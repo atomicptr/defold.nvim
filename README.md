@@ -22,6 +22,7 @@ A Neovim plugin that just works, enabling you to use Neovim as an external edito
 ```lua
 {
     "atomicptr/defold.nvim",
+
     -- this will make sure this plugin only loads when you are in a defold project
     cond = function()
         local root_dir = vim.fs.root(0, { "game.project", ".git" })
@@ -30,6 +31,15 @@ A Neovim plugin that just works, enabling you to use Neovim as an external edito
         end
         return vim.fn.filereadable(root_dir .. "/game.project") == 1
     end,
+
+    -- configuration
+    opts = {
+        -- enables code hot reloading (default: true)
+        hot_reload_enabled = true,
+
+        -- enables registering commands for every editor command via :DefoldCmd... (default: true)
+        register_editor_commands = true,
+    }
 }
 ```
 
@@ -41,8 +51,8 @@ It opens Neovim through ghostty and switches focus (in Hyprland) to it
 
 ## Available Commands
 
-- **:DefoldSend cmd** - Sends a command directly to the Defold editor e.g. **:DefoldSend build** this, you should use this for scripts, keybinds etc
-- **:DefoldCmd...** - The plugin automatically registers all available Defold commands to Neovim, this might fail, run **:DefoldRefreshCommands** to reload the list. Try **:DefoldCmdBuild**
+- **:DefoldSend cmd** - Sends a command directly to the Defold editor (e.g. **:DefoldSend build**). You should use this for scripts, keybinds etc.
+- **:DefoldCmd...** - The plugin automatically registers all available Defold commands to Neovim (this might fail, run **:DefoldRefreshCommands** to reload the list. Try **:DefoldCmdBuild**)
 - **:DefoldRefreshCommands** - Fetches commands from the editor, they are all prefixed with **:DefoldCmd...**
 
 ## Special thanks
