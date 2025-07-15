@@ -30,6 +30,14 @@ vim.api.nvim_create_autocmd("LspAttach", {
     end,
 })
 
+-- register hot reload when saving lua files
+vim.api.nvim_create_autocmd("BufWritePost", {
+    pattern = { "*.lua", "*.script" },
+    callback = function()
+        editor.send_command "hot-reload"
+    end,
+})
+
 -- register commands
 local function fetch_commands()
     local commands = editor.list_commands()

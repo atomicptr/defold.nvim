@@ -4,6 +4,7 @@ A Neovim plugin that just works, enabling you to use Neovim as an external edito
 
 ## Features
 
+- Code hot reload
 - Control Defold using Neovim user commands
 - Inject Defold API annotations to the Neovim LSP
 - Add support for Defolds various file formats
@@ -11,8 +12,8 @@ A Neovim plugin that just works, enabling you to use Neovim as an external edito
 ## System Requirements
 
 - Linux (might work on macOS, untested)
-- curl
-- lsof or ss
+- ``curl``
+- ``lsof`` or ``ss``
 
 ## Install
 
