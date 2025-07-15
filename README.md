@@ -43,9 +43,11 @@ This plugin is designed for Linux environments, though it might function on macO
 
 ## Setup Neovim
 
-We might still need to make a more generic script but here is what I'm using: https://gist.github.com/atomicptr/5077153f622baa60a95893faf4784403
+Copy [neovim-defold.sh](./neovim-defold.sh) into your path and set it up in Defold like this:
 
-It opens Neovim through ghostty and switches focus (in Hyprland) to it
+In Defold head to **File** > **Preferences** > **Code**
+
+![Defold Settings](./.github/defold-settings.png)
 
 ## Available Commands
 
