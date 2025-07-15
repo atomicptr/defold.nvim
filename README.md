@@ -1,23 +1,21 @@
 # defold.nvim
 
-A Neovim plugin that just works, enabling you to use Neovim as an external editor for the [Defold game engine](https://defold.com)
+Use Neovim as your external editor for the [Defold game engine](https://defold.com).
 
 ## Features
 
-- Code hot reload
-- Control Defold using Neovim user commands
-- Inject Defold API annotations to the Neovim LSP
-- Add support for Defolds various file formats
+- **Code Hot-Reloading**: Instantly see code changes reflected in Defold.
+- **Defold Control via Neovim**: Execute Defold commands directly from Neovim using custom user commands.
+- **LSP Integration**: Leverage Defold API annotations within Neovim's Language Server Protocol
+- **File Format Support**: Seamlessly work with Defold's diverse range of file formats.
 
 ## System Requirements
 
-- Linux (might work on macOS, untested)
-- ``curl``
-- ``lsof`` or ``ss``
+This plugin is designed for Linux environments, though it might function on macOS (untested). You'll also need curl and either lsof or ss installed on your system.
 
 ## Install
 
-### Lazy
+### Lazy.nvim
 
 ```lua
 {
@@ -51,9 +49,16 @@ It opens Neovim through ghostty and switches focus (in Hyprland) to it
 
 ## Available Commands
 
-- **:DefoldSend cmd** - Sends a command directly to the Defold editor (e.g. **:DefoldSend build**). You should use this for scripts, keybinds etc.
-- **:DefoldCmd...** - The plugin automatically registers all available Defold commands to Neovim (this might fail, run **:DefoldRefreshCommands** to reload the list. Try **:DefoldCmdBuild**)
-- **:DefoldRefreshCommands** - Fetches commands from the editor, they are all prefixed with **:DefoldCmd...**
+Here's how you can interact with Defold directly from Neovim:
+
+* **:DefoldSend `<command>`**
+    This command lets you send any arbitrary command directly to your Defold editor. Use this for scripting or keybindings. For example, use **`:DefoldSend build`** to trigger build & run.
+
+* **:DefoldCmd...**
+    The plugin automatically registers all available Defold commands within Neovim, each prefixed with `:DefoldCmd`. For instance, you can use **`:DefoldCmdBuild`** to build & run your game. This might fail if the Defold editor isn't running, use the next command to reload the available commands.
+
+* **:DefoldRefreshCommands**
+    Use this to fetch and reload the list of commands from the Defold editor. All of these will be available using the **`:DefoldCmd...`** prefix.
 
 ## Special thanks
 
