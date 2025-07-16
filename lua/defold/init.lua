@@ -7,7 +7,6 @@ local root_markers = { "game.project" }
 ---@class DefoldConfig
 local default_config = {
     hot_reload_enabled = true,
-    register_editor_commands = true,
     auto_fetch_dependencies = true,
 }
 
@@ -68,16 +67,25 @@ function M.setup(opts)
         })
     end
 
-    -- register commands
-    local function fetch_commands()
-        local commands = editor.list_commands()
+    vim.api.nvim_create_user_command("Defold", function()
+        local cmds = {}
+        local options = {}
 
-        for cmd, description in pairs(commands) do
-            vim.api.nvim_create_user_command("DefoldCmd" .. utils.kebab_case_to_pascal_case(cmd), function()
-                editor.send_command(cmd)
-            end, { nargs = 0, desc = description })
+        for cmd, desc in pairs(editor.list_commands()) do
+            table.insert(cmds, cmd)
+            table.insert(options, string.format("%s - %s", cmd, desc))
         end
-    end
+
+        vim.ui.select(options, {
+            prompt = "Select a command to run:",
+        }, function(choice, idx)
+            if not choice then
+                return
+            end
+
+            editor.send_command(cmds[idx])
+        end)
+    end, { nargs = 0, desc = "Select a command to run" })
 
     vim.api.nvim_create_user_command("DefoldSend", function(opt)
         editor.send_command(opt.args)
@@ -86,14 +94,6 @@ function M.setup(opts)
     vim.api.nvim_create_user_command("DefoldFetch", function(opt)
         project.install_dependencies(opt.bang)
     end, { bang = true, nargs = 0, desc = "Fetch & create Defold project dependency annotations" })
-
-    if M.config.register_editor_commands then
-        vim.api.nvim_create_user_command("DefoldRefreshCommands", function()
-            fetch_commands()
-        end, { nargs = 0, desc = "Refresh the Defold editor provided commands" })
-
-        fetch_commands()
-    end
 
     if M.config.auto_fetch_dependencies then
         project.install_dependencies(false)

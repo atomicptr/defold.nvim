@@ -43,9 +43,6 @@ You'll also need:
         -- enables code hot reloading (default: true)
         hot_reload_enabled = true,
 
-        -- enables registering commands for every editor command via :DefoldCmd... (default: true)
-        register_editor_commands = true,
-
         -- enables the plugin to automatically fetch & annotate your project dependencies (default: true)
         auto_fetch_dependencies = true,
     }
@@ -64,17 +61,14 @@ In Defold head to **File** > **Preferences** > **Code**
 
 Here's how you can interact with Defold directly from Neovim:
 
+* **:Defold**
+    This commands starts vim.ui.select to let you select a Defold command to run
+
 * **:DefoldSend `<command>`**
     This command lets you send any arbitrary command directly to your Defold editor. Use this for scripting or keybindings. For example, use **`:DefoldSend build`** to trigger build & run.
 
 * **:DefoldFetch**
     This command fetches all Defold dependencies and creates annotations for the Lua LSP. Run with bang to force re-downloading the annotations.
-
-* **:DefoldCmd...**
-    The plugin automatically registers all available Defold commands within Neovim, each prefixed with `:DefoldCmd`. For instance, you can use **`:DefoldCmdBuild`** to build & run your game. This might fail if the Defold editor isn't running, use the next command to reload the available commands.
-
-* **:DefoldRefreshCommands**
-    Use this to fetch and reload the list of commands from the Defold editor. All of these will be available using the **`:DefoldCmd...`** prefix.
 
 ## Special Thanks
 
