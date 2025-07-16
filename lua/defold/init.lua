@@ -1,3 +1,4 @@
+local project = require "defold.project"
 local editor = require "defold.editor"
 local utils = require "defold.utils"
 
@@ -7,6 +8,7 @@ local root_markers = { "game.project" }
 local default_config = {
     hot_reload_enabled = true,
     register_editor_commands = true,
+    auto_fetch_dependencies = true,
 }
 
 local M = {}
@@ -81,12 +83,20 @@ function M.setup(opts)
         editor.send_command(opt.args)
     end, { nargs = 1, desc = "Send a command to the Defold editor" })
 
+    vim.api.nvim_create_user_command("DefoldFetch", function(opt)
+        project.install_dependencies(opt.bang)
+    end, { bang = true, nargs = 0, desc = "Fetch & create Defold project dependency annotations" })
+
     if M.config.register_editor_commands then
         vim.api.nvim_create_user_command("DefoldRefreshCommands", function()
             fetch_commands()
         end, { nargs = 0, desc = "Refresh the Defold editor provided commands" })
 
         fetch_commands()
+    end
+
+    if M.config.auto_fetch_dependencies then
+        project.install_dependencies(false)
     end
 end
 

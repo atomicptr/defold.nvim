@@ -1,14 +1,9 @@
+local os = require "defold.service.os"
 local http = require "defold.service.http"
 
 local M = {}
 
 M.port = nil
-
----Test if a command exists on the system
----@return boolean
-local function command_exists(cmd)
-    return vim.fn.executable(cmd) == 1
-end
 
 ---Extract the port from lsof/ss output
 ---@return number|nil
@@ -31,7 +26,7 @@ end
 local function find_port()
     local found_command = false
 
-    if command_exists "lsof" then
+    if os.command_exists "lsof" then
         found_command = true
 
         local output = vim.fn.system "lsof -nP -iTCP -sTCP:LISTEN |grep java"
@@ -41,7 +36,7 @@ local function find_port()
         end
     end
 
-    if command_exists "ss" then
+    if os.command_exists "ss" then
         found_command = true
 
         local output = vim.fn.system "ss -tplH4 |grep java"

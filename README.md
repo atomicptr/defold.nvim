@@ -7,11 +7,19 @@ Use Neovim as your external editor for the [Defold game engine](https://defold.c
 - **Code Hot-Reloading**: Instantly see code changes reflected in Defold.
 - **Defold Control via Neovim**: Execute Defold commands directly from Neovim using custom user commands.
 - **LSP Integration**: Leverage Defold API annotations within Neovim's Language Server Protocol
-- **File Format Support**: Seamlessly work with Defold's diverse range of file formats.
+- **Dependency Annotations**: Automatically provide LSP annotations for Defold dependencies
 
 ## System Requirements
 
-This plugin is designed for Linux environments, though it might function on macOS (untested). You'll also need curl and either lsof or ss installed on your system.
+This plugin is designed for Linux environments, though it might function on macOS (untested).
+
+You'll also need:
+
+- curl
+- either lsof or ss
+- unzip
+- tar
+- (optional) babashka
 
 ## Install
 
@@ -37,6 +45,9 @@ This plugin is designed for Linux environments, though it might function on macO
 
         -- enables registering commands for every editor command via :DefoldCmd... (default: true)
         register_editor_commands = true,
+
+        -- enables the plugin to automatically fetch & annotate your project dependencies (default: true)
+        auto_fetch_dependencies = true,
     }
 }
 ```
@@ -56,13 +67,16 @@ Here's how you can interact with Defold directly from Neovim:
 * **:DefoldSend `<command>`**
     This command lets you send any arbitrary command directly to your Defold editor. Use this for scripting or keybindings. For example, use **`:DefoldSend build`** to trigger build & run.
 
+* **:DefoldFetch**
+    This command fetches all Defold dependencies and creates annotations for the Lua LSP. Run with bang to force re-downloading the annotations.
+
 * **:DefoldCmd...**
     The plugin automatically registers all available Defold commands within Neovim, each prefixed with `:DefoldCmd`. For instance, you can use **`:DefoldCmdBuild`** to build & run your game. This might fail if the Defold editor isn't running, use the next command to reload the available commands.
 
 * **:DefoldRefreshCommands**
     Use this to fetch and reload the list of commands from the Defold editor. All of these will be available using the **`:DefoldCmd...`** prefix.
 
-## Special thanks
+## Special Thanks
 
 - [astrochili/defold-annotations](https://github.com/astrochili/defold-annotations)
 

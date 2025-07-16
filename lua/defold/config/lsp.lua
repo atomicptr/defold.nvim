@@ -1,4 +1,5 @@
 local defold = require "defold"
+local deps = require "defold.service.deps"
 
 return {
     Lua = {
@@ -6,7 +7,7 @@ return {
             version = "LuaJIT",
         },
         workspace = {
-            library = { "lua", defold.defold_api_path() },
+            library = { "lua", defold.defold_api_path(), deps.dependency_install_root() },
         },
         diagnostics = {
             globals = {
