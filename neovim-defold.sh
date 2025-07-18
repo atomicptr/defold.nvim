@@ -11,7 +11,7 @@ class_name="com.defold.neovim"
 
 launch_neovim() {
     local server_name="$1"
-    local file_name="$2"
+    local file_name="\"$2\""
 
     if command -v ghostty >/dev/null 2>&1; then
         ghostty --class="$class_name" -e nvim --listen "$server_name" --remote "$file_name"
