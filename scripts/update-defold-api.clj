@@ -1,6 +1,6 @@
 #!/usr/bin/env bb
 
-(require '[babashka.curl :as curl]
+(require '[babashka.http-client :as http]
          '[babashka.fs :as fs]
          '[cheshire.core :as json]
          '[clojure.string :as string]
@@ -19,7 +19,7 @@
       keyword))
 
 (defn fetch-releases []
-  (let [res  (curl/get releases-url)
+  (let [res  (http/get releases-url)
         body (:body res)]
     (json/parse-string body transform-key-fn)))
 
@@ -29,7 +29,7 @@
 
 (defn download-file [url to-path]
   (try
-    (let [res (curl/get url {:as :bytes})]
+    (let [res (http/get url {:as :bytes})]
       (with-open [os (io/output-stream to-path)]
         (.write os (:body res))))
     (catch Exception e
