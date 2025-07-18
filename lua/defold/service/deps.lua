@@ -1,7 +1,7 @@
 local http = require "defold.service.http"
 local fs = require "defold.service.fs"
 local zip = require "defold.service.zip"
-local script_api = require "defold.service.script_api"
+local babashka = require "defold.service.babashka"
 
 local M = {}
 
@@ -93,7 +93,7 @@ function M.install_dependency(url)
 
     for _, include_dir in ipairs(include_dirs) do
         for _, file in ipairs(find_script_api_files(include_dir)) do
-            local res = script_api.compile_file(file)
+            local res = babashka.run_task("compile-script-api", { file })
 
             local basename = vim.fs.basename(file)
             local filename = basename:sub(0, string.len(basename) - string.len ".script_api")
