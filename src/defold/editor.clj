@@ -6,7 +6,7 @@
 
 (defn- command-exists? [cmd]
   (try
-    (check (shell {:out :string} "which" cmd))
+    (check (shell {:out :string :err :string} "which" cmd))
     true
     (catch Exception _ false)))
 
@@ -35,7 +35,7 @@
     (command-exists? "ss")
     (find-port-from-command "ss" "-tplH4")
 
-    :else nil))
+    :else (throw (ex-info "Couldn't find either 'lsof' or 'ss', which is necessary to interact with Defold" {}))))
 
 (defn make-command-url [port cmd]
   (str "http://127.0.0.1:" port "/command/" (string/lower-case cmd)))
