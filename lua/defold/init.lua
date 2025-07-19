@@ -62,7 +62,7 @@ function M.setup(opts)
         vim.api.nvim_create_autocmd("BufWritePost", {
             pattern = { "*.lua", "*.script" },
             callback = function()
-                editor.send_command "hot-reload"
+                editor.send_command("hot-reload", true)
             end,
         })
     end

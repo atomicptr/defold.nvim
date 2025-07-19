@@ -22,10 +22,15 @@ end
 
 ---Sends a command to the Defold editor
 ---@param command string
-function M.send_command(command)
+---@param dont_report_error boolean|nil
+function M.send_command(command, dont_report_error)
     local res = babashka.run_task_json("send-command", { command })
 
     if res.status == 202 then
+        return
+    end
+
+    if dont_report_error or false then
         return
     end
 
