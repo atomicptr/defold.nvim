@@ -45,7 +45,7 @@
 (def api-dir  (fs/file data-dir "defold_api"))
 
 (let [release  (fetch-newest-release)
-      _        (println "Found tag:" (:tag-name release))
+      _        (print (:tag-name release))
       tempfile (fs/file (fs/temp-dir) "api.zip")
       _        (fs/delete-tree tempfile)
       url      (-> release
@@ -54,6 +54,5 @@
                    :browser-download-url)]
   (download-file url tempfile)
   (fs/delete-tree api-dir)
-  (fs/unzip tempfile data-dir)
-  (println "Downloaded" (str api-dir)))
+  (fs/unzip tempfile data-dir))
 
