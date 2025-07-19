@@ -54,4 +54,9 @@ function M.run_task(task, args)
     return vim.fn.system(cmd)
 end
 
+function M.run_task_json(task, args)
+    local res = M.run_task(task, args)
+    return vim.json.decode(res)
+end
+
 return M

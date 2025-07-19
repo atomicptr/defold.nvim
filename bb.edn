@@ -1,4 +1,6 @@
 {:min-bb-version "1.12.0"
  :paths ["src"]
  :tasks {:requires ([defold.main :as defold])
-         compile-script-api  {:task (defold/compile-script-api)}}}
+         compile-script-api  {:task (defold/compile-script-api)}
+         list-commands       {:task (defold/list-commands)}
+         send-command        {:task (defold/send-command)}}}
