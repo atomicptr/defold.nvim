@@ -1,6 +1,6 @@
-local project = require "defold.project"
+local babashka = require "defold.service.babashka"
 local editor = require "defold.editor"
-local utils = require "defold.utils"
+local project = require "defold.project"
 
 local root_markers = { "game.project" }
 
@@ -29,6 +29,9 @@ end
 ---@param opts DefoldConfig|nil
 function M.setup(opts)
     M.config = vim.tbl_extend("force", M.config, opts or {})
+
+    -- init babashka
+    babashka.run_task("init", {})
 
     -- register filetypes
     vim.filetype.add(require "defold.config.filetype")

@@ -1,6 +1,6 @@
-/.clj-kondo
-/.lsp
-/.nrepl*
+.clj-kondo
+.lsp
+.nrepl*
 
 # Created by https://www.toptal.com/developers/gitignore/api/windows,macos,linux,lua
 # Edit at https://www.toptal.com/developers/gitignore?templates=windows,macos,linux,lua

@@ -1,5 +1,11 @@
 local defold = require "defold"
-local deps = require "defold.service.deps"
+local project = require "defold.project"
+
+local libs = { "lua", defold.defold_api_path() }
+
+for _, lib in ipairs(project.dependency_api_paths()) do
+    table.insert(libs, lib)
+end
 
 return {
     Lua = {
@@ -7,7 +13,7 @@ return {
             version = "LuaJIT",
         },
         workspace = {
-            library = { "lua", defold.defold_api_path(), deps.dependency_install_root() },
+            library = libs,
         },
         diagnostics = {
             globals = {

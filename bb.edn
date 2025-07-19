@@ -1,6 +1,9 @@
 {:min-bb-version "1.12.0"
  :paths ["src"]
+ :deps {com.brainbot/iniconfig {:mvn/version "0.2.0"}}
  :tasks {:requires ([defold.main :as defold])
-         compile-script-api  {:task (defold/compile-script-api)}
-         list-commands       {:task (defold/list-commands)}
-         send-command        {:task (defold/send-command)}}}
+         init                 {:task (defold/init)}
+         install-dependencies {:task (defold/install-dependencies)}
+         list-commands        {:task (defold/list-commands)}
+         list-dependency-dirs {:task (defold/list-dependency-dirs)}
+         send-command         {:task (defold/send-command)}}}

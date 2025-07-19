@@ -20,12 +20,14 @@
     (last)))
 
 (defn- find-port-from-command [& cmd]
-  (-> (apply shell {:out :string} cmd)
-    :out
-    (string/split-lines)
-    (->> (filter #(string/includes? % "java")))
-    (first)
-    (extract-port)))
+  (try
+    (-> (apply shell {:out :string} cmd)
+      :out
+      (string/split-lines)
+      (->> (filter #(string/includes? % "java")))
+      (first)
+      (extract-port))
+    (catch Exception _ (throw (ex-info (str "Could not find Defold port via '" (string/join " " cmd) "'.") {})))))
 
 (defn find-port []
   (cond

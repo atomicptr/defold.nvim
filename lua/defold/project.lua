@@ -1,8 +1,8 @@
-local deps = require "defold.service.deps"
+local babashka = require "defold.service.babashka"
 
 local M = {}
 
-function M.find_dependencies()
+local function game_project_file()
     local root = vim.fs.root(0, { "game.project" })
 
     if not root then
@@ -10,41 +10,27 @@ function M.find_dependencies()
         return {}
     end
 
-    local deps = {}
+    return '"' .. vim.fs.joinpath(root, "game.project") .. '"'
+end
 
-    local pattern = "dependencies#%d+%s*=%s*(.+)$"
-
-    for line in io.lines(vim.fs.joinpath(root, "game.project")) do
-        local _, _, url = line:find(pattern)
-
-        if url then
-            table.insert(deps, url)
-        end
-    end
-
-    return deps
+function M.dependency_api_paths()
+    local res = babashka.run_task_json("list-dependency-dirs", { game_project_file() })
+    return res.dirs
 end
 
 ---@param force_redownload boolean
 function M.install_dependencies(force_redownload)
-    if force_redownload or false then
-        local root = deps.dependency_install_root()
-        if root then
-            vim.fs.rm(root, { recursive = true, force = true })
-        end
+    local args = { game_project_file() }
+
+    if force_redownload then
+        table.insert(args, "force")
     end
 
-    for _, url in ipairs(M.find_dependencies()) do
-        vim.notify(string.format("installing %s...", url))
+    local res = babashka.run_task_json("install-dependencies", args)
 
-        if force_redownload then
-            local root = deps.dependency_cache_root(url)
-            if root then
-                vim.fs.rm(root, { recursive = true, force = true })
-            end
-        end
-
-        deps.install_dependency(url)
+    if res.error then
+        vim.notify(string.format("Could not install dependencies, because: %s", res.error), vim.log.levels.ERROR)
+        return
     end
 end
 

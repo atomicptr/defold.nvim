@@ -1,16 +1,30 @@
 local os = require "defold.service.os"
-local fs = require "defold.service.fs"
-local http = require "defold.service.http"
 
 local bb_version = "1.12.206"
 local bb_url = "https://github.com/babashka/babashka/releases/download/v%s/babashka-%s-%s-%s.%s"
 
 local M = {}
 
+local function file_exists(path)
+    return vim.fn.filereadable(path) == 1 or vim.fn.isdirectory(path) == 1
+end
+
+---Download file at url and download it to to_path
+---@param url string
+---@param to_path string
+local function download(url, to_path)
+    if not os.command_exists "curl" then
+        vim.notify("Could not find command 'curl'", vim.log.levels.ERROR)
+        return
+    end
+
+    vim.fn.system(string.format("curl -L -s -o '%s' %s", to_path, url))
+end
+
 local function local_bb()
     local bb_path = vim.fs.joinpath(vim.fn.stdpath "data", "defold.nvim", "bin", "bb")
 
-    if fs.file_exists(bb_path) then
+    if file_exists(bb_path) then
         return bb_path
     end
 
@@ -20,7 +34,7 @@ local function local_bb()
 
     local download_path = bb_path .. ".tar.gz"
 
-    http.download(url, download_path)
+    download(url, download_path)
 
     vim.fn.system(string.format("tar -xf '%s' -C '%s'", download_path, vim.fs.dirname(bb_path)))
     vim.fn.system(string.format("chmod +x '%s'", bb_path))

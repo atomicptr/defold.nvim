@@ -1,4 +1,4 @@
-(ns defold.tasks.script-api-compiler
+(ns defold.script-api-compiler
   (:require [clj-yaml.core :as yaml]
             [clojure.string :as string]))
 
