@@ -71,7 +71,13 @@ function M.setup(opts)
         local cmds = {}
         local options = {}
 
-        for cmd, desc in pairs(editor.list_commands()) do
+        local commands = editor.list_commands()
+
+        if not commands then
+            return
+        end
+
+        for cmd, desc in pairs(commands) do
             table.insert(cmds, cmd)
             table.insert(options, string.format("%s - %s", cmd, desc))
         end

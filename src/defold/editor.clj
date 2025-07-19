@@ -41,19 +41,19 @@
   (str "http://127.0.0.1:" port "/command/" (string/lower-case cmd)))
 
 (defn list-commands []
-  (let [port (find-port)
-        url  (make-command-url port "")]
-    (try
+  (try
+    (let [port (find-port)
+          url  (make-command-url port "")]
       (->
         (http/get url)
         :body
-        (json/parse-string))
-      (catch Exception e {"error" (.getMessage e)}))))
+        (json/parse-string)))
+    (catch Exception e {"error" (ex-message e)})))
 
 (defn send-command [cmd]
-  (let [port (find-port)
-        url  (make-command-url port cmd)]
-    (try
-      {"status" (:status (http/post url))}
-      (catch Exception e {"error" (.getMessage e)}))))
+  (try
+    (let [port (find-port)
+          url  (make-command-url port cmd)]
+      {"status" (:status (http/post url))})
+    (catch Exception e {"error" (ex-message e)})))
 
