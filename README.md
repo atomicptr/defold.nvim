@@ -17,7 +17,7 @@ This plugin is using [Babashka](https://babashka.org) internally to circumvent N
 If you do not have Babashka installed on your system, the plugin will download and manage its own local copy
 which will however add a few more requirements.
 
-If you have Babashka installed you'll only need either lsof or ss
+If you have Babashka installed you'll only need either lsof, ss or netstat
 
 If not, we'll also need curl and tar in addition
 
