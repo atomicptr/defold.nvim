@@ -1,6 +1,6 @@
 (ns defold.tasks.script-api-compiler
-  (:require [clojure.string :as string]
-            [clj-yaml.core :as yaml]))
+  (:require [clj-yaml.core :as yaml]
+            [clojure.string :as string]))
 
 (defn- split-long-string [s max-len]
   (loop [remaining-s s

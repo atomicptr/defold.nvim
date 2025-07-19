@@ -1,0 +1,2 @@
+{:indent-line-comments? true
+ :sort-ns-references? true}

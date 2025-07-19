@@ -1,7 +1,7 @@
 (ns defold.main
-  (:require [defold.tasks.script-api-compiler :as script-api-compiler]
+  (:require [cheshire.core :as json]
             [defold.editor :as editor]
-            [cheshire.core :as json]))
+            [defold.tasks.script-api-compiler :as script-api-compiler]))
 
 (defn compile-script-api []
   (script-api-compiler/run (first *command-line-args*)))

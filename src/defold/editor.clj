@@ -1,8 +1,8 @@
 (ns defold.editor
-  (:require [babashka.process :refer [shell check]]
-            [clojure.string :as string]
-            [babashka.http-client :as http]
-            [cheshire.core :as json]))
+  (:require [babashka.http-client :as http]
+            [babashka.process :refer [shell check]]
+            [cheshire.core :as json]
+            [clojure.string :as string]))
 
 (defn- command-exists? [cmd]
   (try
