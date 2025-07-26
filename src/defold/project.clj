@@ -101,7 +101,7 @@
              (when (not (fs/exists? deps-path))
                (download-file cache-dir url)
                (doseq [include-dir (find-include-dirs cache-path)]
-                 (copy-files include-dir deps-path ["lua"])
+                 (copy-files include-dir (fs/path deps-path (fs/file-name include-dir)) ["lua"])
                  (let [script-api-files (find-script-api-files include-dir)]
                    (doseq [script-api-file script-api-files]
                      (compile-script-api-file script-api-file (str (fs/path deps-path (replace-ext (fs/file-name script-api-file) "lua")))))))
