@@ -2,7 +2,7 @@ local babashka = require "defold.service.babashka"
 local editor = require "defold.editor"
 local project = require "defold.project"
 
-local root_markers = { "game.project" }
+local root_markers = { "game.project", ".git" }
 
 ---@class DefoldConfig
 local default_config = {
@@ -23,7 +23,19 @@ function M.defold_api_path()
         return ""
     end
     local plugin_root = vim.fs.dirname(vim.fs.dirname(vim.fs.dirname(string.sub(script_path, 2))))
-    return vim.fs.joinpath(plugin_root, "data", "defold_api")
+    return vim.fs.joinpath(plugin_root, "resources", "defold_api")
+end
+
+---Returns true if we are in a defold project
+---@return boolean
+function M.is_defold_project()
+    local root_dir = vim.fs.root(0, root_markers)
+
+    if not root_dir then
+        return false
+    end
+
+    return vim.fn.filereadable(root_dir .. "/game.project") == 1
 end
 
 ---@param opts DefoldConfig|nil

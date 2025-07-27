@@ -41,8 +41,8 @@
                   (fs/parent)
                   (fs/parent)))
 
-(def data-dir (fs/file root-dir "data"))
-(def api-dir  (fs/file data-dir "defold_api"))
+(def resources-dir (fs/file root-dir "resources"))
+(def api-dir       (fs/file resources-dir "defold_api"))
 
 (let [release  (fetch-newest-release)
       _        (print (:tag-name release))
@@ -54,5 +54,5 @@
                    :browser-download-url)]
   (download-file url tempfile)
   (fs/delete-tree api-dir)
-  (fs/unzip tempfile data-dir))
+  (fs/unzip tempfile resources-dir))
 
