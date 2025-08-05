@@ -1,10 +1,10 @@
 --[[
   Generated with github.com/astrochili/defold-annotations
-  Defold 1.10.3
+  Defold 1.10.4
 
   Camera API documentation
 
-  Messages to control camera components and camera focus.
+  Functions for interacting with camera components.
 --]]
 
 ---@meta
