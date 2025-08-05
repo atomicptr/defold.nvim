@@ -37,18 +37,6 @@ If not, we'll also need curl and tar in addition
         -- enables the plugin to automatically fetch & annotate your project dependencies (default: true)
         auto_fetch_dependencies = true,
     },
-
-    -- this will make sure this plugin only loads when you are in a defold project
-    config = function(_, opts)
-        local defold = require "defold"
-
-        -- only setup plugin when we are in a defold project
-        if not defold.is_defold_project() then
-            return
-        end
-
-        defold.setup(opts)
-    end,
 }
 ```
 

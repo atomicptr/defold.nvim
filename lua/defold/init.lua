@@ -39,7 +39,19 @@ function M.is_defold_project()
 end
 
 ---@param opts DefoldConfig|nil
+function M.prepare(opts)
+    -- TODO: prepare setup
+end
+
+---@param opts DefoldConfig|nil
 function M.setup(opts)
+    M.prepare(opts)
+
+    -- dont actually setup the project unless we are in a Defold project
+    if not M.is_defold_project() then
+        return
+    end
+
     M.config = vim.tbl_extend("force", M.config, opts or {})
 
     -- init babashka
