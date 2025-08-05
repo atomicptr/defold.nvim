@@ -1,6 +1,5 @@
 {:min-bb-version "1.12.0"
- :paths ["src"]
- :deps {com.brainbot/iniconfig {:mvn/version "0.2.0"}}
+ :paths ["src" "vendor"]
  :tasks {:requires ([defold.main :as defold])
          init                 {:task (defold/init)}
          install-dependencies {:task (defold/install-dependencies)}
