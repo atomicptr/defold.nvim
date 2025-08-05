@@ -2,6 +2,7 @@
   (:require
    [babashka.fs :as fs]
    [babashka.process :refer [shell]]
+   [clojure.string :as string]
    [defold.utils :refer [cache-dir command-exists?]]))
 
 (def base-class-name "com.defold.nvim.%s")
@@ -66,10 +67,13 @@
     (catch Exception e
       (println "Could not switch focus, do nothing..." e))))
 
+(defn- escape-spaces [s]
+  (string/escape s {\space "\\ "}))
+
 (defn make-neovim-edit-command [file-name line]
   (if line
-    (format "edit +%s %s" line file-name)
-    (format "edit %s" file-name)))
+    (format "edit +%s %s" line (escape-spaces file-name))
+    (format "edit %s" (escape-spaces file-name))))
 
 (defn launch-new-nvim-instance [class-name neovim socket-file file-name line]
   (let [file (if line (format "%s +%s" file-name line) file-name)]
@@ -96,10 +100,10 @@
         (catch Exception e
           (println "Failed to communicate with neovim server:" e)
 
-         ; if we couldnt communicate with the server despite existing apparently
-         ; delete it and start a new instance
+          ; if we couldnt communicate with the server despite existing apparently
+          ; delete it and start a new instance
           (fs/delete-if-exists socket-file)
-          (launch-new-nvim-instance class-name neovim socket-file file-name line)))
-      (launch-new-nvim-instance class-name neovim socket-file file-name line))
+          (launch-new-nvim-instance class-name neovim socket-file (escape-spaces file-name) line)))
+      (launch-new-nvim-instance class-name neovim socket-file (escape-spaces file-name) line))
     (switch-focus class-name)))
 
