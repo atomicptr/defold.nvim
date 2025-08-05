@@ -1,6 +1,6 @@
 --[[
   Generated with github.com/astrochili/defold-annotations
-  Defold 1.10.3
+  Defold 1.10.4
 
   Editor scripting documentation
 --]]
@@ -365,6 +365,11 @@ function editor.command(opts) end
 ---Throws an error if the directory can't be created.
 ---@param resource_path string Resource path (starting with /)
 function editor.create_directory(resource_path) end
+
+---Create resources (including non-existent parent directories).
+---Throws an error if any of the provided resource paths already exist
+---@param resources unknown ] Array of resource paths (strings starting with /) or resource definitions, lua tables with the following keys:1 stringrequired, resource path (starting with /)2 stringoptional, created resource content
+function editor.create_resources(resources) end
 
 ---Delete a directory if it exists, and all existent child directories and files.
 ---Throws an error if the directory can't be deleted.
