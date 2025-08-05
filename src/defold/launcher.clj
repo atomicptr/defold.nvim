@@ -23,9 +23,9 @@
   (apply shell cmd))
 
 (defn find-project-root-from-file [file]
-  (loop [current-dir (fs/parent file)]
+  (loop [current-dir (fs/parent (fs/path file))]
     (if-not current-dir
-      (throw (ex-info "Could not determine Defold project from path: " file {}))
+      (throw (ex-info (str "Could not determine Defold project from path: " file) {}))
       (let [target (fs/path current-dir "game.project")]
         (if (fs/exists? target)
           (str current-dir)
@@ -80,7 +80,7 @@
           (> (count *command-line-args*) 2))
     (usage))
 
-  (let [neovim      "nvim"
+  (let [neovim      (fs/which "nvim")
         line        (when line (Integer/parseInt line))
         root-dir    (find-project-root-from-file file-name)
         runtime     (runtime-dir root-dir)
