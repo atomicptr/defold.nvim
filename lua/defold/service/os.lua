@@ -7,7 +7,14 @@ function M.command_exists(cmd)
 end
 
 function M.name()
-    return vim.loop.os_uname().sysname:lower()
+    local os_name = vim.loop.os_uname().sysname:lower()
+
+    -- babashka uses macos and not darwin, so we'll do the same
+    if os_name == "darwin" then
+        return "macos"
+    end
+
+    return os_name
 end
 
 function M.architecture()
