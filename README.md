@@ -11,7 +11,7 @@ Use Neovim as your external editor for the [Defold game engine](https://defold.c
 
 ## System Requirements
 
-This plugin is designed for Linux environments, though it might function on macOS (untested).
+This plugin is designed for Linux and supports macOS. Windows is untested and probably doesn't work (yet)
 
 This plugin is using [Babashka](https://babashka.org) internally to circumvent Neovim Luas API limitations.
 If you do not have Babashka installed on your system, the plugin will download and manage its own local copy
@@ -28,6 +28,7 @@ If not, we'll also need curl and tar in addition
 ```lua
 {
     "atomicptr/defold.nvim",
+    lazy = false,
 
     -- configuration
     opts = {
