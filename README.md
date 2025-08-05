@@ -36,17 +36,21 @@ If not, we'll also need curl and tar in addition
 
         -- enables the plugin to automatically fetch & annotate your project dependencies (default: true)
         auto_fetch_dependencies = true,
+
+        -- always enables the plugin even if we're not in a defold project
+        always_enable_plugin = false,
+
+        -- sets neovim/defold.nvim to be the default editor for Defold
+        set_neovim_as_default_editor = true,
     },
 }
 ```
 
 ## Setup Neovim
 
-Copy [neovim-defold.sh](./neovim-defold.sh) into your path and set it up in Defold like this:
+By installing and running the plugin once, Defold should automatically use Neovim as its editor. (Unless you disabled the setting above)
 
-In Defold head to **File** > **Preferences** > **Code**
-
-![Defold Settings](./.github/defold-settings.png)
+If you manually want to setup Defold, run `:SetupDefold`
 
 ## Available Commands
 
@@ -60,6 +64,9 @@ Here's how you can interact with Defold directly from Neovim:
 
 * **:DefoldFetch**
     This command fetches all Defold dependencies and creates annotations for the Lua LSP. Run with bang to force re-downloading the annotations.
+
+* **:SetupDefold**
+    This commands does the required setup for Defold to use Neovim as its external editor (this will be done by default unless disabled, see config above)
 
 ## Special Thanks
 

@@ -6,4 +6,6 @@
          install-dependencies {:task (defold/install-dependencies)}
          list-commands        {:task (defold/list-commands)}
          list-dependency-dirs {:task (defold/list-dependency-dirs)}
-         send-command         {:task (defold/send-command)}}}
+         send-command         {:task (defold/send-command)}
+         launch-neovim        {:task (defold/launch-neovim)}
+         set-default-editor   {:task (defold/set-default-editor)}}}

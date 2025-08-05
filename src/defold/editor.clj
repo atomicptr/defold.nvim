@@ -1,14 +1,10 @@
 (ns defold.editor
-  (:require [babashka.http-client :as http]
-            [babashka.process :refer [shell check]]
-            [cheshire.core :as json]
-            [clojure.string :as string]))
-
-(defn- command-exists? [cmd]
-  (try
-    (check (shell {:out :string :err :string} "which" cmd))
-    true
-    (catch Exception _ false)))
+  (:require
+   [babashka.http-client :as http]
+   [babashka.process :refer [shell]]
+   [cheshire.core :as json]
+   [clojure.string :as string]
+   [defold.utils :refer [command-exists?]]))
 
 (defn make-command-url [port cmd]
   (str "http://127.0.0.1:" port "/command/" (string/lower-case cmd)))

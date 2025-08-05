@@ -8,6 +8,8 @@ local root_markers = { "game.project", ".git" }
 local default_config = {
     hot_reload_enabled = true,
     auto_fetch_dependencies = true,
+    always_enable_plugin = false,
+    set_neovim_as_default_editor = true,
 }
 
 local M = {}
@@ -38,21 +40,30 @@ function M.is_defold_project()
     return vim.fn.filereadable(root_dir .. "/game.project") == 1
 end
 
----@param opts DefoldConfig|nil
-function M.prepare(opts)
-    -- TODO: prepare setup
+function M.prepare()
+    babashka.setup {
+        set_editor = M.config.set_neovim_as_default_editor,
+    }
 end
 
 ---@param opts DefoldConfig|nil
 function M.setup(opts)
-    M.prepare(opts)
+    M.config = vim.tbl_extend("force", M.config, opts or {})
+
+    M.prepare()
+
+    vim.api.nvim_create_user_command("SetupDefold", function()
+        babashka.run_task("set-default-editor", { babashka.setup {
+            set_editor = true,
+        } })
+
+        vim.notify "defold.nvim: Defold setup successfully"
+    end, { nargs = 0, desc = "Setup Defold to use Neovim as its default editor" })
 
     -- dont actually setup the project unless we are in a Defold project
-    if not M.is_defold_project() then
+    if M.config.always_enable_plugin or not M.is_defold_project() then
         return
     end
-
-    M.config = vim.tbl_extend("force", M.config, opts or {})
 
     -- init babashka
     babashka.run_task("init", {})

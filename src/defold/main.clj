@@ -1,7 +1,10 @@
 (ns defold.main
-  (:require [cheshire.core :as json]
-            [defold.editor :as editor]
-            [defold.project :as project]))
+  (:require
+   [cheshire.core :as json]
+   [defold.editor :as editor]
+   [defold.editor-config :as editor-config]
+   [defold.launcher :as launcher]
+   [defold.project :as project]))
 
 (defn init []
   (print (json/generate-string {:hello "defold"})))
@@ -18,4 +21,8 @@
 (defn send-command []
   (print (json/generate-string (editor/send-command (first *command-line-args*)))))
 
+(defn launch-neovim []
+  (launcher/run (first *command-line-args*) (second *command-line-args*)))
 
+(defn set-default-editor []
+  (print (json/generate-string (editor-config/set-default-editor (first *command-line-args*)))))

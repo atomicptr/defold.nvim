@@ -22,11 +22,23 @@ local function download(url, to_path)
 end
 
 local function local_bb()
+    local meta_data_path = vim.fs.joinpath(vim.fn.stdpath "data", "defold.nvim", "meta.json")
     local bb_path = vim.fs.joinpath(vim.fn.stdpath "data", "defold.nvim", "bin", "bb")
 
-    if file_exists(bb_path) then
+    local meta_data = nil
+
+    if file_exists(meta_data_path) then
+        local content = vim.fn.readfile(meta_data_path)
+        meta_data = vim.fn.json_decode(table.concat(content))
+    end
+
+    if meta_data and meta_data.bb_version == bb_version and file_exists(bb_path) then
         return bb_path
     end
+
+    meta_data = meta_data or {}
+
+    vim.notify(string.format("defold.nvim: Downloading babashka %s", bb_version))
 
     vim.fn.mkdir(vim.fs.dirname(bb_path), "p")
 
@@ -40,6 +52,10 @@ local function local_bb()
     vim.fn.system(string.format("chmod +x '%s'", bb_path))
 
     vim.fs.rm(download_path)
+
+    meta_data.bb_version = bb_version
+    local json = vim.fn.json_encode(meta_data)
+    vim.fn.writefile({ json }, meta_data_path)
 
     return bb_path
 end
@@ -60,6 +76,22 @@ local function bb_edn_path()
     end
     local plugin_root = vim.fs.dirname(vim.fs.dirname(vim.fs.dirname(vim.fs.dirname(string.sub(script_path, 2)))))
     return vim.fs.joinpath(plugin_root, "bb.edn")
+end
+
+---@class BabashkaConfig
+---@field set_editor boolean
+
+---@param opts BabashkaConfig
+---@return string
+function M.setup(opts)
+    -- make sure bb is available
+    local bb = bb_path()
+
+    if opts.set_editor then
+        M.run_task_json("set-default-editor", { bb })
+    end
+
+    return bb
 end
 
 function M.run_task(task, args)
