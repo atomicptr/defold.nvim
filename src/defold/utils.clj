@@ -5,8 +5,7 @@
 
 (defn command-exists? [cmd]
   (try
-    (fs/which cmd)
-    true
+    (not (nil? (fs/which cmd)))
     (catch Throwable t
       (println t)
       false)))

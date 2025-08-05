@@ -45,7 +45,7 @@
               ["kitty" "--class=%s" "-e"]
               ["alacritty" "--class=%s" "-e"]
               ["st" "-c %s" "-e"]]
-        term  (some #(when (command-exists? (first %1)) %1) term)]
+        term  (some #(when (command-exists? (first %)) %) term)]
     (if term
       (let [[term-cmd class-arg run-arg] term]
         (try
