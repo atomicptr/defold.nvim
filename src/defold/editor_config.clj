@@ -1,13 +1,11 @@
 (ns defold.editor-config
   (:require
    [babashka.fs :as fs :refer [which]]
-   [clojure.edn :as edn]))
-
-(defn- config-home []
-  (str (fs/path (fs/xdg-config-home) "Defold")))
+   [clojure.edn :as edn]
+   [defold.utils :refer [config-dir]]))
 
 (defn- editor-settings-filepath []
-  (str (fs/path (config-home) "prefs.editor_settings")))
+  (config-dir "Defold" "prefs.editor_settings"))
 
 (defn- read-editor-settings [path]
   (edn/read-string (slurp path)))

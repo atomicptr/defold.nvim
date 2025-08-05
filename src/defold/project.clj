@@ -5,7 +5,8 @@
    [clojure.java.io :as io]
    [clojure.string :as string]
    [com.brainbot.iniconfig :as iniconfig]
-   [defold.script-api-compiler :as script-api-compiler])
+   [defold.script-api-compiler :as script-api-compiler]
+   [defold.utils :as utils])
   (:import
    [java.nio.charset StandardCharsets]
    [java.security MessageDigest]))
@@ -27,14 +28,14 @@
     (subs hash 0 8)))
 
 (defn- cache-dir [ident]
-  (let [path (fs/path (fs/xdg-cache-home) "defold.nvim" ident "cache")]
+  (let [path (utils/cache-dir "defold.nvim" ident "cache")]
     (fs/create-dirs path)
-    (str path)))
+    path))
 
 (defn- deps-dir [ident]
-  (let [path (fs/path (fs/xdg-data-home) "defold.nvim" ident "deps")]
+  (let [path (utils/data-dir "defold.nvim" ident "deps")]
     (fs/create-dirs path)
-    (str path)))
+    path))
 
 (defn- download-file [base-dir file-url]
   (let [ext           (fs/extension file-url)

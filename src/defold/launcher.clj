@@ -2,7 +2,7 @@
   (:require
    [babashka.fs :as fs]
    [babashka.process :refer [shell]]
-   [defold.utils :refer [command-exists?]]))
+   [defold.utils :refer [cache-dir command-exists?]]))
 
 (def base-class-name "com.defold.nvim.%s")
 
@@ -34,11 +34,10 @@
 (defn project-id [project-root]
   (subs (sha3 project-root) 0 8))
 
-; TODO: support windows / macos better, should work tho
 (defn runtime-dir [project-root]
-  (let [p (fs/path (fs/xdg-cache-home) "defold.nvim" "runtime" (project-id project-root))]
+  (let [p (cache-dir "defold.nvim" "runtime" (project-id project-root))]
     (fs/create-dirs p)
-    (str p)))
+    p))
 
 (defn launch-app-in-terminal [class-name cmd & args]
   (let [term [["ghostty" "--class=%s" "-e"]
