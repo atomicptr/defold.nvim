@@ -13,6 +13,11 @@ end
 ---@param url string
 ---@param to_path string
 local function download(url, to_path)
+    if os.is_windows() then
+        vim.fn.system(string.format('powershell -Command "Invoke-WebRequest -Uri %s -OutFile %s"', url, to_path))
+        return
+    end
+
     if not os.command_exists "curl" then
         vim.notify("Could not find command 'curl'", vim.log.levels.ERROR)
         return
@@ -24,6 +29,10 @@ end
 local function local_bb()
     local meta_data_path = vim.fs.joinpath(vim.fn.stdpath "data", "defold.nvim", "meta.json")
     local bb_path = vim.fs.joinpath(vim.fn.stdpath "data", "defold.nvim", "bin", "bb")
+
+    if os.is_windows() then
+        bb_path = bb_path .. ".exe"
+    end
 
     local meta_data = nil
 
@@ -42,16 +51,34 @@ local function local_bb()
 
     vim.fn.mkdir(vim.fs.dirname(bb_path), "p")
 
-    local url = string.format(bb_url, bb_version, bb_version, os.name(), os.architecture(), "tar.gz")
+    local file_ending = "tar.gz"
 
-    local download_path = bb_path .. ".tar.gz"
+    if os.is_windows() then
+        file_ending = "zip"
+    end
+
+    local url = string.format(bb_url, bb_version, bb_version, os.name(), os.architecture(), file_ending)
+
+    local download_path = bb_path .. "." .. file_ending
 
     download(url, download_path)
 
-    vim.fn.system(string.format("tar -xf '%s' -C '%s'", download_path, vim.fs.dirname(bb_path)))
-    vim.fn.system(string.format("chmod +x '%s'", bb_path))
+    if not os.is_windows() then
+        vim.fn.system(string.format("tar -xf '%s' -C '%s'", download_path, vim.fs.dirname(bb_path)))
+        vim.fn.system(string.format("chmod +x '%s'", bb_path))
+    else
+        vim.fn.system(
+            string.format(
+                'powershell -Command "Expand-Archive -Path %s -DestinationPath %s"',
+                download_path,
+                vim.fs.dirname(bb_path)
+            )
+        )
+    end
 
-    vim.fs.rm(download_path)
+    if file_exists(download_path) then
+        vim.fs.rm(download_path)
+    end
 
     meta_data.bb_version = bb_version
     local json = vim.fn.json_encode(meta_data)

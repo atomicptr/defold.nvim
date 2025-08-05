@@ -12,9 +12,15 @@ function M.name()
     -- babashka uses macos and not darwin, so we'll do the same
     if os_name == "darwin" then
         return "macos"
+    elseif string.find(os_name, "windows") then
+        return "windows"
     end
 
     return os_name
+end
+
+function M.is_windows()
+    return M.name() == "windows"
 end
 
 function M.architecture()

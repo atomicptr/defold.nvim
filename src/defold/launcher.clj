@@ -3,7 +3,7 @@
    [babashka.fs :as fs]
    [babashka.process :refer [shell]]
    [clojure.string :as string]
-   [defold.utils :refer [cache-dir command-exists?]]))
+   [defold.utils :refer [cache-dir command-exists? determine-os is-windows?]]))
 
 (def base-class-name "com.defold.nvim.%s")
 
@@ -40,13 +40,21 @@
     (fs/create-dirs p)
     p))
 
+(defn- terminals []
+  (concat
+    [["ghostty" "--class=%s" "-e"]
+     ["foot" "--app-id=%s" "-e"]
+     ["kitty" "--class=%s" "-e"]
+     ["alacritty" "--class=%s" "-e"]
+     ["st" "-c %s" "-e"]]
+    (case (determine-os)
+      :linux   []
+      :mac     []
+      :windows [["wt" "" ""]]
+      :else [])))
+
 (defn launch-app-in-terminal [class-name cmd & args]
-  (let [term [["ghostty" "--class=%s" "-e"]
-              ["foot" "--app-id=%s" "-e"]
-              ["kitty" "--class=%s" "-e"]
-              ["alacritty" "--class=%s" "-e"]
-              ["st" "-c %s" "-e"]]
-        term  (some #(when (command-exists? (first %)) %) term)]
+  (let [term  (some #(when (command-exists? (first %)) %) (terminals))]
     (if term
       (let [[term-cmd class-arg run-arg] term]
         (try
@@ -79,21 +87,10 @@
   (let [file (if line (format "%s +%s" file-name line) file-name)]
     (launch-app-in-terminal class-name neovim "--listen" socket-file "--remote" file)))
 
-(defn run [file-name line]
-  (when (or (< (count *command-line-args*) 1)
-          (> (count *command-line-args*) 2))
-    (usage))
-
-  (let [neovim      (fs/which "nvim")
-        line        (when line (Integer/parseInt line))
-        root-dir    (find-project-root-from-file file-name)
-        runtime     (runtime-dir root-dir)
-        socket-file (str (fs/path runtime "neovim.socket"))
-        class-name  (format base-class-name (project-id root-dir))
-        edit-cmd    (make-neovim-edit-command file-name line)]
-    (when (not (command-exists? neovim))
-      (println "Could not find nvim")
-      (System/exit 1))
+(defn- run-fsock [neovim root-dir class-name filename line edit-cmd]
+  (let [runtime     (runtime-dir root-dir)
+        socket-file (str (fs/path runtime "neovim.sock"))
+        class-name  (format base-class-name (project-id root-dir))]
     (if (fs/exists? socket-file)
       (try
         (run-shell neovim "--server" socket-file "--remote-send" (format "\"<C-\\\\><C-n>:%s<CR>\"" edit-cmd))
@@ -103,7 +100,49 @@
           ; if we couldnt communicate with the server despite existing apparently
           ; delete it and start a new instance
           (fs/delete-if-exists socket-file)
-          (launch-new-nvim-instance class-name neovim socket-file (escape-spaces file-name) line)))
-      (launch-new-nvim-instance class-name neovim socket-file (escape-spaces file-name) line))
+          (launch-new-nvim-instance class-name neovim socket-file (escape-spaces filename) line)))
+      (launch-new-nvim-instance class-name neovim socket-file (escape-spaces filename) line))))
+
+(defn- win-port-in-use? [port]
+  (string/includes? (:out (shell {:out :string} "netstat" "-aon")) (format ":%s" port)))
+
+(defn- win-find-free-port []
+  (loop [port (+ 1024 (rand-int (- 65535 1024)))]
+    (if (not (win-port-in-use? port))
+      port
+      (recur (+ 1024 (rand-int (- 65535 1024)))))))
+
+(defn- run-netsock [neovim root-dir class-name filename line edit-cmd]
+  (let [runtime   (runtime-dir root-dir)
+        port-path (str (fs/path runtime "port"))
+        exists?   (fs/exists? port-path)
+        port      (if exists? (slurp port-path) (win-find-free-port))
+        socket    (format "127.0.0.1:%s" port)]
+    (if (win-port-in-use? port)
+      (try
+        (run-shell neovim "--server" socket "--remote-send" (format "\"<C-\\\\><C-n>:%s<CR>\"" edit-cmd))
+        (catch Exception e
+          (println "Failed to communicate with neovim server:" e)
+          (let [new-port (win-find-free-port)]
+            (spit port-path new-port)
+            (launch-new-nvim-instance class-name neovim socket (escape-spaces filename) line))))
+      (launch-new-nvim-instance class-name neovim socket (escape-spaces filename) line))))
+
+(defn run [file-name line]
+  (when (or (< (count *command-line-args*) 1)
+          (> (count *command-line-args*) 2))
+    (usage))
+
+  (let [neovim      (str (fs/which "nvim"))
+        line        (when line (Integer/parseInt line))
+        root-dir    (find-project-root-from-file file-name)
+        class-name  (format base-class-name (project-id root-dir))
+        edit-cmd    (make-neovim-edit-command file-name line)]
+    (when (not (command-exists? neovim))
+      (println "Could not find nvim")
+      (System/exit 1))
+    (cond
+      (is-windows?) (run-netsock neovim root-dir class-name file-name line edit-cmd)
+      :else         (run-fsock   neovim root-dir class-name file-name line edit-cmd))
     (switch-focus class-name)))
 

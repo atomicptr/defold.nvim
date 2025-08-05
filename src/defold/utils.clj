@@ -18,11 +18,14 @@
       (string/includes? os-name "windows") :windows
       :else                                :unknown)))
 
+(defn is-windows? []
+  (= (determine-os) :windows))
+
 (defn config-dir
   ([] (case (determine-os)
         :linux   (str (fs/xdg-config-home))
         :mac     (str (fs/path (fs/home) "Library" "Preferences"))
-        :windows (str (fs/path (System/getenv "APPDATA") "AppData" "Roaming"))
+        :windows (str (fs/path (System/getenv "APPDATA")))
         :unknown (str (fs/path (fs/home) ".config"))))
   ([& path] (str (apply fs/path (config-dir) path))))
 
@@ -30,7 +33,7 @@
   ([] (case (determine-os)
         :linux   (str (fs/xdg-data-home))
         :mac     (str (fs/path (fs/home) "Library"))
-        :windows (str (fs/path (System/getenv "APPDATA") "AppData" "Roaming"))
+        :windows (str (fs/path (System/getenv "APPDATA")))
         :unknown (str (fs/path (fs/home) ".data"))))
   ([& path] (str (apply fs/path (data-dir) path))))
 
