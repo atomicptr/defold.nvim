@@ -2,7 +2,7 @@ local editor = require "defold.editor"
 local os = require "defold.service.os"
 local project = require "defold.project"
 
-local mobdap_version = "0.1.1"
+local mobdap_version = "0.1.2"
 local mobdap_url = "https://github.com/atomicptr/mobdap/releases/download/v%s/mobdap-%s-%s.%s"
 
 local M = {}
