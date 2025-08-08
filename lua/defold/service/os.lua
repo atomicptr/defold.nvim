@@ -35,4 +35,25 @@ function M.architecture()
     end
 end
 
+---Download file at url and download it to to_path
+---@param url string
+---@param to_path string
+function M.download(url, to_path)
+    if M.is_windows() then
+        vim.fn.system(string.format('powershell -Command "Invoke-WebRequest -Uri %s -OutFile %s"', url, to_path))
+        return
+    end
+
+    if not M.command_exists "curl" then
+        vim.notify("Could not find command 'curl'", vim.log.levels.ERROR)
+        return
+    end
+
+    vim.fn.system(string.format("curl -L -s -o '%s' %s", to_path, url))
+end
+
+function M.file_exists(path)
+    return vim.fn.filereadable(path) == 1 or vim.fn.isdirectory(path) == 1
+end
+
 return M

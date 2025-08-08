@@ -13,6 +13,17 @@ local function game_project_file()
     return '"' .. vim.fs.joinpath(root, "game.project") .. '"'
 end
 
+---@return string
+function M.defold_api_path()
+    local script_path = debug.getinfo(1, "S").source
+    if not string.sub(script_path, 1, 1) == "@" then
+        vim.notify("Could not find Defold API files", vim.log.levels.ERROR)
+        return ""
+    end
+    local plugin_root = vim.fs.dirname(vim.fs.dirname(vim.fs.dirname(string.sub(script_path, 2))))
+    return vim.fs.joinpath(plugin_root, "resources", "defold_api")
+end
+
 function M.dependency_api_paths()
     local res = babashka.run_task_json("list-dependency-dirs", { game_project_file() })
     return res.dirs

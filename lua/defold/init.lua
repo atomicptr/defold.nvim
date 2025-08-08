@@ -1,5 +1,7 @@
 local babashka = require "defold.service.babashka"
+local debugger = require "defold.service.debugger"
 local editor = require "defold.editor"
+local os = require "defold.service.os"
 local project = require "defold.project"
 
 local root_markers = { "game.project", ".git" }
@@ -10,23 +12,13 @@ local default_config = {
     auto_fetch_dependencies = true,
     always_enable_plugin = false,
     set_neovim_as_default_editor = true,
+    enable_debugger = true,
 }
 
 local M = {}
 
 ---@type DefoldConfig
 M.config = default_config
-
----@return string
-function M.defold_api_path()
-    local script_path = debug.getinfo(1, "S").source
-    if not string.sub(script_path, 1, 1) == "@" then
-        vim.notify("Could not find Defold API files", vim.log.levels.ERROR)
-        return ""
-    end
-    local plugin_root = vim.fs.dirname(vim.fs.dirname(vim.fs.dirname(string.sub(script_path, 2))))
-    return vim.fs.joinpath(plugin_root, "resources", "defold_api")
-end
 
 ---Returns true if we are in a defold project
 ---@return boolean
@@ -44,11 +36,20 @@ function M.prepare()
     babashka.setup {
         set_editor = M.config.set_neovim_as_default_editor,
     }
+
+    if M.config.enable_debugger then
+        debugger.setup()
+    end
 end
 
 ---@param opts DefoldConfig|nil
 function M.setup(opts)
     M.config = vim.tbl_extend("force", M.config, opts or {})
+
+    if M.config.enable_debugger and os.is_windows() then
+        vim.notify("defold.nvim: Debugging on Windows is not supported", vim.log.levels.ERROR)
+        M.config.enable_debugger = false
+    end
 
     M.prepare()
 
@@ -56,6 +57,10 @@ function M.setup(opts)
         babashka.run_task("set-default-editor", { babashka.setup {
             set_editor = true,
         } })
+
+        if M.config.enable_debugger then
+            debugger.setup()
+        end
 
         vim.notify "defold.nvim: Defold setup successfully"
     end, { nargs = 0, desc = "Setup Defold to use Neovim as its default editor" })
@@ -138,6 +143,10 @@ function M.setup(opts)
     vim.api.nvim_create_user_command("DefoldFetch", function(opt)
         project.install_dependencies(opt.bang)
     end, { bang = true, nargs = 0, desc = "Fetch & create Defold project dependency annotations" })
+
+    if M.config.enable_debugger then
+        debugger.register_nvim_dap()
+    end
 
     if M.config.auto_fetch_dependencies then
         project.install_dependencies(false)

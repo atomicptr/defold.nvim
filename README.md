@@ -8,6 +8,7 @@ Use Neovim as your external editor for the [Defold game engine](https://defold.c
 - **Defold Control via Neovim**: Execute Defold commands directly from Neovim using custom user commands.
 - **LSP Integration**: Leverage Defold API annotations within Neovim's Language Server Protocol
 - **Dependency Annotations**: Automatically provide LSP annotations for Defold dependencies
+- **Debugger**: Step through your code and analyze issues in detail
 
 ## System Requirements
 
@@ -30,6 +31,11 @@ If not, we'll also need curl and tar in addition
     "atomicptr/defold.nvim",
     lazy = false,
 
+    -- (Optional) Required when using debugger
+    dependencies = {
+        "mfussenegger/nvim-dap",
+    },
+
     -- configuration
     opts = {
         -- enables code hot reloading (default: true)
@@ -43,6 +49,9 @@ If not, we'll also need curl and tar in addition
 
         -- sets neovim/defold.nvim to be the default editor for Defold
         set_neovim_as_default_editor = true,
+
+        -- enables
+        enable_debugger = true,
     },
 }
 ```

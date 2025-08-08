@@ -5,27 +5,6 @@ local bb_url = "https://github.com/babashka/babashka/releases/download/v%s/babas
 
 local M = {}
 
-local function file_exists(path)
-    return vim.fn.filereadable(path) == 1 or vim.fn.isdirectory(path) == 1
-end
-
----Download file at url and download it to to_path
----@param url string
----@param to_path string
-local function download(url, to_path)
-    if os.is_windows() then
-        vim.fn.system(string.format('powershell -Command "Invoke-WebRequest -Uri %s -OutFile %s"', url, to_path))
-        return
-    end
-
-    if not os.command_exists "curl" then
-        vim.notify("Could not find command 'curl'", vim.log.levels.ERROR)
-        return
-    end
-
-    vim.fn.system(string.format("curl -L -s -o '%s' %s", to_path, url))
-end
-
 local function local_bb()
     local meta_data_path = vim.fs.joinpath(vim.fn.stdpath "data", "defold.nvim", "meta.json")
     local bb_path = vim.fs.joinpath(vim.fn.stdpath "data", "defold.nvim", "bin", "bb")
@@ -36,12 +15,12 @@ local function local_bb()
 
     local meta_data = nil
 
-    if file_exists(meta_data_path) then
+    if os.file_exists(meta_data_path) then
         local content = vim.fn.readfile(meta_data_path)
         meta_data = vim.fn.json_decode(table.concat(content))
     end
 
-    if meta_data and meta_data.bb_version == bb_version and file_exists(bb_path) then
+    if meta_data and meta_data.bb_version == bb_version and os.file_exists(bb_path) then
         return bb_path
     end
 
@@ -61,7 +40,7 @@ local function local_bb()
 
     local download_path = bb_path .. "." .. file_ending
 
-    download(url, download_path)
+    os.download(url, download_path)
 
     if not os.is_windows() then
         vim.fn.system(string.format("tar -xf '%s' -C '%s'", download_path, vim.fs.dirname(bb_path)))
@@ -76,7 +55,7 @@ local function local_bb()
         )
     end
 
-    if file_exists(download_path) then
+    if os.file_exists(download_path) then
         vim.fs.rm(download_path)
     end
 
