@@ -7,6 +7,8 @@ local mobdap_url = "https://github.com/atomicptr/mobdap/releases/download/v%s/mo
 
 local M = {}
 
+M.custom_executable = nil
+
 local function local_mobdap_path()
     local meta_data_path = vim.fs.joinpath(vim.fn.stdpath "data", "defold.nvim", "meta.json")
     local mobdap_path = vim.fs.joinpath(vim.fn.stdpath "data", "defold.nvim", "bin", "mobdap")
@@ -23,8 +25,7 @@ local function local_mobdap_path()
     end
 
     if meta_data and meta_data.mobdap_version == mobdap_version and os.file_exists(mobdap_path) then
-        return "/home/christopher/dev/clojure/mobdap/target/native-image/mobdap-0.1.1"
-        -- return mobdap_path
+        return mobdap_path
     end
 
     meta_data = meta_data or {}
@@ -79,8 +80,13 @@ local function local_mobdap_path()
     return mobdap_path
 end
 
-function M.setup()
-    local_mobdap_path()
+---@param custom_executable string|nil
+function M.setup(custom_executable)
+    M.custom_executable = custom_executable
+
+    if not M.custom_executable then
+        local_mobdap_path()
+    end
 end
 
 function M.register_nvim_dap()
@@ -89,7 +95,7 @@ function M.register_nvim_dap()
     dap.adapters.defold_nvim = {
         id = "defold_nvim",
         type = "executable",
-        command = local_mobdap_path(),
+        command = M.custom_executable or local_mobdap_path(),
         args = { "--debug" },
     }
 

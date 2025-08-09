@@ -5,6 +5,8 @@ local bb_url = "https://github.com/babashka/babashka/releases/download/v%s/babas
 
 local M = {}
 
+M.custom_executable = nil
+
 local function local_bb()
     local meta_data_path = vim.fs.joinpath(vim.fn.stdpath "data", "defold.nvim", "meta.json")
     local bb_path = vim.fs.joinpath(vim.fn.stdpath "data", "defold.nvim", "bin", "bb")
@@ -66,7 +68,12 @@ local function local_bb()
     return bb_path
 end
 
-local function bb_path()
+---@return string
+function M.bb_path()
+    if M.custom_executable then
+        return M.custom_executable
+    end
+
     if os.command_exists "bb" then
         return vim.fn.exepath "bb"
     end
@@ -74,7 +81,7 @@ local function bb_path()
     return local_bb()
 end
 
-local function bb_edn_path()
+function M.bb_edn_path()
     local script_path = debug.getinfo(1, "S").source
     if not string.sub(script_path, 1, 1) == "@" then
         vim.notify("Could not find bb.edn", vim.log.levels.ERROR)
@@ -86,12 +93,15 @@ end
 
 ---@class BabashkaConfig
 ---@field set_editor boolean
+---@field custom_executable string|nil
 
 ---@param opts BabashkaConfig
 ---@return string
 function M.setup(opts)
+    M.custom_executable = opts.custom_executable
+
     -- make sure bb is available
-    local bb = bb_path()
+    local bb = M.bb_path()
 
     if opts.set_editor then
         M.run_task_json("set-default-editor", { bb })
@@ -102,7 +112,7 @@ end
 
 function M.run_task(task, args)
     local params = table.concat(args or {}, " ")
-    local cmd = string.format("%s --config '%s' run %s %s", bb_path(), bb_edn_path(), task, params)
+    local cmd = string.format("%s --config '%s' run %s %s", M.bb_path(), M.bb_edn_path(), task, params)
     return vim.fn.system(cmd)
 end
 

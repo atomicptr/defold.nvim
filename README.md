@@ -31,27 +31,38 @@ If not, we'll also need curl and tar in addition
     "atomicptr/defold.nvim",
     lazy = false,
 
-    -- (Optional) Required when using debugger
+    -- (Optional) Required when using the debugger
     dependencies = {
         "mfussenegger/nvim-dap",
     },
 
-    -- configuration
     opts = {
-        -- enables code hot reloading (default: true)
-        hot_reload_enabled = true,
+        defold = {
+            -- Automatically set defold.nvim as the default editor in Defold (default: true)
+            set_default_editor = true,
 
-        -- enables the plugin to automatically fetch & annotate your project dependencies (default: true)
-        auto_fetch_dependencies = true,
+            -- Automatically fetch dependencies on launch (default: true)
+            auto_fetch_dependencies = true,
 
-        -- always enables the plugin even if we're not in a defold project
-        always_enable_plugin = false,
+            -- Enable hot reloading when saving scripts in Neovim (default: true)
+            hot_reload_enabled = true,
+        },
 
-        -- sets neovim/defold.nvim to be the default editor for Defold
-        set_neovim_as_default_editor = true,
+        debugger = {
+            -- Enable the debugger (default: true)
+            enable = true,
 
-        -- enables
-        enable_debugger = true,
+            -- Use a custom executable for the debugger (default: nil)
+            custom_executable = nil,
+        },
+
+        babashka = {
+            -- Use a custom executable for babashka (default: nil)
+            custom_executable = nil,
+        },
+
+        -- Force the plugin to be always enabled (even if we can't find the game.project file) (default: false)
+        force_plugin_enabled = false,
     },
 }
 ```

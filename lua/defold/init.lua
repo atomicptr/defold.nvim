@@ -6,18 +6,47 @@ local project = require "defold.project"
 
 local root_markers = { "game.project", ".git" }
 
----@class DefoldConfig
+---@class DefoldEditorSettings Settings for the Defold Game Engine
+---@field set_default_editor boolean Automatically set defold.nvim as the default editor in Defold
+---@field auto_fetch_dependencies boolean Automatically fetch dependencies on launch
+---@field hot_reload_enabled boolean Enable hot reloading when saving scripts in Neovim
+
+---@class DebuggerSettings Settings for the integrated debugger
+---@field enable boolean Enable the debugger
+---@field custom_executable string|nil Use a custom executable for the debugger
+
+---@class BabashkaSettings Settings for the integrated Babashka interpreter
+---@field custom_executable string|nil Use a custom executable for babashka
+
+---@class DefoldNvimConfig Settings for defold.nvim
+---@field defold DefoldEditorSettings Settings for the Defold Game Engine
+---@field debugger DebuggerSettings Settings for the integrated debugger
+---@field babashka BabashkaSettings Settings for the integrated Babashka interpreter
+---@field force_plugin_enabled boolean Force the plugin to be always enabled (even if we can't find the game.project file)
+
+---@type DefoldNvimConfig
 local default_config = {
-    hot_reload_enabled = true,
-    auto_fetch_dependencies = true,
-    always_enable_plugin = false,
-    set_neovim_as_default_editor = true,
-    enable_debugger = true,
+    defold = {
+        set_default_editor = true,
+        auto_fetch_dependencies = true,
+        hot_reload_enabled = true,
+    },
+
+    debugger = {
+        enable = true,
+        custom_executable = nil,
+    },
+
+    babashka = {
+        custom_executable = nil,
+    },
+
+    force_plugin_enabled = false,
 }
 
 local M = {}
 
----@type DefoldConfig
+---@type DefoldNvimConfig
 M.config = default_config
 
 ---Returns true if we are in a defold project
@@ -34,21 +63,22 @@ end
 
 function M.prepare()
     babashka.setup {
-        set_editor = M.config.set_neovim_as_default_editor,
+        custom_executable = M.config.babashka.custom_executable,
+        set_editor = M.config.defold.set_default_editor,
     }
 
-    if M.config.enable_debugger then
+    if M.config.debugger.enable then
         debugger.setup()
     end
 end
 
----@param opts DefoldConfig|nil
+---@param opts DefoldNvimConfig|nil
 function M.setup(opts)
     M.config = vim.tbl_extend("force", M.config, opts or {})
 
-    if M.config.enable_debugger and os.is_windows() then
+    if M.config.debugger.enable and os.is_windows() then
         vim.notify("defold.nvim: Debugging on Windows is not supported", vim.log.levels.ERROR)
-        M.config.enable_debugger = false
+        M.config.debugger.enable = false
     end
 
     vim.api.nvim_create_user_command("SetupDefold", function()
@@ -56,7 +86,7 @@ function M.setup(opts)
             set_editor = true,
         } })
 
-        if M.config.enable_debugger then
+        if M.config.debugger.enable then
             debugger.setup()
         end
 
@@ -67,7 +97,7 @@ function M.setup(opts)
         M.prepare()
 
         -- dont actually setup the project unless we are in a Defold project
-        if M.config.always_enable_plugin or not M.is_defold_project() then
+        if M.config.force_plugin_enabled or not M.is_defold_project() then
             return
         end
 
@@ -109,7 +139,7 @@ function M.load_plugin()
     })
 
     -- register hot reload when saving lua files
-    if M.config.hot_reload_enabled then
+    if M.config.defold.hot_reload_enabled then
         vim.api.nvim_create_autocmd("BufWritePost", {
             pattern = { "*.lua", "*.script" },
             callback = function()
@@ -152,11 +182,11 @@ function M.load_plugin()
         project.install_dependencies(opt.bang)
     end, { bang = true, nargs = 0, desc = "Fetch & create Defold project dependency annotations" })
 
-    if M.config.enable_debugger then
+    if M.config.debugger.enable then
         debugger.register_nvim_dap()
     end
 
-    if M.config.auto_fetch_dependencies then
+    if M.config.defold.auto_fetch_dependencies then
         project.install_dependencies(false)
     end
 end
