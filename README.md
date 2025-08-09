@@ -5,8 +5,8 @@ Use Neovim as your external editor for the [Defold game engine](https://defold.c
 ## Features
 
 - **Code Hot-Reloading**: Instantly see code changes reflected in Defold.
-- **Defold Control via Neovim**: Execute Defold commands directly from Neovim using custom user commands.
-- **LSP Integration**: Leverage Defold API annotations within Neovim's Language Server Protocol
+- **Defold Control via Neovim**: Execute Defold commands directly from Neovim using custom user commands. (see below)
+- **LSP Integration**: Leverage Defold API annotations within Neovims integrated LSP
 - **Dependency Annotations**: Automatically provide LSP annotations for Defold dependencies
 - **Debugger**: Step through your code and analyze issues in detail
 
@@ -74,6 +74,17 @@ If not, we'll also need curl and tar in addition
 By installing and running the plugin once, Defold should automatically use Neovim as its editor. (Unless you disabled the setting above)
 
 If you manually want to setup Defold, run `:SetupDefold`
+
+## Setup Debugging
+
+For debugging we're using [mobdap](https://github.com/atomicptr/mobdap) which is running on top of [MobDebug](https://github.com/pkulchenko/MobDebug) so you need to have that available
+in your project.
+
+The easiest way is using [defold-mobdebug](https://github.com/atomicptr/defold-mobdebug) in your project.
+
+[(Read this)](https://github.com/atomicptr/defold-mobdebug?tab=readme-ov-file#installation)
+
+And then you run use ``:DapNew`` and the game should be running
 
 ## Available Commands
 
