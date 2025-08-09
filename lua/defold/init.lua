@@ -14,6 +14,7 @@ local root_markers = { "game.project", ".git" }
 ---@class DebuggerSettings Settings for the integrated debugger
 ---@field enable boolean Enable the debugger
 ---@field custom_executable string|nil Use a custom executable for the debugger
+---@field custom_arguments table<string>|nil Custom arguments for the debugger
 
 ---@class BabashkaSettings Settings for the integrated Babashka interpreter
 ---@field custom_executable string|nil Use a custom executable for babashka
@@ -35,6 +36,7 @@ local default_config = {
     debugger = {
         enable = true,
         custom_executable = nil,
+        custom_arguments = nil,
     },
 
     babashka = {
@@ -68,13 +70,13 @@ function M.prepare()
     }
 
     if M.config.debugger.enable then
-        debugger.setup()
+        debugger.setup(M.config.debugger.custom_executable, M.config.debugger.custom_arguments)
     end
 end
 
 ---@param opts DefoldNvimConfig|nil
 function M.setup(opts)
-    M.config = vim.tbl_extend("force", M.config, opts or {})
+    M.config = vim.tbl_deep_extend("force", default_config, opts or {})
 
     if M.config.debugger.enable and os.is_windows() then
         vim.notify("defold.nvim: Debugging on Windows is not supported", vim.log.levels.ERROR)
@@ -87,7 +89,7 @@ function M.setup(opts)
         } })
 
         if M.config.debugger.enable then
-            debugger.setup()
+            debugger.setup(M.config.debugger.custom_executable, M.config.debugger.custom_arguments)
         end
 
         vim.notify "defold.nvim: Defold setup successfully"
@@ -96,8 +98,7 @@ function M.setup(opts)
     local co = coroutine.create(function()
         M.prepare()
 
-        -- dont actually setup the project unless we are in a Defold project
-        if M.config.force_plugin_enabled or not M.is_defold_project() then
+        if not M.config.force_plugin_enabled and not M.is_defold_project() then
             return
         end
 

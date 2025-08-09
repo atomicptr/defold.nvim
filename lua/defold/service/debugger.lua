@@ -8,6 +8,7 @@ local mobdap_url = "https://github.com/atomicptr/mobdap/releases/download/v%s/mo
 local M = {}
 
 M.custom_executable = nil
+M.custom_arguments = nil
 
 local function local_mobdap_path()
     local meta_data_path = vim.fs.joinpath(vim.fn.stdpath "data", "defold.nvim", "meta.json")
@@ -81,8 +82,10 @@ local function local_mobdap_path()
 end
 
 ---@param custom_executable string|nil
-function M.setup(custom_executable)
+---@param custom_arguments table<string>|nil
+function M.setup(custom_executable, custom_arguments)
     M.custom_executable = custom_executable
+    M.custom_arguments = custom_arguments
 
     if not M.custom_executable then
         local_mobdap_path()
@@ -96,7 +99,7 @@ function M.register_nvim_dap()
         id = "defold_nvim",
         type = "executable",
         command = M.custom_executable or local_mobdap_path(),
-        args = { "--debug" },
+        args = M.custom_arguments,
     }
 
     dap.configurations.lua = {
