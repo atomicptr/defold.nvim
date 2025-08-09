@@ -10,6 +10,8 @@ Use Neovim as your external editor for the [Defold game engine](https://defold.c
 - **Dependency Annotations**: Automatically provide LSP annotations for Defold dependencies
 - **Debugger**: Step through your code and analyze issues in detail
 
+![](https://media1.giphy.com/media/v1.Y2lkPTc5MGI3NjExdjlqMHJ3NWNyY2l2MXB6emYzcWtmaG5oM24yamxobzV4cHZtNHJhciZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/SGRIFmSmzXyBThYM9k/giphy.gif)
+
 ## System Requirements
 
 This plugin is designed for Linux and supports macOS. Windows is untested and probably doesn't work (yet)
