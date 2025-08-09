@@ -16,7 +16,7 @@
 
 (defn- run-shell [& cmd]
   (println "Run:" cmd)
-  (apply shell cmd))
+  (apply shell {:out :string :err :string} cmd))
 
 (defn- find-project-root-from-file [file]
   (loop [current-dir (fs/parent (fs/path file))]
@@ -140,4 +140,14 @@
       (is-windows?) (run-netsock neovim root-dir class-name file-name line edit-cmd)
       :else         (run-fsock   neovim root-dir class-name file-name line edit-cmd))
     (switch-focus class-name)))
+
+(defn focus-neovim [root-dir]
+  (try
+    (assert (some? root-dir))
+    (assert (fs/exists? (fs/path root-dir "game.project")))
+    (let [class-name (format base-class-name (project-id root-dir))
+          res (with-out-str (switch-focus class-name))]
+      {"status" 200 "res" res})
+    (catch Throwable t
+      {"error" (ex-message t)})))
 

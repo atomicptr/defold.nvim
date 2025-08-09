@@ -7,4 +7,5 @@
          list-dependency-dirs {:task (defold/list-dependency-dirs)}
          send-command         {:task (defold/send-command)}
          launch-neovim        {:task (defold/launch-neovim)}
-         set-default-editor   {:task (defold/set-default-editor)}}}
+         set-default-editor   {:task (defold/set-default-editor)}
+         focus-neovim         {:task (defold/focus-neovim)}}}

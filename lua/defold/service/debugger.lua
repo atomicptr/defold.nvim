@@ -1,6 +1,7 @@
 local editor = require "defold.editor"
 local os = require "defold.service.os"
 local project = require "defold.project"
+local babashka = require "defold.service.babashka"
 
 local mobdap_version = "0.1.2"
 local mobdap_url = "https://github.com/atomicptr/mobdap/releases/download/v%s/mobdap-%s-%s.%s"
@@ -129,6 +130,11 @@ function M.register_nvim_dap()
 
     dap.listeners.after.event_mobdap_waiting_for_connection.defold_nvim_start_game = function(_, _)
         editor.send_command "build"
+    end
+
+    dap.listeners.after.event_stopped.defold_nvim_switch_focus_on_stop = function(_, _)
+        local rootdir = vim.fs.root(0, { "game.project", ".git" })
+        babashka.run_task_json("focus-neovim", { rootdir })
     end
 end
 

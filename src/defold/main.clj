@@ -26,3 +26,6 @@
 
 (defn set-default-editor []
   (print (json/generate-string (editor-config/set-default-editor (first *command-line-args*)))))
+
+(defn focus-neovim []
+  (print (json/generate-string (launcher/focus-neovim (first *command-line-args*)))))
