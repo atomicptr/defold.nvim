@@ -3,27 +3,22 @@
    [babashka.fs :as fs]
    [babashka.process :refer [shell]]
    [clojure.string :as string]
-   [defold.utils :refer [cache-dir command-exists? determine-os is-windows?]]))
+   [defold.utils :refer [cache-dir command-exists? determine-os is-windows?
+                         sha3]]))
 
 (def base-class-name "com.defold.nvim.%s")
 
-(defn usage []
+(defn- usage []
   (println "Usage: <file> [line]")
   (println "    <file>: The file to open")
   (println "    [line]: Optional. The line number to open the file at")
   (System/exit 1))
 
-(defn sha3 [s]
-  (let [md (.getInstance java.security.MessageDigest "SHA3-256")
-        bytes (.getBytes s)]
-    (.update md bytes)
-    (apply str (map #(format "%02x" %) (.digest md)))))
-
-(defn run-shell [& cmd]
+(defn- run-shell [& cmd]
   (println "Run:" cmd)
   (apply shell cmd))
 
-(defn find-project-root-from-file [file]
+(defn- find-project-root-from-file [file]
   (loop [current-dir (fs/parent (fs/path file))]
     (if-not current-dir
       (throw (ex-info (str "Could not determine Defold project from path: " file) {}))
@@ -32,10 +27,10 @@
           (str current-dir)
           (recur (fs/parent current-dir)))))))
 
-(defn project-id [project-root]
+(defn- project-id [project-root]
   (subs (sha3 project-root) 0 8))
 
-(defn runtime-dir [project-root]
+(defn- runtime-dir [project-root]
   (let [p (cache-dir "defold.nvim" "runtime" (project-id project-root))]
     (fs/create-dirs p)
     p))
@@ -53,7 +48,7 @@
       :windows [["wt" "" ""]]
       :else [])))
 
-(defn launch-app-in-terminal [class-name cmd & args]
+(defn- launch-app-in-terminal [class-name cmd & args]
   (let [term  (some #(when (command-exists? (first %)) %) (terminals))]
     (if term
       (let [[term-cmd class-arg run-arg] term]
@@ -65,7 +60,7 @@
       (do (println "No supported terminal found, aborting...")
           (System/exit 1)))))
 
-(defn switch-focus [class-name]
+(defn- switch-focus [class-name]
   (try
     (cond
       (command-exists? "hyprctl") (run-shell "hyprctl" "dispatch" "focuswindow" (str "class:" class-name))
@@ -78,16 +73,16 @@
 (defn- escape-spaces [s]
   (string/escape s {\space "\\ "}))
 
-(defn make-neovim-edit-command [file-name line]
+(defn- make-neovim-edit-command [file-name line]
   (if line
     (format "edit +%s %s" line (escape-spaces file-name))
     (format "edit %s" (escape-spaces file-name))))
 
-(defn launch-new-nvim-instance [class-name neovim socket-file file-name line]
+(defn- launch-new-nvim-instance [class-name neovim socket-file file-name line]
   (let [file (if line (format "%s +%s" file-name line) file-name)]
     (launch-app-in-terminal class-name neovim "--listen" socket-file "--remote" file)))
 
-(defn- run-fsock [neovim root-dir class-name filename line edit-cmd]
+(defn- run-fsock [neovim root-dir _ filename line edit-cmd]
   (let [runtime     (runtime-dir root-dir)
         socket-file (str (fs/path runtime "neovim.sock"))
         class-name  (format base-class-name (project-id root-dir))]

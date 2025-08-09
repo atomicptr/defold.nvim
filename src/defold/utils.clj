@@ -44,3 +44,9 @@
         :windows (str (fs/path (System/getenv "TEMP")))
         :unknown (str (fs/path (fs/home) ".cache"))))
   ([& path] (str (apply fs/path (cache-dir) path))))
+
+(defn sha3 [s]
+  (let [md (.getInstance java.security.MessageDigest "SHA3-256")
+        bytes (.getBytes s)]
+    (.update md bytes)
+    (apply str (map #(format "%02x" %) (.digest md)))))
