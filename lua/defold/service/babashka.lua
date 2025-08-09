@@ -1,6 +1,6 @@
 local os = require "defold.service.os"
 
-local bb_version = "1.12.206"
+local bb_version = "1.12.207"
 local bb_url = "https://github.com/babashka/babashka/releases/download/v%s/babashka-%s-%s-%s.%s"
 
 local M = {}
