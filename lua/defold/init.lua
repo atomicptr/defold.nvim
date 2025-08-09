@@ -51,8 +51,6 @@ function M.setup(opts)
         M.config.enable_debugger = false
     end
 
-    M.prepare()
-
     vim.api.nvim_create_user_command("SetupDefold", function()
         babashka.run_task("set-default-editor", { babashka.setup {
             set_editor = true,
@@ -65,11 +63,21 @@ function M.setup(opts)
         vim.notify "defold.nvim: Defold setup successfully"
     end, { nargs = 0, desc = "Setup Defold to use Neovim as its default editor" })
 
-    -- dont actually setup the project unless we are in a Defold project
-    if M.config.always_enable_plugin or not M.is_defold_project() then
-        return
-    end
+    local co = coroutine.create(function()
+        M.prepare()
 
+        -- dont actually setup the project unless we are in a Defold project
+        if M.config.always_enable_plugin or not M.is_defold_project() then
+            return
+        end
+
+        M.load_plugin()
+    end)
+
+    coroutine.resume(co)
+end
+
+function M.load_plugin()
     -- init babashka
     babashka.run_task("init", {})
 
