@@ -2,7 +2,7 @@
   (:require
    [babashka.fs :as fs :refer [which]]
    [clojure.edn :as edn]
-   [defold.utils :refer [config-dir]]))
+   [defold.utils :refer [cache-dir config-dir is-windows?]]))
 
 (defn- editor-settings-filepath []
   (config-dir "Defold" "prefs.editor_settings"))
@@ -16,11 +16,23 @@
 (defn- bb-edn []
   (System/getProperty "babashka.config"))
 
+(defn- create-runner-script [bb-path]
+  (if (is-windows?)
+    (let [runner-path (cache-dir "defold.nvim" "run.bat")]
+      (fs/create-dirs (fs/parent runner-path))
+      (spit runner-path (format "@echo off\r\n\"%s\" --config \"%s\" run launch-neovim %%1 %%2" bb-path (bb-edn)))
+      runner-path)
+    (let [runner-path (cache-dir "defold.nvim" "run.sh")]
+      (fs/create-dirs (fs/parent runner-path))
+      (spit runner-path (format "#!/usr/bin/env bash\n%s --config %s run launch-neovim $1 $2" bb-path (bb-edn)))
+      (fs/set-posix-file-permissions runner-path "rwxrwxrwx")
+      runner-path)))
+
 (defn- update-editor-settings [config bb-path]
   (-> config
-    (assoc-in [:code :custom-editor]     (str bb-path))
-    (assoc-in [:code :open-file]         (format "--config %s run launch-neovim {file}" (bb-edn)))
-    (assoc-in [:code :open-file-at-line] (format "--config %s run launch-neovim {file} {line}" (bb-edn)))))
+    (assoc-in [:code :custom-editor]     (create-runner-script bb-path))
+    (assoc-in [:code :open-file]         "{file}")
+    (assoc-in [:code :open-file-at-line] "{file} {line}")))
 
 (defn set-default-editor [bb-path]
   (let [bb-path       (or bb-path (which "bb"))
