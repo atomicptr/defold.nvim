@@ -1,0 +1,79 @@
+{
+    "init": {
+        "prefix": "init(self)",
+        "description": "Defold: init function",
+        "body": [
+            "---@param self ${TM_FILENAME_BASE}",
+            "function init(self)",
+            "    ${1}",
+            "end"
+        ]
+    },
+    "final": {
+        "prefix": "final(self)",
+        "description": "Defold: final function",
+        "body": [
+            "---@param self ${TM_FILENAME_BASE}",
+            "function final(self)",
+            "    ${1}",
+            "end"
+        ]
+    },
+    "update": {
+        "prefix": "update(self, dt)",
+        "description": "Defold: update function",
+        "body": [
+            "---@param self ${TM_FILENAME_BASE}",
+            "---@param dt   number",
+            "function update(self, dt)",
+            "    ${1}",
+            "end"
+        ]
+    },
+    "fixed_update": {
+        "prefix": "fixed_update(self, dt)",
+        "description": "Defold: fixed_update function",
+        "body": [
+            "---@param self ${TM_FILENAME_BASE}",
+            "---@param dt   number",
+            "function fixed_update(self, dt)",
+            "    ${1}",
+            "end"
+        ]
+    },
+    "on_message": {
+        "prefix": "on_message(self, message_id, message, sender)",
+        "description": "Defold: on_message function",
+        "body": [
+            "---@param self       ${TM_FILENAME_BASE}",
+            "---@param message_id hash",
+            "---@param message    table",
+            "---@param sender     url",
+            "function on_message(self, message_id, message, sender)",
+            "    ${1}",
+            "end"
+        ]
+    },
+    "on_input": {
+        "prefix": "on_input(self, action_id, action)",
+        "description": "Defold: on_input function",
+        "body": [
+            "---@param self      ${TM_FILENAME_BASE}",
+            "---@param action_id hash",
+            "---@param action    on_input.action",
+            "function on_input(self, action_id, action)",
+            "    ${1}",
+            "end"
+        ]
+    },
+    "on_reload": {
+        "prefix": "on_reload(self)",
+        "description": "Defold: on_reload function",
+        "body": [
+            "---@param self ${TM_FILENAME_BASE}",
+            "function on_reload(self)",
+            "    ${1}",
+            "end"
+        ]
+    }
+}

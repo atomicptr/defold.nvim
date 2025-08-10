@@ -9,6 +9,7 @@ Batteries-included development environment for the [Defold game engine](https://
 - **LSP Integration**: Get Defold API hints and autocomplete in Neovim’s built-in LSP.
 - **Dependency Annotations**: Auto-load LSP annotations for your Defold dependencies.
 - **Debugger**: Step through your code and dig into issues with ease.
+- **Snippets**: Insert pre-made code snippets to save time.
 
 ![](https://media1.giphy.com/media/v1.Y2lkPTc5MGI3NjExdjlqMHJ3NWNyY2l2MXB6emYzcWtmaG5oM24yamxobzV4cHZtNHJhciZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/SGRIFmSmzXyBThYM9k/giphy.gif)
 
@@ -69,13 +70,15 @@ If not, we'll also need curl and tar in addition
 }
 ```
 
-## Setup Neovim
+## Setup
+
+### Setup Neovim
 
 By installing and running the plugin once, Defold should automatically use Neovim as its editor. (Unless you disabled the setting above)
 
 If you manually want to setup Defold, run `:SetupDefold`
 
-## Setup Debugging
+### Setup Debugging
 
 For debugging we're using [mobdap](https://github.com/atomicptr/mobdap) which is running on top of [MobDebug](https://github.com/pkulchenko/MobDebug) so you need to have that available
 in your project.
@@ -85,6 +88,17 @@ The easiest way is using [defold-mobdebug](https://github.com/atomicptr/defold-m
 [(Read this)](https://github.com/atomicptr/defold-mobdebug?tab=readme-ov-file#installation)
 
 And then you run use ``:DapNew`` and the game should be running
+
+### Setup Snippets
+
+In order to use snippets you need to either have [LuaSnip](https://github.com/L3MON4D3/LuaSnip) installed or use any other VSCode Snippet compatible plugin and set it up yourself
+
+You can retrieve the plugin root via:
+
+```lua
+local defold = require "defold"
+local root = defold.plugin_root()
+```
 
 ## Available Commands
 

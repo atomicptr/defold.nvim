@@ -3,6 +3,7 @@ local debugger = require "defold.service.debugger"
 local editor = require "defold.editor"
 local os = require "defold.service.os"
 local project = require "defold.project"
+local snippets = require "defold.service.snippets"
 
 local root_markers = { "game.project", ".git" }
 
@@ -201,6 +202,9 @@ function M.load_plugin()
     if M.config.debugger.enable then
         debugger.register_nvim_dap()
     end
+
+    -- add snippets
+    snippets.install()
 
     -- fetch dependencies
     if M.config.defold.auto_fetch_dependencies then

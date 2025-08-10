@@ -94,7 +94,15 @@ function M.setup(custom_executable, custom_arguments)
 end
 
 function M.register_nvim_dap()
-    local dap = require "dap"
+    local ok, dap = pcall(require, "dap")
+
+    if not ok then
+        vim.notify(
+            "defold.nvim: Debugger enabled but could not find plugin: mfussenegger/nvim-dap",
+            vim.log.levels.ERROR
+        )
+        return
+    end
 
     dap.adapters.defold_nvim = {
         id = "defold_nvim",
