@@ -3,7 +3,7 @@ local os = require "defold.service.os"
 local project = require "defold.project"
 local babashka = require "defold.service.babashka"
 
-local mobdap_version = "0.1.2"
+local mobdap_version = "0.1.3"
 local mobdap_url = "https://github.com/atomicptr/mobdap/releases/download/v%s/mobdap-%s-%s.%s"
 
 local M = {}
