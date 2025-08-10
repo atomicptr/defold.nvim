@@ -149,6 +149,7 @@ function M.load_plugin()
         })
     end
 
+    -- add the :Defold command for interacting with the editor
     vim.api.nvim_create_user_command("Defold", function()
         local cmds = {}
         local options = {}
@@ -160,8 +161,14 @@ function M.load_plugin()
         end
 
         for cmd, desc in pairs(commands) do
-            table.insert(cmds, cmd)
-            table.insert(options, string.format("%s - %s", cmd, desc))
+            -- hide debugger related commands as they'd give the user the impression that these work with our debugger integration
+            -- which they dont
+            local is_debugger_command = string.find(cmd, "debugger")
+
+            if not is_debugger_command then
+                table.insert(cmds, cmd)
+                table.insert(options, string.format("%s - %s", cmd, desc))
+            end
         end
 
         vim.ui.select(options, {
@@ -175,18 +182,22 @@ function M.load_plugin()
         end)
     end, { nargs = 0, desc = "Select a command to run" })
 
+    -- add the ":DefoldSend cmd" command to send commands to the editor
     vim.api.nvim_create_user_command("DefoldSend", function(opt)
         editor.send_command(opt.args)
     end, { nargs = 1, desc = "Send a command to the Defold editor" })
 
+    -- add the ":DefoldFetch" command to fetch dependencies & annoatations
     vim.api.nvim_create_user_command("DefoldFetch", function(opt)
         project.install_dependencies(opt.bang)
     end, { bang = true, nargs = 0, desc = "Fetch & create Defold project dependency annotations" })
 
+    -- integrate the debugger into dap
     if M.config.debugger.enable then
         debugger.register_nvim_dap()
     end
 
+    -- fetch dependencies
     if M.config.defold.auto_fetch_dependencies then
         project.install_dependencies(false)
     end
