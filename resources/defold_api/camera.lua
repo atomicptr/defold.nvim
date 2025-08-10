@@ -4,7 +4,7 @@
 
   Camera API documentation
 
-  Functions for interacting with camera components.
+  Messages to control camera components and camera focus.
 --]]
 
 ---@meta
