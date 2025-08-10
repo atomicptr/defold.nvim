@@ -12,8 +12,8 @@
 ---@diagnostic disable: duplicate-set-field
 ---@diagnostic disable: args-after-dots
 
----@class defold_api.
- = {}
+---@class defold_api.font
+font = {}
 
 ---Asynchronoously adds more glyphs to a .fontc resource
 ---@param path string|hash The path to the .fontc resource
@@ -37,4 +37,4 @@ function font.add_glyphs(path, text, callback) end
 ---@param text string A string with unique unicode characters to be removed
 function font.remove_glyphs(path, text) end
 
-return 
+return font
