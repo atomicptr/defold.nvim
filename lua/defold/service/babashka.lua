@@ -7,6 +7,7 @@ local M = {}
 
 M.custom_executable = nil
 
+---@return string|nil
 local function local_bb()
     local meta_data_path = vim.fs.joinpath(vim.fn.stdpath "data", "defold.nvim", "meta.json")
     local bb_path = vim.fs.joinpath(vim.fn.stdpath "data", "defold.nvim", "bin", "bb")
@@ -49,7 +50,7 @@ local function local_bb()
             string.format("defold.nvim: Unable to download '%s' to '%s', something went wrong", url, download_path),
             vim.log.levels.ERROR
         )
-        return
+        return nil
     end
 
     if not os.is_windows() then
@@ -79,7 +80,7 @@ local function local_bb()
             ),
             vim.log.levels.ERROR
         )
-        return
+        return nil
     end
 
     meta_data.bb_version = bb_version
@@ -89,7 +90,7 @@ local function local_bb()
     return bb_path
 end
 
----@return string
+---@return string|nil
 function M.bb_path()
     if M.custom_executable then
         return M.custom_executable

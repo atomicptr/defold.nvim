@@ -59,7 +59,7 @@ local function local_mobdap_path()
             string.format("defold.nvim: Unable to download '%s' to '%s', something went wrong", url, download_path),
             vim.log.levels.ERROR
         )
-        return
+        return nil
     end
 
     if not os.is_windows() then
@@ -92,7 +92,7 @@ local function local_mobdap_path()
             ),
             vim.log.levels.ERROR
         )
-        return
+        return nil
     end
 
     meta_data.mobdap_version = mobdap_version
@@ -102,15 +102,26 @@ local function local_mobdap_path()
     return mobdap_path
 end
 
+---@return string|nil
+function M.mobdap_path()
+    if M.custom_executable then
+        return M.custom_executable
+    end
+
+    if os.command_exists "mobdap" then
+        return vim.fn.exepath "mobdap"
+    end
+
+    return local_mobdap_path()
+end
+
 ---@param custom_executable string|nil
 ---@param custom_arguments table<string>|nil
 function M.setup(custom_executable, custom_arguments)
     M.custom_executable = custom_executable
     M.custom_arguments = custom_arguments
 
-    if not M.custom_executable then
-        local_mobdap_path()
-    end
+    M.mobdap_path()
 end
 
 function M.register_nvim_dap()
@@ -127,7 +138,7 @@ function M.register_nvim_dap()
     dap.adapters.defold_nvim = {
         id = "defold_nvim",
         type = "executable",
-        command = M.custom_executable or local_mobdap_path(),
+        command = M.mobdap_path(),
         args = M.custom_arguments,
     }
 
