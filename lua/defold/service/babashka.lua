@@ -44,6 +44,14 @@ local function local_bb()
 
     os.download(url, download_path)
 
+    if not os.file_exists(download_path) then
+        vim.notify(
+            string.format("defold.nvim: Unable to download '%s' to '%s', something went wrong", url, download_path),
+            vim.log.levels.ERROR
+        )
+        return
+    end
+
     if not os.is_windows() then
         vim.fn.system(string.format("tar -xf '%s' -C '%s'", download_path, vim.fs.dirname(bb_path)))
         vim.fn.system(string.format("chmod +x '%s'", bb_path))
@@ -59,6 +67,19 @@ local function local_bb()
 
     if os.file_exists(download_path) then
         vim.fs.rm(download_path)
+    end
+
+    if not os.file_exists(bb_path) then
+        vim.notify(
+            string.format(
+                "defold.nvim: Could not install '%s' (downloaded from: '%s', unpacked from '%s'), something went wrong",
+                bb_path,
+                url,
+                download_path
+            ),
+            vim.log.levels.ERROR
+        )
+        return
     end
 
     meta_data.bb_version = bb_version
