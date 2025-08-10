@@ -2,6 +2,8 @@
 
 Batteries-included development environment for the [Defold game engine](https://defold.com), powered by [Neovim](https://neovim.io/)
 
+![](https://media1.giphy.com/media/v1.Y2lkPTc5MGI3NjExdjlqMHJ3NWNyY2l2MXB6emYzcWtmaG5oM24yamxobzV4cHZtNHJhciZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/SGRIFmSmzXyBThYM9k/giphy.gif)
+
 ## Features
 
 - **Code Hot-Reloading**: Make code tweaks and see them live in Defold, no waiting.
@@ -10,8 +12,6 @@ Batteries-included development environment for the [Defold game engine](https://
 - **Dependency Annotations**: Auto-load LSP annotations for your Defold dependencies.
 - **Debugger**: Step through your code and dig into issues with ease.
 - **Snippets**: Insert pre-made code snippets to save time.
-
-![](https://media1.giphy.com/media/v1.Y2lkPTc5MGI3NjExdjlqMHJ3NWNyY2l2MXB6emYzcWtmaG5oM24yamxobzV4cHZtNHJhciZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/SGRIFmSmzXyBThYM9k/giphy.gif)
 
 ## System Requirements
 
