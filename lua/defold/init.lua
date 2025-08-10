@@ -63,6 +63,11 @@ function M.is_defold_project()
     return vim.fn.filereadable(root_dir .. "/game.project") == 1
 end
 
+---@return string
+function M.plugin_root()
+    return os.plugin_root()
+end
+
 function M.prepare()
     babashka.setup {
         custom_executable = M.config.babashka.custom_executable,

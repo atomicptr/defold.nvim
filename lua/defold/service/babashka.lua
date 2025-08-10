@@ -82,12 +82,7 @@ function M.bb_path()
 end
 
 function M.bb_edn_path()
-    local script_path = debug.getinfo(1, "S").source
-    if not string.sub(script_path, 1, 1) == "@" then
-        vim.notify("Could not find bb.edn", vim.log.levels.ERROR)
-        return ""
-    end
-    local plugin_root = vim.fs.dirname(vim.fs.dirname(vim.fs.dirname(vim.fs.dirname(string.sub(script_path, 2)))))
+    local plugin_root = os.plugin_root()
     return vim.fs.joinpath(plugin_root, "bb.edn")
 end
 

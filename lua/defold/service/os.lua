@@ -56,4 +56,17 @@ function M.file_exists(path)
     return vim.fn.filereadable(path) == 1 or vim.fn.isdirectory(path) == 1
 end
 
+---Find the root dir of our plugin
+---@return string
+function M.plugin_root()
+    local script_path = debug.getinfo(1, "S").source
+
+    if not string.sub(script_path, 1, 1) == "@" then
+        vim.notify("Could not find bb.edn", vim.log.levels.ERROR)
+        return ""
+    end
+
+    return vim.fs.dirname(vim.fs.dirname(vim.fs.dirname(vim.fs.dirname(string.sub(script_path, 2)))))
+end
+
 return M

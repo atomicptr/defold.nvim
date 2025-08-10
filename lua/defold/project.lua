@@ -1,4 +1,5 @@
 local babashka = require "defold.service.babashka"
+local os = require "defold.service.os"
 
 local M = {}
 
@@ -15,12 +16,7 @@ end
 
 ---@return string
 function M.defold_api_path()
-    local script_path = debug.getinfo(1, "S").source
-    if not string.sub(script_path, 1, 1) == "@" then
-        vim.notify("Could not find Defold API files", vim.log.levels.ERROR)
-        return ""
-    end
-    local plugin_root = vim.fs.dirname(vim.fs.dirname(vim.fs.dirname(string.sub(script_path, 2))))
+    local plugin_root = os.plugin_root()
     return vim.fs.joinpath(plugin_root, "resources", "defold_api")
 end
 
