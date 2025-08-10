@@ -4,7 +4,8 @@
    [babashka.process :refer [shell]]
    [cheshire.core :as json]
    [clojure.string :as string]
-   [defold.utils :refer [command-exists?]]))
+   [defold.utils :refer [command-exists?]]
+   [taoensso.timbre :as log]))
 
 (defn make-command-url [port cmd]
   (str "http://127.0.0.1:" port "/command/" (string/lower-case cmd)))
@@ -34,7 +35,10 @@
       (->> (map extract-port-generic))
       (->> (filter is-defold-port?))
       (first))
-    (catch Exception _ (throw (ex-info (str "Could not find Defold port via '" (string/join " " cmd) "'.") {})))))
+    (catch Exception t
+      (do
+        (log/error "Error: " t)
+        (throw (ex-info (str "Could not find Defold port via '" (string/join " " cmd) "'.") {}))))))
 
 (defn- find-port-netstat []
   (some #(when (is-defold-port? %) %)
@@ -72,12 +76,18 @@
         (http/get url)
         :body
         (json/parse-string)))
-    (catch Exception e {"error" (ex-message e)})))
+    (catch Exception e
+      (let [msg (ex-message e)]
+        (log/error "Error: " msg e)
+        {"error" (ex-message e)}))))
 
 (defn send-command [cmd]
   (try
     (let [port (find-port)
           url  (make-command-url port cmd)]
       {"status" (:status (http/post url))})
-    (catch Exception e {"error" (ex-message e)})))
+    (catch Exception e
+      (let [msg (ex-message e)]
+        (log/error "Error: " msg e)
+        {"error" (ex-message e)}))))
 

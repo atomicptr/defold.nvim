@@ -6,7 +6,8 @@
    [clojure.string :as string]
    [com.brainbot.iniconfig :as iniconfig]
    [defold.script-api-compiler :as script-api-compiler]
-   [defold.utils :as utils])
+   [defold.utils :as utils]
+   [taoensso.timbre :as log])
   (:import
    [java.nio.charset StandardCharsets]
    [java.security MessageDigest]))
@@ -108,7 +109,10 @@
                      (compile-script-api-file script-api-file (str (fs/path deps-path (replace-ext (fs/file-name script-api-file) "lua")))))))
                (fs/delete-tree cache-path))))
          {"success" true})
-       (catch Exception e {"error" (ex-message e)})))
+       (catch Exception e
+         (let [msg (ex-message e)]
+           (log/error "Error: " msg e)
+           {"error" (ex-message e)}))))
 
 (defn list-dependency-dirs [game-project-file]
   (let [ident    (make-ident game-project-file)

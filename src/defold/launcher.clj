@@ -5,7 +5,8 @@
    [clojure.string :as string]
    [com.brainbot.iniconfig :as iniconfig]
    [defold.utils :refer [cache-dir command-exists? determine-os is-windows?
-                         sha3]]))
+                         sha3]]
+   [taoensso.timbre :as log]))
 
 (def base-class-name "com.defold.nvim.%s")
 
@@ -15,9 +16,19 @@
   (println "    [line]: Optional. The line number to open the file at")
   (System/exit 1))
 
+(defn- remove-ansi-codes [s]
+  (string/replace s #"\x1B\[([0-9A-Za-z;?])*[\w@]" ""))
+
 (defn- run-shell [& cmd]
-  (println "Run:" cmd)
-  (apply shell {:out :string :err :string} cmd))
+  (log/info "run-shell:" cmd)
+  (let [res (apply shell {:out :string :err :string} cmd)
+        out (remove-ansi-codes (:out res))
+        err (remove-ansi-codes (:err res))]
+    (when (and (some? out) (not-empty out))
+      (log/debug "run-shell result:" out))
+    (when (and (some? err) (not-empty err))
+      (log/error "run-shell error:" err))
+    res))
 
 (defn- find-project-root-from-file [file]
   (loop [current-dir (fs/parent (fs/path file))]
@@ -56,9 +67,9 @@
         (try
           (apply run-shell term-cmd (format class-arg class-name) run-arg cmd args)
           (catch Exception e
-            (println "Failed to launch terminal" e)
+            (log/error "Failed to launch terminal" e)
             (System/exit 1))))
-      (do (println "No supported terminal found, aborting...")
+      (do (log/error "No supported terminal found, aborting...")
           (System/exit 1)))))
 
 (defn- switch-focus [type name]
@@ -66,15 +77,15 @@
                  :class (format "class:%s" name)
                  :title (format "title:%s" name)
                  (throw (ex-info (format "Unknown type: %s" type) {})))]
-    (println "Switch to" target)
+    (log/info "Switching to:" target)
     (try
       (cond
         (command-exists? "hyprctl") (run-shell "hyprctl" "dispatch" "focuswindow" target)
 
         :else
-        (println "No supported focus switcher found, do nothing..."))
+        (log/error "No supported focus switcher found, do nothing..."))
       (catch Exception e
-        (println "Could not switch focus, do nothing..." e)))))
+        (log/error "Could not switch focus, do nothing..." e)))))
 
 (defn- escape-spaces [s]
   (string/escape s {\space "\\ "}))
@@ -96,7 +107,7 @@
       (try
         (run-shell neovim "--server" socket-file "--remote-send" (format "\"<C-\\\\><C-n>:%s<CR>\"" edit-cmd))
         (catch Exception e
-          (println "Failed to communicate with neovim server:" e)
+          (log/error "Failed to communicate with neovim server:" e)
 
           ; if we couldnt communicate with the server despite existing apparently
           ; delete it and start a new instance
@@ -119,11 +130,12 @@
         exists?   (fs/exists? port-path)
         port      (if exists? (slurp port-path) (win-find-free-port))
         socket    (format "127.0.0.1:%s" port)]
+    (log/info "run-netsock: Port:" port)
     (if (win-port-in-use? port)
       (try
         (run-shell neovim "--server" socket "--remote-send" (format "\"<C-\\\\><C-n>:%s<CR>\"" edit-cmd))
         (catch Exception e
-          (println "Failed to communicate with neovim server:" e)
+          (log/error "Failed to communicate with neovim server:" e)
           (let [new-port (win-find-free-port)]
             (spit port-path new-port)
             (launch-new-nvim-instance class-name neovim socket (escape-spaces filename) line))))
@@ -140,7 +152,7 @@
         class-name  (format base-class-name (project-id root-dir))
         edit-cmd    (make-neovim-edit-command file-name line)]
     (when (not (command-exists? neovim))
-      (println "Could not find nvim")
+      (log/error "Could not find neovim" neovim)
       (System/exit 1))
     (cond
       (is-windows?) (run-netsock neovim root-dir class-name file-name line edit-cmd)
@@ -155,6 +167,7 @@
           res (with-out-str (switch-focus :class class-name))]
       {"status" 200 "res" res})
     (catch Throwable t
+      (log/error "focus-neovim: Error" (ex-message t) t)
       {"error" (ex-message t)})))
 
 (defn focus-game [root-dir]
@@ -168,4 +181,5 @@
           res (with-out-str (switch-focus :title title))]
       {"status" 200 "res" res})
     (catch Throwable t
+      (log/error "focus-game: Error" (ex-message t) t)
       {"error" (ex-message t)})))
