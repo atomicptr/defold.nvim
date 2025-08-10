@@ -1,14 +1,14 @@
 # defold.nvim
 
-Use Neovim as your external editor for the [Defold game engine](https://defold.com).
+Batteries-included development environment for the [Defold game engine](https://defold.com), powered by [Neovim](https://neovim.io/)
 
 ## Features
 
-- **Code Hot-Reloading**: Instantly see code changes reflected in Defold.
-- **Defold Control via Neovim**: Execute Defold commands directly from Neovim using custom user commands. (see below)
-- **LSP Integration**: Leverage Defold API annotations within Neovims integrated LSP
-- **Dependency Annotations**: Automatically provide LSP annotations for Defold dependencies
-- **Debugger**: Step through your code and analyze issues in detail
+- **Code Hot-Reloading**: Make code tweaks and see them live in Defold, no waiting.
+- **Defold Control from Neovim**: Run Defold commands right from Neovim with custom shortcuts.
+- **LSP Integration**: Get Defold API hints and autocomplete in Neovim’s built-in LSP.
+- **Dependency Annotations**: Auto-load LSP annotations for your Defold dependencies.
+- **Debugger**: Step through your code and dig into issues with ease.
 
 ![](https://media1.giphy.com/media/v1.Y2lkPTc5MGI3NjExdjlqMHJ3NWNyY2l2MXB6emYzcWtmaG5oM24yamxobzV4cHZtNHJhciZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/SGRIFmSmzXyBThYM9k/giphy.gif)
 
