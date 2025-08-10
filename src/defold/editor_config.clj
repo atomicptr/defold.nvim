@@ -25,7 +25,7 @@
     (let [runner-path (cache-dir "defold.nvim" "run.sh")]
       (fs/create-dirs (fs/parent runner-path))
       (spit runner-path (format "#!/usr/bin/env bash\n%s --config %s run launch-neovim $1 $2" bb-path (bb-edn)))
-      (fs/set-posix-file-permissions runner-path "rwxrwxrwx")
+      (fs/set-posix-file-permissions runner-path "rwxr-xr-x")
       runner-path)))
 
 (defn- update-editor-settings [config bb-path]
