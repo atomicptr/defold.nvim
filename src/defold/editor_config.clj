@@ -2,7 +2,7 @@
   (:require
    [babashka.fs :as fs :refer [which]]
    [clojure.edn :as edn]
-   [defold.utils :refer [cache-dir config-dir determine-os is-windows?]]
+   [defold.utils :refer [cache-dir config-dir determine-os]]
    [taoensso.timbre :as log]))
 
 (defn- editor-settings-filepath []

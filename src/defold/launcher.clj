@@ -96,8 +96,9 @@
     (format "edit %s" (escape-spaces file-name))))
 
 (defn- launch-new-nvim-instance [class-name neovim socket-file file-name line]
-  (let [file (if line (format "%s +%s" file-name line) file-name)]
-    (launch-app-in-terminal class-name neovim "--listen" socket-file "--remote" file)))
+  (if line
+    (launch-app-in-terminal class-name neovim "--listen" socket-file "--remote" (format "\"+%s\"" line) file-name)
+    (launch-app-in-terminal class-name neovim "--listen" socket-file "--remote" file-name)))
 
 (defn- run-fsock [neovim root-dir _ filename line edit-cmd]
   (let [runtime     (runtime-dir root-dir)
