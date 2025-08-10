@@ -136,6 +136,11 @@ function M.register_nvim_dap()
         local rootdir = vim.fs.root(0, { "game.project", ".git" })
         babashka.run_task_json("focus-neovim", { rootdir })
     end
+
+    dap.listeners.after.continue.defold_nvim_switch_focus_on_continue = function(_, _)
+        local rootdir = vim.fs.root(0, { "game.project", ".git" })
+        babashka.run_task_json("focus-game", { rootdir })
+    end
 end
 
 return M

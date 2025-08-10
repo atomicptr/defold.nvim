@@ -3,6 +3,7 @@
    [babashka.fs :as fs]
    [babashka.process :refer [shell]]
    [clojure.string :as string]
+   [com.brainbot.iniconfig :as iniconfig]
    [defold.utils :refer [cache-dir command-exists? determine-os is-windows?
                          sha3]]))
 
@@ -60,15 +61,20 @@
       (do (println "No supported terminal found, aborting...")
           (System/exit 1)))))
 
-(defn- switch-focus [class-name]
-  (try
-    (cond
-      (command-exists? "hyprctl") (run-shell "hyprctl" "dispatch" "focuswindow" (str "class:" class-name))
+(defn- switch-focus [type name]
+  (let [target (case type
+                 :class (format "class:%s" name)
+                 :title (format "title:%s" name)
+                 (throw (ex-info (format "Unknown type: %s" type) {})))]
+    (println "Switch to" target)
+    (try
+      (cond
+        (command-exists? "hyprctl") (run-shell "hyprctl" "dispatch" "focuswindow" target)
 
-      :else
-      (println "No supported focus switcher found, do nothing..."))
-    (catch Exception e
-      (println "Could not switch focus, do nothing..." e))))
+        :else
+        (println "No supported focus switcher found, do nothing..."))
+      (catch Exception e
+        (println "Could not switch focus, do nothing..." e)))))
 
 (defn- escape-spaces [s]
   (string/escape s {\space "\\ "}))
@@ -139,15 +145,27 @@
     (cond
       (is-windows?) (run-netsock neovim root-dir class-name file-name line edit-cmd)
       :else         (run-fsock   neovim root-dir class-name file-name line edit-cmd))
-    (switch-focus class-name)))
+    (switch-focus :class class-name)))
 
 (defn focus-neovim [root-dir]
   (try
     (assert (some? root-dir))
     (assert (fs/exists? (fs/path root-dir "game.project")))
     (let [class-name (format base-class-name (project-id root-dir))
-          res (with-out-str (switch-focus class-name))]
+          res (with-out-str (switch-focus :class class-name))]
       {"status" 200 "res" res})
     (catch Throwable t
       {"error" (ex-message t)})))
 
+(defn focus-game [root-dir]
+  (try
+    (assert (some? root-dir))
+    (let [game-project (fs/path root-dir "game.project")
+          _            (assert (fs/exists? game-project))
+          config       (iniconfig/read-ini (str game-project))
+          title        (get-in config ["project" "title"])
+          _            (assert (some? title))
+          res (with-out-str (switch-focus :title title))]
+      {"status" 200 "res" res})
+    (catch Throwable t
+      {"error" (ex-message t)})))

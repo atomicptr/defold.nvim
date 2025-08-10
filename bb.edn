@@ -8,4 +8,5 @@
          send-command         {:task (defold/send-command)}
          launch-neovim        {:task (defold/launch-neovim)}
          set-default-editor   {:task (defold/set-default-editor)}
-         focus-neovim         {:task (defold/focus-neovim)}}}
+         focus-neovim         {:task (defold/focus-neovim)}
+         focus-game           {:task (defold/focus-game)}}}

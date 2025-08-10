@@ -29,3 +29,6 @@
 
 (defn focus-neovim []
   (print (json/generate-string (launcher/focus-neovim (first *command-line-args*)))))
+
+(defn focus-game []
+  (print (json/generate-string (launcher/focus-game (first *command-line-args*)))))
