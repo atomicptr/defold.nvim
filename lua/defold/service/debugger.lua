@@ -53,7 +53,14 @@ local function local_mobdap_path()
     local download_path = mobdap_path .. "." .. file_ending
 
     os.download(url, download_path)
-    assert(os.file_exists(download_path))
+
+    if not os.file_exists(download_path) then
+        vim.notify(
+            string.format("defold.nvim: Unable to download '%s' to '%s', something went wrong", url, download_path),
+            vim.log.levels.ERROR
+        )
+        return
+    end
 
     if not os.is_windows() then
         vim.fn.system(
@@ -73,6 +80,19 @@ local function local_mobdap_path()
 
     if os.file_exists(download_path) then
         vim.fs.rm(download_path)
+    end
+
+    if not os.file_exists(mobdap_path) then
+        vim.notify(
+            string.format(
+                "defold.nvim: Could not install '%s' (downloaded from: '%s', unpacked from '%s'), something went wrong",
+                mobdap_path,
+                url,
+                download_path
+            ),
+            vim.log.levels.ERROR
+        )
+        return
     end
 
     meta_data.mobdap_version = mobdap_version
