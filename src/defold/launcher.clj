@@ -4,8 +4,8 @@
    [babashka.process :refer [shell]]
    [clojure.string :as string]
    [com.brainbot.iniconfig :as iniconfig]
-   [defold.utils :refer [cache-dir command-exists? determine-os is-windows?
-                         sha3]]
+   [defold.utils :refer [cache-dir command-exists? determine-os escape-spaces
+                         is-windows? sha3]]
    [taoensso.timbre :as log]))
 
 (def base-class-name "com.defold.nvim.%s")
@@ -86,9 +86,6 @@
         (log/error "No supported focus switcher found, do nothing..."))
       (catch Exception e
         (log/error "Could not switch focus, do nothing..." e)))))
-
-(defn- escape-spaces [s]
-  (string/escape s {\space "\\ "}))
 
 (defn- make-neovim-edit-command [file-name line]
   (if line

@@ -50,3 +50,6 @@
         bytes (.getBytes s)]
     (.update md bytes)
     (apply str (map #(format "%02x" %) (.digest md)))))
+
+(defn escape-spaces [s]
+  (string/escape s {\space "\\ "}))

@@ -2,7 +2,7 @@
   (:require
    [babashka.fs :as fs :refer [which]]
    [clojure.edn :as edn]
-   [defold.utils :refer [cache-dir config-dir determine-os]]
+   [defold.utils :refer [cache-dir config-dir determine-os escape-spaces]]
    [taoensso.timbre :as log]))
 
 (defn- editor-settings-filepath []
@@ -21,9 +21,9 @@
   (let [os (determine-os)
         [run-file content]
         (case os
-          :linux   ["run.sh"  (format "#!/usr/bin/env bash\n%s --config %s run launch-neovim $1 $2" bb-path (bb-edn))]
-          :mac     ["run.sh"  (format "#!/usr/bin/env bash\nexport PATH=\"/usr/bin:/usr/local/bin:$PATH\"\n%s --config %s run launch-neovim $1 $2" bb-path (bb-edn))]
-          :windows ["run.bat" (format "@echo off\r\n\"%s\" --config \"%s\" run launch-neovim %%1 %%2" bb-path (bb-edn))]
+          :linux   ["run.sh"  (format "#!/usr/bin/env bash\n%s --config \"%s\" run launch-neovim \"$1\" $2" (escape-spaces bb-path) (bb-edn))]
+          :mac     ["run.sh"  (format "#!/usr/bin/env bash\nexport PATH=\"/usr/bin:/usr/local/bin:$PATH\"\n%s --config \"%s\" run launch-neovim \"$1\" $2" (escape-spaces bb-path) (bb-edn))]
+          :windows ["run.bat" (format "@echo off\r\n\"%s\" --config \"%s\" run launch-neovim \"%%1\" %%2" bb-path (bb-edn))]
           :unknown (let [ex (ex-info "Can't create runner script for unknown operating system" {})]
                      (log/error (ex-message ex) ex)
                      (throw ex)))
