@@ -84,11 +84,6 @@ end
 function M.setup(opts)
     M.config = vim.tbl_deep_extend("force", default_config, opts or {})
 
-    if M.config.debugger.enable and os.is_windows() then
-        vim.notify("defold.nvim: Debugging on Windows is not supported", vim.log.levels.ERROR)
-        M.config.debugger.enable = false
-    end
-
     vim.api.nvim_create_user_command("SetupDefold", function()
         babashka.run_task("set-default-editor", { babashka.setup {
             set_editor = true,

@@ -3,7 +3,7 @@ local os = require "defold.service.os"
 local project = require "defold.project"
 local babashka = require "defold.service.babashka"
 
-local mobdap_version = "0.1.3"
+local mobdap_version = "0.1.4"
 local mobdap_url = "https://github.com/atomicptr/mobdap/releases/download/v%s/mobdap-%s-%s.%s"
 
 local M = {}
@@ -44,8 +44,8 @@ local function local_mobdap_path()
 
     local architecture = os.architecture()
 
-    if architecture == "amd64" then
-        architecture = "x86_64"
+    if architecture == "aarch64" then
+        architecture = "arm64"
     end
 
     local url = string.format(mobdap_url, mobdap_version, os.name(), architecture, file_ending)
