@@ -66,7 +66,7 @@ local function local_mobdap_path()
         vim.fn.system(
             string.format("tar -xf '%s' --strip-components 2 -C '%s'", download_path, vim.fs.dirname(mobdap_path))
         )
-        vim.fn.system(string.format("mv '%s-*%s' %s", mobdap_path, mobdap_version, mobdap_path))
+        vim.fn.system(string.format("mv '%s-%s' %s", mobdap_path, mobdap_version, mobdap_path))
         vim.fn.system(string.format("chmod +x '%s'", mobdap_path))
     else
         vim.fn.system(
@@ -78,7 +78,7 @@ local function local_mobdap_path()
         )
         vim.fn.system(
             string.format(
-                "mv '%s-*%s.exe' %s",
+                'powershell.exe -Command "Move-Item -Path \\"%s-%s.exe\\" -Destination \\"%s\\""',
                 vim.fs.joinpath(vim.fn.stdpath "data", "defold.nvim", "bin", "mobdap"),
                 mobdap_version,
                 mobdap_path
