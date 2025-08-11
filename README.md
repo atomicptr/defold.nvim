@@ -15,7 +15,25 @@ Batteries-included development environment for the [Defold game engine](https://
 
 ## System Requirements
 
-This plugin is designed for Linux and supports macOS. Windows is untested and probably doesn't work (yet)
+### Operating System
+
+- Linux 🐧   - First class & fully supported
+- MacOS 🍎   - Experimental (and mostly untested), both ARM and Intel Macs are supported
+- Windows 🪟 - Planned, but still unsupported
+
+### Launchers
+
+Since Neovim is a terminal based application it has to be run through a Terminal, we currently support:
+
+- [ghostty](https://ghostty.org/)
+- [kitty](https://sw.kovidgoyal.net/kitty/)
+- [alacritty](https://alacritty.org/)
+- [foot](https://codeberg.org/dnkl/foot)
+- [st](https://st.suckless.org/)
+
+More to be added, also planning to support custom terminals and GUI frontends like Neovide
+
+### Other
 
 This plugin is using [Babashka](https://babashka.org) internally to circumvent Neovim Luas API limitations.
 If you do not have Babashka installed on your system, the plugin will download and manage its own local copy
