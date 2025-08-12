@@ -1,6 +1,7 @@
 local babashka = require "defold.service.babashka"
 local debugger = require "defold.service.debugger"
 local editor = require "defold.editor"
+local log = require "defold.service.logger"
 local os = require "defold.service.os"
 local project = require "defold.project"
 local snippets = require "defold.service.snippets"
@@ -93,7 +94,7 @@ function M.setup(opts)
             debugger.setup(M.config.debugger.custom_executable, M.config.debugger.custom_arguments)
         end
 
-        vim.notify "defold.nvim: Defold setup successfully"
+        log.info "Defold setup successfully"
     end, { nargs = 0, desc = "Setup Defold to use Neovim as its default editor" })
 
     local co = coroutine.create(function()
@@ -110,6 +111,11 @@ function M.setup(opts)
 end
 
 function M.load_plugin()
+    log.debug "============= defold.nvim: Loaded plugin"
+    log.debug("Babashka Path: " .. babashka.bb_path())
+    log.debug("Mobdap Path: " .. debugger.mobdap_path())
+    log.debug("Config: " .. vim.inspect(M.config))
+
     -- init babashka
     babashka.run_task("init", {})
 

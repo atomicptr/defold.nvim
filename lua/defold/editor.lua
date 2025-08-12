@@ -1,4 +1,5 @@
 local babashka = require "defold.service.babashka"
+local log = require "defold.service.logger"
 
 local M = {}
 
@@ -8,12 +9,12 @@ function M.list_commands()
     local res = babashka.run_task_json "list-commands"
 
     if not res then
-        vim.notify("Could not fetch commands from Defold, maybe the editor isn't running?", vim.log.levels.ERROR)
+        log.error "Could not fetch commands from Defold, maybe the editor isn't running?"
         return nil
     end
 
     if res.error then
-        vim.notify(string.format("Could not fetch commands from Defold, because: %s", res.error), vim.log.levels.ERROR)
+        log.error(string.format("Could not fetch commands from Defold, because: %s", res.error))
         return nil
     end
 
@@ -34,10 +35,7 @@ function M.send_command(command, dont_report_error)
         return
     end
 
-    vim.notify(
-        string.format("Could execute comannd '%s', because: %s", command, res.error or "Something went wrong!"),
-        vim.log.levels.ERROR
-    )
+    log.error(string.format("Could execute comannd '%s', because: %s", command, res.error or "Something went wrong!"))
 end
 
 return M

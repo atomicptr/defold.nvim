@@ -2,6 +2,7 @@ local editor = require "defold.editor"
 local os = require "defold.service.os"
 local project = require "defold.project"
 local babashka = require "defold.service.babashka"
+local log = require "defold.service.logger"
 
 local mobdap_version = "0.1.4"
 local mobdap_url = "https://github.com/atomicptr/mobdap/releases/download/v%s/mobdap-%s-%s.%s"
@@ -32,7 +33,7 @@ local function local_mobdap_path()
 
     meta_data = meta_data or {}
 
-    vim.notify(string.format("defold.nvim: Downloading mobdap %s", mobdap_version))
+    log.info(string.format("Downloading mobdap %s", mobdap_version))
 
     vim.fn.mkdir(vim.fs.dirname(mobdap_path), "p")
 
@@ -55,34 +56,29 @@ local function local_mobdap_path()
     os.download(url, download_path)
 
     if not os.file_exists(download_path) then
-        vim.notify(
-            string.format("defold.nvim: Unable to download '%s' to '%s', something went wrong", url, download_path),
-            vim.log.levels.ERROR
-        )
+        log.error(string.format("Unable to download '%s' to '%s', something went wrong", url, download_path))
         return nil
     end
 
     if not os.is_windows() then
-        vim.fn.system(
-            string.format("tar -xf '%s' --strip-components 2 -C '%s'", download_path, vim.fs.dirname(mobdap_path))
-        )
-        vim.fn.system(string.format("mv '%s-%s' %s", mobdap_path, mobdap_version, mobdap_path))
-        vim.fn.system(string.format("chmod +x '%s'", mobdap_path))
+        os.exec(string.format("tar -xf '%s' --strip-components 2 -C '%s'", download_path, vim.fs.dirname(mobdap_path)))
+        os.move(string.format("%s-%s", mobdap_path, mobdap_version), mobdap_path)
+        os.make_executable(mobdap_path)
     else
-        vim.fn.system(
+        os.exec(
             string.format(
                 'powershell -Command "Expand-Archive -Path %s -DestinationPath %s"',
                 download_path,
                 vim.fs.dirname(mobdap_path)
             )
         )
-        vim.fn.system(
+        os.move(
             string.format(
-                'powershell.exe -Command "Move-Item -Path \\"%s-%s.exe\\" -Destination \\"%s\\""',
+                "%s-%s.exe",
                 vim.fs.joinpath(vim.fn.stdpath "data", "defold.nvim", "bin", "mobdap"),
-                mobdap_version,
-                mobdap_path
-            )
+                mobdap_version
+            ),
+            mobdap_path
         )
     end
 
@@ -91,14 +87,13 @@ local function local_mobdap_path()
     end
 
     if not os.file_exists(mobdap_path) then
-        vim.notify(
+        log.error(
             string.format(
-                "defold.nvim: Could not install '%s' (downloaded from: '%s', unpacked from '%s'), something went wrong",
+                "Could not install '%s' (downloaded from: '%s', unpacked from '%s'), something went wrong",
                 mobdap_path,
                 url,
                 download_path
-            ),
-            vim.log.levels.ERROR
+            )
         )
         return nil
     end
@@ -136,10 +131,7 @@ function M.register_nvim_dap()
     local ok, dap = pcall(require, "dap")
 
     if not ok then
-        vim.notify(
-            "defold.nvim: Debugger enabled but could not find plugin: mfussenegger/nvim-dap",
-            vim.log.levels.ERROR
-        )
+        log.error "Debugger enabled but could not find plugin: mfussenegger/nvim-dap"
         return
     end
 
@@ -176,15 +168,21 @@ function M.register_nvim_dap()
     }
 
     dap.listeners.after.event_mobdap_waiting_for_connection.defold_nvim_start_game = function(_, _)
+        log.debug "debugger: connected"
+
         editor.send_command "build"
     end
 
     dap.listeners.after.event_stopped.defold_nvim_switch_focus_on_stop = function(_, _)
+        log.debug "debugger: event stopped"
+
         local rootdir = vim.fs.root(0, { "game.project", ".git" })
         babashka.run_task_json("focus-neovim", { rootdir })
     end
 
     dap.listeners.after.continue.defold_nvim_switch_focus_on_continue = function(_, _)
+        log.debug "debugger: continued"
+
         local rootdir = vim.fs.root(0, { "game.project", ".git" })
         babashka.run_task_json("focus-game", { rootdir })
     end

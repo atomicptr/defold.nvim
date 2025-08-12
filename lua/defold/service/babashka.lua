@@ -1,4 +1,5 @@
 local os = require "defold.service.os"
+local log = require "defold.service.logger"
 
 local bb_version = "1.12.207"
 local bb_url = "https://github.com/babashka/babashka/releases/download/v%s/babashka-%s-%s-%s.%s"
@@ -29,7 +30,7 @@ local function local_bb()
 
     meta_data = meta_data or {}
 
-    vim.notify(string.format("defold.nvim: Downloading babashka %s", bb_version))
+    log.info(string.format("defold.nvim: Downloading babashka %s", bb_version))
 
     vim.fn.mkdir(vim.fs.dirname(bb_path), "p")
 
@@ -46,18 +47,15 @@ local function local_bb()
     os.download(url, download_path)
 
     if not os.file_exists(download_path) then
-        vim.notify(
-            string.format("defold.nvim: Unable to download '%s' to '%s', something went wrong", url, download_path),
-            vim.log.levels.ERROR
-        )
+        log.error(string.format("Unable to download '%s' to '%s', something went wrong", url, download_path))
         return nil
     end
 
     if not os.is_windows() then
-        vim.fn.system(string.format("tar -xf '%s' -C '%s'", download_path, vim.fs.dirname(bb_path)))
-        vim.fn.system(string.format("chmod +x '%s'", bb_path))
+        os.exec(string.format("tar -xf '%s' -C '%s'", download_path, vim.fs.dirname(bb_path)))
+        os.make_executable(bb_path)
     else
-        vim.fn.system(
+        os.exec(
             string.format(
                 'powershell -Command "Expand-Archive -Path %s -DestinationPath %s"',
                 download_path,
@@ -71,14 +69,13 @@ local function local_bb()
     end
 
     if not os.file_exists(bb_path) then
-        vim.notify(
+        log.error(
             string.format(
-                "defold.nvim: Could not install '%s' (downloaded from: '%s', unpacked from '%s'), something went wrong",
+                "Could not install '%s' (downloaded from: '%s', unpacked from '%s'), something went wrong",
                 bb_path,
                 url,
                 download_path
-            ),
-            vim.log.levels.ERROR
+            )
         )
         return nil
     end
@@ -124,13 +121,16 @@ function M.setup(opts)
         M.run_task_json("set-default-editor", { bb })
     end
 
+    assert(bb)
     return bb
 end
 
 function M.run_task(task, args)
+    log.debug(string.format("Run Babashka task: %s %s", task, vim.inspect(args)))
+
     local params = table.concat(args or {}, " ")
     local cmd = string.format("%s --config '%s' run %s %s", M.bb_path(), M.bb_edn_path(), task, params)
-    return vim.fn.system(cmd)
+    return os.exec(cmd)
 end
 
 function M.run_task_json(task, args)

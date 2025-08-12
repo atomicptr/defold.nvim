@@ -1,4 +1,15 @@
+local log = require "defold.service.logger"
+
 local M = {}
+
+---@param command string
+---@return string
+function M.exec(command)
+    log.debug("Exec: " .. command)
+    local res = vim.fn.system(command)
+    log.debug("Result => " .. res)
+    return res
+end
 
 ---Test if a command exists on the system
 ---@return boolean
@@ -39,25 +50,51 @@ end
 ---@param url string
 ---@param to_path string
 function M.download(url, to_path)
+    log.debug(string.format("Downloading '%s' to '%s'", url, to_path))
+
     if M.is_windows() then
-        vim.fn.system(string.format('powershell -Command "Invoke-WebRequest -Uri %s -OutFile %s"', url, to_path))
+        M.exec(string.format('powershell -Command "Invoke-WebRequest -Uri %s -OutFile %s"', url, to_path))
         return
     end
 
     if M.command_exists "curl" then
-        vim.fn.system(string.format("curl -s -o '%s' %s", to_path, url))
+        M.exec(string.format("curl -L -s -o '%s' %s", to_path, url))
         return
     end
 
     if M.command_exists "wget" then
-        vim.fn.system(string.format("wget -q -O '%s' %s", to_path, url))
+        M.exec(string.format("wget -q -O '%s' %s", to_path, url))
         return
     end
 
-    vim.notify(
-        "Could not find a command to download something like 'curl', 'wget' or 'powershell'",
-        vim.log.levels.ERROR
-    )
+    log.error "Could not find a command to download something like 'curl', 'wget' or 'powershell'"
+end
+
+---Move file from location a to b
+---@param from_path string
+---@param to_path string
+function M.move(from_path, to_path)
+    if M.is_windows() then
+        M.exec(
+            string.format(
+                'powershell.exe -Command "Move-Item -Path \\"%s\\" -Destination \\"%s\\""',
+                from_path,
+                to_path
+            )
+        )
+        return
+    end
+
+    M.exec(string.format("mv '%s' '%s'", from_path, to_path))
+end
+
+---Make application executable
+---@param path any
+function M.make_executable(path)
+    if M.is_windows() then
+        return
+    end
+    M.exec(string.format("chmod +x '%s'", path))
 end
 
 function M.file_exists(path)
@@ -70,11 +107,13 @@ function M.plugin_root()
     local script_path = debug.getinfo(1, "S").source
 
     if not string.sub(script_path, 1, 1) == "@" then
-        vim.notify("Could not find bb.edn", vim.log.levels.ERROR)
+        log.error "Could not find plugin root"
         return ""
     end
 
-    return vim.fs.dirname(vim.fs.dirname(vim.fs.dirname(vim.fs.dirname(string.sub(script_path, 2)))))
+    local res = vim.fs.dirname(vim.fs.dirname(vim.fs.dirname(vim.fs.dirname(string.sub(script_path, 2)))))
+    log.debug("Plugin root: " .. res)
+    return res
 end
 
 return M

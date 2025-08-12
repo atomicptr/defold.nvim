@@ -1,5 +1,6 @@
 local babashka = require "defold.service.babashka"
 local os = require "defold.service.os"
+local log = require "defold.service.logger"
 
 local M = {}
 
@@ -7,7 +8,7 @@ local function game_project_file()
     local root = vim.fs.root(0, { "game.project" })
 
     if not root then
-        vim.notify("Could not find game.project file, not a Defold project?", vim.log.levels.ERROR)
+        log.error "Could not find game.project file, not a Defold project?"
         return {}
     end
 
@@ -36,7 +37,7 @@ function M.install_dependencies(force_redownload)
     local res = babashka.run_task_json("install-dependencies", args)
 
     if res.error then
-        vim.notify(string.format("Could not install dependencies, because: %s", res.error), vim.log.levels.ERROR)
+        log.error(string.format("Could not install dependencies, because: %s", res.error))
         return
     end
 end
