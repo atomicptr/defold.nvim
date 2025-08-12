@@ -76,6 +76,9 @@ which will however add a few more requirements.
 
             -- Use a custom executable for the debugger (default: nil)
             custom_executable = nil,
+
+            -- Add custom arguments to the debugger (default: nil)
+            custom_arguments = nil,
         },
 
         babashka = {
