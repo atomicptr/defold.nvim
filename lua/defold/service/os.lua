@@ -44,12 +44,20 @@ function M.download(url, to_path)
         return
     end
 
-    if not M.command_exists "curl" then
-        vim.notify("Could not find command 'curl'", vim.log.levels.ERROR)
+    if M.command_exists "curl" then
+        vim.fn.system(string.format("curl -s -o '%s' %s", to_path, url))
         return
     end
 
-    vim.fn.system(string.format("curl -L -s -o '%s' %s", to_path, url))
+    if M.command_exists "wget" then
+        vim.fn.system(string.format("wget -q -O '%s' %s", to_path, url))
+        return
+    end
+
+    vim.notify(
+        "Could not find a command to download something like 'curl', 'wget' or 'powershell'",
+        vim.log.levels.ERROR
+    )
 end
 
 function M.file_exists(path)
