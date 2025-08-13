@@ -87,7 +87,10 @@
           url  (make-command-url port cmd)]
       {"status" (:status (http/post url))})
     (catch Exception e
-      (let [msg (ex-message e)]
-        (log/error "Error: " msg e)
-        {"error" (ex-message e)}))))
+      (if (= 403 (get-in (Throwable->map e) [:data :status]))
+        (do (log/warn (format "Editor responded 403 Forbidden to %s" cmd))
+            {"error" (ex-message e)})
+        (let [msg (ex-message e)]
+          (log/error "Error: " msg e)
+          {"error" (ex-message e)})))))
 
