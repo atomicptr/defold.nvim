@@ -29,11 +29,32 @@ Since Neovim is a terminal based application it has to be run through something,
 
 #### Supported Terminals
 
+These are the terminal supported by default (when you just switch the launcher type to "terminal")
+
 - [ghostty](https://ghostty.org/)
 - [kitty](https://sw.kovidgoyal.net/kitty/)
 - [alacritty](https://alacritty.org/)
 - [foot](https://codeberg.org/dnkl/foot)
 - [st](https://st.suckless.org/)
+
+You can use any other terminal by changing the launcher options to the following:
+
+```lua
+    -- ...
+
+    launcher = {
+        type = "terminal",
+
+        executable = "/usr/bin/my-custom-terminal",
+
+        terminal = {
+            class_argument = "--app-id=",
+            run_argument = "-e",
+        },
+    },
+
+    -- ...
+```
 
 ### Other
 
