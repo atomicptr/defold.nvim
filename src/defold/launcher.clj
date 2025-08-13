@@ -114,6 +114,7 @@
                (flatten
                  (filter some?
                    ["--neovim-bin" neovim
+                    (get-in cfg ["extra_arguments"])
                     (when (linux?)
                       ["--wayland_app_id" :classname
                        "--x11-wm-class" :classname])
@@ -153,11 +154,13 @@
       ; custom executable
       (and (some? (cfg "executable")) (fs/exists? (cfg "executable")))
       {:cmd (cfg "executable")
-       :args (flatten
-               (concat
-                 [(when class-arg [class-arg :classname])
-                  run-arg neovim]
-                 nvim-args))}
+       :args (filter some?
+               (flatten
+                 (concat
+                   [(when class-arg [class-arg :classname])
+                    run-arg neovim]
+                   (cfg "extra_arguments")
+                   nvim-args)))}
 
       ; check default terminals
       (some #(command-exists? (first %)) default-terminals)

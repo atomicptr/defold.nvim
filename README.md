@@ -85,9 +85,11 @@ You're in luck, powershell is surprisingly capable so there is nothing else need
             -- path to your neovim or terminal executable (optional)
             executable = nil,
 
+            -- extra arguments passed to the `executable` (or neovide)
+            extra_arguments = nil,
+
             -- configure how the terminal is run (optional)
             terminal = {
-
                 -- argument to define how to set the class name of the terminal, usually something like "--class="
                 class_argument = nil,
 

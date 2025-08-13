@@ -16,6 +16,7 @@ local root_markers = { "game.project", ".git" }
 ---@class LauncherSettings Settings for the Neovim launcher run by Defold
 ---@field type "neovide"|"terminal" Neovim launcher run by Defold
 ---@field executable string|nil Executable to be used by the launcher, nil means we're trying to figure this out ourselves
+---@field extra_arguments table<string>|nil Extra arguments passed to the `executable` (or neovide)
 ---@field terminal TerminalLauncherSettings|nil Settings for running via terminal
 
 ---@class TerminalLauncherSettings
@@ -49,6 +50,8 @@ local default_config = {
     launcher = {
         type = "neovide",
         executable = nil,
+        extra_arguments = nil,
+        terminal = nil,
     },
 
     debugger = {
