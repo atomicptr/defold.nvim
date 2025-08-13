@@ -18,7 +18,7 @@ Batteries-included development environment for the [Defold game engine](https://
 ### Operating System
 
 - Linux 🐧   - First class & fully supported
-- MacOS 🍎   - Experimental (and mostly untested), both ARM and Intel Macs are supported
+- MacOS 🍎   - Experimental, both ARM and Intel Macs are supported
 - Windows 🪟 - Planned, but still unsupported
 
 ### Launchers
