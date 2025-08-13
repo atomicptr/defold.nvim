@@ -135,8 +135,8 @@
       :else
       {:cmd (let [neovide (neovide/executable-path)]
               (when-not neovide
-                (throw (ex-info "Could not find neovide, have you installed it?" {}))
-                neovide))
+                (throw (ex-info "Could not find neovide, have you installed it?" {})))
+              neovide)
        :args args})))
 
 (def ^:private default-terminals
@@ -185,7 +185,7 @@
         class-name  (format base-class-name (project-id root-dir))
         edit-cmd    (make-neovim-edit-command file-name line)]
     (when (or (nil? (:cmd launcher)) (not (command-exists? (:cmd launcher))))
-      (log/error "Could not create launcher" (:cmd launcher))
+      (log/error "Could not create launcher" (:cmd launcher) launcher-config)
       (System/exit 1))
     (when (not (command-exists? neovim))
       (log/error "Could not find neovim" neovim)

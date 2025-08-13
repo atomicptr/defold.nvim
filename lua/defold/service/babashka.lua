@@ -138,7 +138,7 @@ function M.run_task(task, args)
     end
 
     local params = table.concat(args_to_send, " ")
-    local cmd = string.format("%s --config '%s' run %s %s", M.bb_path(), M.bb_edn_path(), task, params)
+    local cmd = string.format('%s --config "%s" run %s %s', M.bb_path(), M.bb_edn_path(), task, params)
     return os.exec(cmd)
 end
 
