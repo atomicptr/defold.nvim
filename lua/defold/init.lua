@@ -13,6 +13,15 @@ local root_markers = { "game.project", ".git" }
 ---@field auto_fetch_dependencies boolean Automatically fetch dependencies on launch
 ---@field hot_reload_enabled boolean Enable hot reloading when saving scripts in Neovim
 
+---@class LauncherSettings Settings for the Neovim launcher run by Defold
+---@field type "neovide"|"terminal" Neovim launcher run by Defold
+---@field executable string|nil Executable to be used by the launcher, nil means we're trying to figure this out ourselves
+---@field terminal TerminalLauncherSettings|nil Settings for running via terminal
+
+---@class TerminalLauncherSettings
+---@field class_argument string|nil Argument to define the class name, usually something like "--class="
+---@field run_argument   string|nil Argument to define the run argument, usually something like "-e"
+
 ---@class DebuggerSettings Settings for the integrated debugger
 ---@field enable boolean Enable the debugger
 ---@field custom_executable string|nil Use a custom executable for the debugger
@@ -23,6 +32,7 @@ local root_markers = { "game.project", ".git" }
 
 ---@class DefoldNvimConfig Settings for defold.nvim
 ---@field defold DefoldEditorSettings Settings for the Defold Game Engine
+---@field launcher LauncherSettings Settings for the Neovim launcher run by Defold
 ---@field debugger DebuggerSettings Settings for the integrated debugger
 ---@field babashka BabashkaSettings Settings for the integrated Babashka interpreter
 ---@field force_plugin_enabled boolean Force the plugin to be always enabled (even if we can't find the game.project file)
@@ -33,6 +43,12 @@ local default_config = {
         set_default_editor = true,
         auto_fetch_dependencies = true,
         hot_reload_enabled = true,
+        launcher = "neovide",
+    },
+
+    launcher = {
+        type = "neovide",
+        executable = nil,
     },
 
     debugger = {

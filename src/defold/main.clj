@@ -8,6 +8,7 @@
    [defold.editor-config :as editor-config]
    [defold.launcher :as launcher]
    [defold.logging :as logging]
+   [defold.neovide :as neovide]
    [defold.project :as project]
    [taoensso.timbre :as log]))
 
@@ -35,6 +36,9 @@
     (let [conf (parse-config config-file)]
       (when-not (get-in conf ["plugin_config" "debugger" "custom_executable"])
         (debugger/setup))
+      (when (and (= "neovide" (get-in conf ["plugin_config" "launcher" "type"]))
+              (not (get-in conf ["plugin_config" "launcher" "executable"])))
+        (neovide/setup))
       (print-json {:status 200}))
     (catch Throwable t
       (log/error "Error:" (ex-message t) t)
@@ -58,8 +62,11 @@
   (print-json (editor/send-command cmd)))
 
 (defmethod run :launch-neovim
-  ([_ _ filename] (launcher/run filename nil))
-  ([_ _ filename line] (launcher/run filename line)))
+  ([_ config-file filename]
+   (run :launch-neovim config-file filename nil))
+  ([_ config-file filename line]
+   (let [conf (parse-config config-file)]
+     (launcher/run (get-in conf ["plugin_config" "launcher"]) filename line))))
 
 (defmethod run :focus-neovim [_ _ root-dir]
   (print-json (launcher/focus-neovim root-dir)))

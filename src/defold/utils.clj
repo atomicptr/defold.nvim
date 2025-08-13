@@ -32,7 +32,10 @@
 (defn get-os-arch-value [m]
   (get-in m [(determine-os) (determine-arch)]))
 
-(defn is-windows? []
+(defn linux? []
+  (= (determine-os) :linux))
+
+(defn windows? []
   (= (determine-os) :windows))
 
 (defn config-dir
@@ -87,3 +90,43 @@
     (with-open [in  (:body response)
                 out (io/output-stream path)]
       (io/copy in out))))
+
+(defn download-and-unpack [download-url]
+  (let [temp-dir     (str (fs/create-temp-dir  {:prefix "defold.nvim"}))
+        temp-file    (str (fs/create-temp-file {:prefix "defold.nvim"}))
+        file-type    (cond
+                       (string/ends-with? download-url ".tar.gz") :tar
+                       (string/ends-with? download-url ".zip")    :zip
+                       :else                                      :unknown)
+        temp-file    (case file-type
+                       :tar (str temp-file ".tar.gz")
+                       :zip (str temp-file ".zip"))]
+
+    (fs/create-dirs temp-dir)
+
+    (log/debug "Downloading" download-url "to" temp-file)
+    (download-file download-url temp-file)
+
+    (case file-type
+      :tar (run-shell "tar" "-xvf" temp-file "-C" temp-dir)
+      :zip (fs/unzip temp-file temp-dir))
+
+    (fs/delete-if-exists temp-file)
+
+    (->
+      temp-dir
+      (fs/glob "**")
+      first
+      str)))
+
+(defn seq-replace-var [coll search replace-with]
+  (map #(if (= % search) replace-with %) coll))
+
+(defn merge-seq-setters [coll]
+  (loop [result [] [x y & rest] coll]
+    (if (nil? x)
+      result
+      (if (and y (= \= (last x)))
+        (recur (conj result (str x y)) rest)
+        (recur (conj result x) (cons y rest))))))
+

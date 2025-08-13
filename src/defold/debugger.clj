@@ -1,9 +1,8 @@
 (ns defold.debugger
   (:require
    [babashka.fs :as fs]
-   [clojure.string :as string]
-   [defold.utils :refer [data-dir download-file get-os-arch-value is-windows?
-                         run-shell]]
+   [defold.utils :refer [data-dir download-and-unpack get-os-arch-value
+                         windows?]]
    [taoensso.timbre :as log]))
 
 (def ^:private mobdap-version "0.1.5")
@@ -16,7 +15,7 @@
    :windows {:x86 "https://github.com/atomicptr/mobdap/releases/download/v%s/mobdap-windows-amd64.zip"}})
 
 (defn executable-path []
-  (if (is-windows?)
+  (if (windows?)
     (data-dir "defold.nvim" "bin" "mobdap.exe")
     (data-dir "defold.nvim" "bin" "mobdap")))
 
@@ -30,34 +29,6 @@
     (when (fs/exists? path)
       (slurp path))))
 
-(defn- download-and-unpack [download-url]
-  (let [temp-dir     (str (fs/create-temp-dir  {:prefix "mobdap"}))
-        temp-file    (str (fs/create-temp-file {:prefix "mobdap"}))
-        file-type    (cond
-                       (string/ends-with? download-url ".tar.gz") :tar
-                       (string/ends-with? download-url ".zip")    :zip
-                       :else                                      :unknown)
-        temp-file    (case file-type
-                       :tar (str temp-file ".tar.gz")
-                       :zip (str temp-file ".zip"))]
-
-    (fs/create-dirs temp-dir)
-
-    (log/debug "Downloading" download-url "to" temp-file)
-    (download-file download-url temp-file)
-
-    (case file-type
-      :tar (run-shell "tar" "-xvf" temp-file "-C" temp-dir)
-      :zip (fs/unzip temp-file temp-dir))
-
-    (fs/delete-if-exists temp-file)
-
-    (->
-      temp-dir
-      (fs/glob "**")
-      first
-      str)))
-
 (defn- install-mobdap []
   (let [download-url (format (get-os-arch-value mobdap-urls) mobdap-version)
         mobdap-file  (download-and-unpack download-url)
@@ -69,7 +40,7 @@
     (spit (version-file-path) mobdap-version)
     (log/debug "mobdap: Installed version:" mobdap-version)
 
-    (when-not (is-windows?)
+    (when-not (windows?)
       (fs/set-posix-file-permissions exec-path "rwxr-xr-x"))))
 
 (defn setup []

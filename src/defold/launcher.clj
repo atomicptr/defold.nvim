@@ -4,17 +4,13 @@
    [babashka.process :refer [shell]]
    [clojure.string :as string]
    [com.brainbot.iniconfig :as iniconfig]
-   [defold.utils :refer [cache-dir command-exists? determine-os escape-spaces
-                         is-windows? run-shell sha3]]
+   [defold.neovide :as neovide]
+   [defold.utils :refer [cache-dir command-exists? escape-spaces linux?
+                         merge-seq-setters run-shell seq-replace-var sha3
+                         windows?]]
    [taoensso.timbre :as log]))
 
 (def base-class-name "com.defold.nvim.%s")
-
-(defn- usage []
-  (println "Usage: <file> [line]")
-  (println "    <file>: The file to open")
-  (println "    [line]: Optional. The line number to open the file at")
-  (System/exit 1))
 
 (defn- find-project-root-from-file [file]
   (loop [current-dir (fs/parent (fs/path file))]
@@ -32,31 +28,6 @@
   (let [p (cache-dir "defold.nvim" "runtime" (project-id project-root))]
     (fs/create-dirs p)
     p))
-
-(defn- terminals []
-  (concat
-    [["ghostty" "--class=%s" "-e"]
-     ["foot" "--app-id=%s" "-e"]
-     ["kitty" "--class=%s" "-e"]
-     ["alacritty" "--class=%s" "-e"]
-     ["st" "-c %s" "-e"]]
-    (case (determine-os)
-      :linux   []
-      :mac     []
-      :windows [["wt" "" ""]]
-      :else [])))
-
-(defn- launch-app-in-terminal [class-name cmd & args]
-  (let [term  (some #(when (command-exists? (first %)) %) (terminals))]
-    (if term
-      (let [[term-cmd class-arg run-arg] term]
-        (try
-          (apply run-shell term-cmd (format class-arg class-name) run-arg cmd args)
-          (catch Exception e
-            (log/error "Failed to launch terminal" e)
-            (System/exit 1))))
-      (do (log/error "No supported terminal found, aborting...")
-          (System/exit 1)))))
 
 (defn- switch-focus [type name]
   (let [target (case type
@@ -78,12 +49,25 @@
     (format "edit +%s %s" line (escape-spaces file-name))
     (format "edit %s" (escape-spaces file-name))))
 
-(defn- launch-new-nvim-instance [class-name neovim socket-file file-name line]
-  (if line
-    (launch-app-in-terminal class-name neovim "--listen" socket-file "--remote" (format "\"+%s\"" line) file-name)
-    (launch-app-in-terminal class-name neovim "--listen" socket-file "--remote" file-name)))
+(defn- launch [launcher classname addr filename line]
+  (let [remote-cmd (if line
+                     [(format "+%s" line) filename]
+                     [filename])
+        args       (-> (:args launcher)
+                     (seq-replace-var :classname classname)
+                     (seq-replace-var :addr addr)
+                     (seq-replace-var :remote-cmd remote-cmd)
+                     merge-seq-setters
+                     flatten)]
+    (log/debug "Launch cmd" (:cmd launcher))
+    (log/debug "Launch arguments" args)
+    (try
+      (apply run-shell (:cmd launcher) args)
+      (catch Throwable t
+        (log/error "Failed to launch:" t)
+        (System/exit 1)))))
 
-(defn- run-fsock [neovim root-dir _ filename line edit-cmd]
+(defn- run-fsock [launcher neovim root-dir _ filename line edit-cmd]
   (let [runtime     (runtime-dir root-dir)
         socket-file (str (fs/path runtime "neovim.sock"))
         class-name  (format base-class-name (project-id root-dir))]
@@ -96,8 +80,8 @@
           ; if we couldnt communicate with the server despite existing apparently
           ; delete it and start a new instance
           (fs/delete-if-exists socket-file)
-          (launch-new-nvim-instance class-name neovim socket-file (escape-spaces filename) line)))
-      (launch-new-nvim-instance class-name neovim socket-file (escape-spaces filename) line))))
+          (launch launcher class-name socket-file (escape-spaces filename) line)))
+      (launch launcher class-name socket-file (escape-spaces filename) line))))
 
 (defn- win-port-in-use? [port]
   (string/includes? (:out (shell {:out :string} "netstat" "-aon")) (format ":%s" port)))
@@ -108,7 +92,7 @@
       port
       (recur (+ 1024 (rand-int (- 65535 1024)))))))
 
-(defn- run-netsock [neovim root-dir class-name filename line edit-cmd]
+(defn- run-netsock [launcher neovim root-dir class-name filename line edit-cmd]
   (let [runtime   (runtime-dir root-dir)
         port-path (str (fs/path runtime "port"))
         exists?   (fs/exists? port-path)
@@ -122,15 +106,77 @@
           (log/error "Failed to communicate with neovim server:" e)
           (let [new-port (win-find-free-port)]
             (spit port-path new-port)
-            (launch-new-nvim-instance class-name neovim socket (escape-spaces filename) line))))
-      (launch-new-nvim-instance class-name neovim socket (escape-spaces filename) line))))
+            (launch launcher class-name socket (escape-spaces filename) line))))
+      (launch launcher class-name socket (escape-spaces filename) line))))
 
-(defn run [file-name line]
-  (when (or (< (count *command-line-args*) 1)
-          (> (count *command-line-args*) 2))
-    (usage))
+(defn- create-neovide-launcher [cfg neovim]
+  (let [args (vec
+               (flatten
+                 (filter some?
+                   ["--neovim-bin" neovim
+                    (when (linux?)
+                      ["--wayland_app_id" :classname
+                       "--x11-wm-class" :classname])
+                    "--"
+                    "--listen" :addr
+                    "--remote" :remote-cmd])))]
+    (cond
+      ; custom executable
+      (and (some? (cfg "executable")) (fs/exists? (cfg "executable")))
+      {:cmd (cfg "executable")
+       :args args}
 
+      ; command already installed
+      (command-exists? "neovide")
+      {:cmd (str (fs/which "neovide"))
+       :args args}
+
+      :else
+      {:cmd (let [neovide (neovide/executable-path)]
+              (when-not neovide
+                (throw (ex-info "Could not find neovide, have you installed it?" {}))
+                neovide))
+       :args args})))
+
+(def ^:private default-terminals
+  [["ghostty" "--class=" "-e"]
+   ["foot" "--app-id=" "-e"]
+   ["kitty" "--class=" "-e"]
+   ["alacritty" "--class=" "-e"]
+   ["st" "-c" "-e"]])
+
+(defn- create-terminal-launcher [cfg neovim]
+  (let [class-arg (get-in cfg ["terminal" "class_argument"])
+        run-arg   (or (get-in cfg ["terminal" "run_argument"]) "-e")
+        nvim-args (filter some? ["--listen" :addr "--remote" :remote-cmd])]
+    (cond
+      ; custom executable
+      (and (some? (cfg "executable")) (fs/exists? (cfg "executable")))
+      {:cmd (cfg "executable")
+       :args (flatten
+               (concat
+                 [(when class-arg [class-arg :classname])
+                  run-arg neovim]
+                 nvim-args))}
+
+      ; check default terminals
+      (some #(command-exists? (first %)) default-terminals)
+      (let [[term class-arg run-arg] (some #(when (command-exists? (first %)) %) default-terminals)]
+        {:cmd term
+         :args (flatten (concat [class-arg :classname run-arg neovim] nvim-args))})
+
+      :else
+      (throw (ex-info "Could not find a supported terminal launcher" {})))))
+
+(defn- create-launcher [cfg neovim]
+  (case (cfg "type")
+    "neovide"  (create-neovide-launcher cfg neovim)
+    "terminal" (create-terminal-launcher cfg neovim)
+    (throw (ex-info (format "Unknown launcher type: %s" (cfg "type")) {:launcher-config cfg}))))
+
+(defn run [launcher-config file-name line]
   (let [neovim      (str (fs/which "nvim"))
+        launcher    (create-launcher launcher-config neovim)
         line        (when line (Integer/parseInt line))
         root-dir    (find-project-root-from-file file-name)
         class-name  (format base-class-name (project-id root-dir))
@@ -139,8 +185,8 @@
       (log/error "Could not find neovim" neovim)
       (System/exit 1))
     (cond
-      (is-windows?) (run-netsock neovim root-dir class-name file-name line edit-cmd)
-      :else         (run-fsock   neovim root-dir class-name file-name line edit-cmd))
+      (windows?) (run-netsock launcher neovim root-dir class-name file-name line edit-cmd)
+      :else      (run-fsock   launcher neovim root-dir class-name file-name line edit-cmd))
     (switch-focus :class class-name)))
 
 (defn focus-neovim [root-dir]
