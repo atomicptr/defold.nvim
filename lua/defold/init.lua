@@ -89,7 +89,12 @@ function M.plugin_root()
     return os.plugin_root()
 end
 
-function M.prepare()
+local function prepare() end
+
+---@param opts DefoldNvimConfig|nil
+function M.setup(opts)
+    M.config = vim.tbl_deep_extend("force", default_config, opts or {})
+
     -- persist config for babashka
     local config_path = babashka.config_path()
     vim.fn.writefile({
@@ -100,27 +105,12 @@ function M.prepare()
         },
     }, config_path)
 
-    local ok = babashka.setup(M.config.babashka.custom_executable)
-
-    if not ok then
-        return
-    end
-
-    if M.config.defold.set_default_editor then
-        babashka.run_task_json "set-default-editor"
-    end
-
-    if M.config.debugger.enable then
-        debugger.setup(M.config.debugger.custom_executable, M.config.debugger.custom_arguments)
-    end
-end
-
----@param opts DefoldNvimConfig|nil
-function M.setup(opts)
-    M.config = vim.tbl_deep_extend("force", default_config, opts or {})
-
     vim.api.nvim_create_user_command("SetupDefold", function()
-        babashka.setup(M.config.babashka.custom_executable)
+        local ok = babashka.setup(M.config.babashka.custom_executable)
+
+        if not ok then
+            return
+        end
 
         babashka.run_task "set-default-editor"
 
@@ -132,7 +122,20 @@ function M.setup(opts)
     end, { nargs = 0, desc = "Setup Defold to use Neovim as its default editor" })
 
     local co = coroutine.create(function()
-        M.prepare()
+        -- prepare plugin components before loading
+        local ok = babashka.setup(M.config.babashka.custom_executable)
+
+        if not ok then
+            return
+        end
+
+        if M.config.defold.set_default_editor then
+            babashka.run_task_json "set-default-editor"
+        end
+
+        if M.config.debugger.enable then
+            debugger.setup(M.config.debugger.custom_executable, M.config.debugger.custom_arguments)
+        end
 
         if not M.config.force_plugin_enabled and not M.is_defold_project() then
             return
