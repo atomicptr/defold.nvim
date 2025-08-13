@@ -5,9 +5,9 @@
    [clojure.string :as string]
    [com.brainbot.iniconfig :as iniconfig]
    [defold.neovide :as neovide]
-   [defold.utils :refer [cache-dir command-exists? escape-spaces linux?
-                         merge-seq-setters run-shell seq-replace-var sha3
-                         windows?]]
+   [defold.utils :refer [cache-dir command-exists? escape-spaces
+                         linux? merge-seq-setters run-shell seq-replace-var
+                         sha3 windows?]]
    [taoensso.timbre :as log]))
 
 (def base-class-name "com.defold.nvim.%s")
@@ -80,8 +80,8 @@
           ; if we couldnt communicate with the server despite existing apparently
           ; delete it and start a new instance
           (fs/delete-if-exists socket-file)
-          (launch launcher class-name socket-file (escape-spaces filename) line)))
-      (launch launcher class-name socket-file (escape-spaces filename) line))))
+          (launch launcher class-name socket-file filename line)))
+      (launch launcher class-name socket-file filename line))))
 
 (defn- win-port-in-use? [port]
   (string/includes? (:out (shell {:out :string} "netstat" "-aon")) (format ":%s" port)))
@@ -106,8 +106,8 @@
           (log/error "Failed to communicate with neovim server:" e)
           (let [new-port (win-find-free-port)]
             (spit port-path new-port)
-            (launch launcher class-name socket (escape-spaces filename) line))))
-      (launch launcher class-name socket (escape-spaces filename) line))))
+            (launch launcher class-name socket filename line))))
+      (launch launcher class-name socket filename line))))
 
 (defn- create-neovide-launcher [cfg neovim]
   (let [args (vec
