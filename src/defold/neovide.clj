@@ -42,8 +42,9 @@
       (fs/set-posix-file-permissions exec-path "rwxr-xr-x"))))
 
 (defn setup []
-  (log/debug "neovide: Currently installed version:" (installed-version))
+  (when (get-os-arch-value neovide-urls)
+    (log/debug "neovide: Currently installed version:" (installed-version))
 
-  (cond
-    (not  (fs/exists? (executable-path)))      (install-neovide)
-    (not= (installed-version) neovide-version) (install-neovide)))
+    (cond
+      (not  (fs/exists? (executable-path)))      (install-neovide)
+      (not= (installed-version) neovide-version) (install-neovide))))

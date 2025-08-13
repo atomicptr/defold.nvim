@@ -44,9 +44,10 @@
       (fs/set-posix-file-permissions exec-path "rwxr-xr-x"))))
 
 (defn setup []
-  (log/debug "mobdap: Currently installed version:" (installed-version))
+  (when (get-os-arch-value mobdap-urls)
+    (log/debug "mobdap: Currently installed version:" (installed-version))
 
-  (cond
-    (not  (fs/exists? (executable-path)))     (install-mobdap)
-    (not= (installed-version) mobdap-version) (install-mobdap)))
+    (cond
+      (not  (fs/exists? (executable-path)))     (install-mobdap)
+      (not= (installed-version) mobdap-version) (install-mobdap))))
 

@@ -25,9 +25,9 @@
 (defn determine-arch []
   (let [arch-name (string/lower-case (System/getProperty "os.arch"))]
     (case arch-name
-      ("amd64" "x86")   :x86
-      ("arm" "aarch64") :arm
-      :else             :unknown)))
+      ("amd64" "x86" "x86_64") :x86
+      ("arm" "aarch64")        :arm
+      :else                    :unknown)))
 
 (defn get-os-arch-value [m]
   (get-in m [(determine-os) (determine-arch)]))

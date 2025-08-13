@@ -28,7 +28,7 @@
 (defmulti run
   (fn [type & args]
     (setup-logging! type)
-    (log/info (format "Run command '%s' with args: [%s]" type (string/join " " args)))
+    (log/info (format "Run command '%s' with args: %s" type args))
     type))
 
 (defmethod run :setup [_ config-file]
