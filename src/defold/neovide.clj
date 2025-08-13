@@ -8,6 +8,7 @@
 (def ^:private neovide-version "0.15.1")
 
 (def ^:private neovide-urls
+  ; TODO: add macos support, sadly neovide only offers the executables as .dmg (and then .app) files making the installation kinda cumbersome
   {:linux   {:x86 "https://github.com/neovide/neovide/releases/download/%s/neovide-linux-x86_64.tar.gz"}
    :windows {:x86 "https://github.com/neovide/neovide/releases/download/%s/neovide.exe.zip"}})
 

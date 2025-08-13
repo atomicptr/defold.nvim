@@ -23,7 +23,11 @@ Batteries-included development environment for the [Defold game engine](https://
 
 ### Launchers
 
-Since Neovim is a terminal based application it has to be run through a Terminal, we currently support:
+Since Neovim is a terminal based application it has to be run through something, by default we do this through [Neovide](https://neovide.dev/) or a terminal
+
+**Note**: While optional, I'd recommend you to have Neovide installed and available in your PATH
+
+#### Supported Terminals
 
 - [ghostty](https://ghostty.org/)
 - [kitty](https://sw.kovidgoyal.net/kitty/)
@@ -31,18 +35,21 @@ Since Neovim is a terminal based application it has to be run through a Terminal
 - [foot](https://codeberg.org/dnkl/foot)
 - [st](https://st.suckless.org/)
 
-More to be added, also planning to support custom terminals and GUI frontends like Neovide
-
 ### Other
 
-This plugin is using [Babashka](https://babashka.org) internally to circumvent Neovim Luas API limitations.
-If you do not have Babashka installed on your system, the plugin will download and manage its own local copy
-which will however add a few more requirements.
+We also need some other programs available:
 
-- (Only Linux & Mac) ``lsof``, ``ss`` or ``netstat``
-- (Only Linux & Mac) ``curl`` or ``wget``
-- (Only Linux & Mac) ``tar``
-- (Only Windows): Powershell
+#### Linux & Mac
+
+These should be installed by default on most repos but in case they're not, you have been warned
+
+- ``lsof``, ``ss`` or ``netstat``
+-  ``curl`` or ``wget``
+-  ``tar``
+
+#### Windows
+
+You're in luck, powershell is surprisingly capable so there is nothing else needed
 
 ## Install
 
@@ -68,6 +75,25 @@ which will however add a few more requirements.
 
             -- Enable hot reloading when saving scripts in Neovim (default: true)
             hot_reload_enabled = true,
+        },
+
+
+        launcher = {
+            -- How to run neovim "neovide" or "terminal" (default: neovide)
+            type = "neovide",
+
+            -- path to your neovim or terminal executable (optional)
+            executable = nil,
+
+            -- configure how the terminal is run (optional)
+            terminal = {
+
+                -- argument to define how to set the class name of the terminal, usually something like "--class="
+                class_argument = nil,
+
+                -- argument to define how to run neovim, usually "-e"
+                run_argument = nil,
+            }
         },
 
         debugger = {
