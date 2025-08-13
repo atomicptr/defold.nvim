@@ -5,7 +5,7 @@
    [clojure.string :as string]
    [com.brainbot.iniconfig :as iniconfig]
    [defold.utils :refer [cache-dir command-exists? determine-os escape-spaces
-                         is-windows? sha3]]
+                         is-windows? run-shell sha3]]
    [taoensso.timbre :as log]))
 
 (def base-class-name "com.defold.nvim.%s")
@@ -15,20 +15,6 @@
   (println "    <file>: The file to open")
   (println "    [line]: Optional. The line number to open the file at")
   (System/exit 1))
-
-(defn- remove-ansi-codes [s]
-  (string/replace s #"\x1B\[([0-9A-Za-z;?])*[\w@]" ""))
-
-(defn- run-shell [& cmd]
-  (log/info "run-shell:" cmd)
-  (let [res (apply shell {:out :string :err :string} cmd)
-        out (remove-ansi-codes (:out res))
-        err (remove-ansi-codes (:err res))]
-    (when (and (some? out) (not-empty out))
-      (log/debug "run-shell result:" out))
-    (when (and (some? err) (not-empty err))
-      (log/error "run-shell error:" err))
-    res))
 
 (defn- find-project-root-from-file [file]
   (loop [current-dir (fs/parent (fs/path file))]

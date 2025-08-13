@@ -4,106 +4,11 @@ local project = require "defold.project"
 local babashka = require "defold.service.babashka"
 local log = require "defold.service.logger"
 
-local mobdap_version = "0.1.4"
-local mobdap_url = "https://github.com/atomicptr/mobdap/releases/download/v%s/mobdap-%s-%s.%s"
-
 local M = {}
 
 M.custom_executable = nil
 M.custom_arguments = nil
-
-local function local_mobdap_path()
-    local meta_data_path = vim.fs.joinpath(vim.fn.stdpath "data", "defold.nvim", "meta.json")
-    local mobdap_path = vim.fs.joinpath(vim.fn.stdpath "data", "defold.nvim", "bin", "mobdap")
-
-    if os.is_windows() then
-        mobdap_path = mobdap_path .. ".exe"
-    end
-
-    local meta_data = nil
-
-    if os.file_exists(meta_data_path) then
-        local content = vim.fn.readfile(meta_data_path)
-        meta_data = vim.fn.json_decode(table.concat(content))
-    end
-
-    if meta_data and meta_data.mobdap_version == mobdap_version and os.file_exists(mobdap_path) then
-        return mobdap_path
-    end
-
-    meta_data = meta_data or {}
-
-    log.info(string.format("Downloading mobdap %s", mobdap_version))
-
-    vim.fn.mkdir(vim.fs.dirname(mobdap_path), "p")
-
-    local file_ending = "tar.gz"
-
-    if os.is_windows() then
-        file_ending = "zip"
-    end
-
-    local architecture = os.architecture()
-
-    if architecture == "aarch64" then
-        architecture = "arm64"
-    end
-
-    local url = string.format(mobdap_url, mobdap_version, os.name(), architecture, file_ending)
-
-    local download_path = mobdap_path .. "." .. file_ending
-
-    os.download(url, download_path)
-
-    if not os.file_exists(download_path) then
-        log.error(string.format("Unable to download '%s' to '%s', something went wrong", url, download_path))
-        return nil
-    end
-
-    if not os.is_windows() then
-        os.exec(string.format("tar -xf '%s' --strip-components 2 -C '%s'", download_path, vim.fs.dirname(mobdap_path)))
-        os.move(string.format("%s-%s", mobdap_path, mobdap_version), mobdap_path)
-        os.make_executable(mobdap_path)
-    else
-        os.exec(
-            string.format(
-                'powershell -Command "Expand-Archive -Path %s -DestinationPath %s"',
-                download_path,
-                vim.fs.dirname(mobdap_path)
-            )
-        )
-        os.move(
-            string.format(
-                "%s-%s.exe",
-                vim.fs.joinpath(vim.fn.stdpath "data", "defold.nvim", "bin", "mobdap"),
-                mobdap_version
-            ),
-            mobdap_path
-        )
-    end
-
-    if os.file_exists(download_path) then
-        vim.fs.rm(download_path)
-    end
-
-    if not os.file_exists(mobdap_path) then
-        log.error(
-            string.format(
-                "Could not install '%s' (downloaded from: '%s', unpacked from '%s'), something went wrong",
-                mobdap_path,
-                url,
-                download_path
-            )
-        )
-        return nil
-    end
-
-    meta_data.mobdap_version = mobdap_version
-    local json = vim.fn.json_encode(meta_data)
-    vim.fn.writefile({ json }, meta_data_path)
-
-    return mobdap_path
-end
+M.path = nil
 
 ---@return string|nil
 function M.mobdap_path()
@@ -115,7 +20,19 @@ function M.mobdap_path()
         return vim.fn.exepath "mobdap"
     end
 
-    return local_mobdap_path()
+    if M.path then
+        return M.path
+    end
+
+    local res = babashka.run_task_json "mobdap-path"
+
+    if res.status ~= 200 then
+        log.error("Unable to locate debugger: " .. vim.inspect(res))
+        return nil
+    end
+
+    M.path = res.mobdap_path
+    return res.mobdap_path
 end
 
 ---@param custom_executable string|nil

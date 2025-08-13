@@ -29,12 +29,12 @@
     (subs hash 0 8)))
 
 (defn- cache-dir [ident]
-  (let [path (utils/cache-dir "defold.nvim" ident "cache")]
+  (let [path (utils/cache-dir "defold.nvim" "cache" ident)]
     (fs/create-dirs path)
     path))
 
 (defn- deps-dir [ident]
-  (let [path (utils/data-dir "defold.nvim" ident "deps")]
+  (let [path (utils/data-dir "defold.nvim" "deps" ident)]
     (fs/create-dirs path)
     path))
 
@@ -45,10 +45,7 @@
         zip-dir       (str (fs/path base-dir file-ident))
         download-path (str (fs/path base-dir filename))]
     (when (not (fs/exists? download-path))
-      (let [response (http/get file-url {:as :stream})]
-        (with-open [in  (:body response)
-                    out (io/output-stream download-path)]
-          (io/copy in out))))
+      (utils/download-file file-url download-path))
     (when (not (fs/exists? zip-dir))
       (fs/create-dirs zip-dir)
       (fs/unzip download-path zip-dir {:replace-existing true}))))

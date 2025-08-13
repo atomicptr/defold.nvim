@@ -71,10 +71,25 @@ function M.plugin_root()
 end
 
 function M.prepare()
-    babashka.setup {
-        custom_executable = M.config.babashka.custom_executable,
-        set_editor = M.config.defold.set_default_editor,
-    }
+    -- persist config for babashka
+    local config_path = babashka.config_path()
+    vim.fn.writefile({
+        vim.fn.json_encode {
+            data_dir = vim.fn.stdpath "data",
+            bb_path = babashka.bb_path(),
+            plugin_config = M.config,
+        },
+    }, config_path)
+
+    local ok = babashka.setup(M.config.babashka.custom_executable)
+
+    if not ok then
+        return
+    end
+
+    if M.config.defold.set_default_editor then
+        babashka.run_task_json "set-default-editor"
+    end
 
     if M.config.debugger.enable then
         debugger.setup(M.config.debugger.custom_executable, M.config.debugger.custom_arguments)
@@ -86,9 +101,9 @@ function M.setup(opts)
     M.config = vim.tbl_deep_extend("force", default_config, opts or {})
 
     vim.api.nvim_create_user_command("SetupDefold", function()
-        babashka.run_task("set-default-editor", { babashka.setup {
-            set_editor = true,
-        } })
+        babashka.setup(M.config.babashka.custom_executable)
+
+        babashka.run_task "set-default-editor"
 
         if M.config.debugger.enable then
             debugger.setup(M.config.debugger.custom_executable, M.config.debugger.custom_arguments)
@@ -115,9 +130,6 @@ function M.load_plugin()
     log.debug("Babashka Path: " .. babashka.bb_path())
     log.debug("Mobdap Path: " .. debugger.mobdap_path())
     log.debug("Config: " .. vim.inspect(M.config))
-
-    -- init babashka
-    babashka.run_task("init", {})
 
     -- register filetypes
     vim.filetype.add(require "defold.config.filetype")

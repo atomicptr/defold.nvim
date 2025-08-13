@@ -9,7 +9,7 @@ local M = {}
 M.custom_executable = nil
 
 ---@return string|nil
-local function local_bb()
+function M.local_bb_path()
     local meta_data_path = vim.fs.joinpath(vim.fn.stdpath "data", "defold.nvim", "meta.json")
     local bb_path = vim.fs.joinpath(vim.fn.stdpath "data", "defold.nvim", "bin", "bb")
 
@@ -97,7 +97,7 @@ function M.bb_path()
         return vim.fn.exepath "bb"
     end
 
-    return local_bb()
+    return M.local_bb_path()
 end
 
 function M.bb_edn_path()
@@ -105,30 +105,39 @@ function M.bb_edn_path()
     return vim.fs.joinpath(plugin_root, "bb.edn")
 end
 
----@class BabashkaConfig
----@field set_editor boolean
----@field custom_executable string|nil
+function M.config_path()
+    return vim.fs.joinpath(vim.fn.stdpath "data", "defold.nvim", "config.json")
+end
 
----@param opts BabashkaConfig
----@return string
-function M.setup(opts)
-    M.custom_executable = opts.custom_executable
+---@param custom_executable string|nil
+---@return boolean
+function M.setup(custom_executable)
+    M.custom_executable = custom_executable
 
     -- make sure bb is available
-    local bb = M.bb_path()
+    M.bb_path()
 
-    if opts.set_editor then
-        M.run_task_json("set-default-editor", { bb })
+    local res = M.run_task_json("setup", {})
+    if res.status ~= 200 then
+        log.error "Could not initialize babashka, check error logs"
+        return false
     end
 
-    assert(bb)
-    return bb
+    return true
 end
 
 function M.run_task(task, args)
     log.debug(string.format("Run Babashka task: %s %s", task, vim.inspect(args)))
 
-    local params = table.concat(args or {}, " ")
+    local args_to_send = {}
+
+    table.insert(args_to_send, M.config_path())
+
+    for _, arg in ipairs(args or {}) do
+        table.insert(args_to_send, arg)
+    end
+
+    local params = table.concat(args_to_send, " ")
     local cmd = string.format("%s --config '%s' run %s %s", M.bb_path(), M.bb_edn_path(), task, params)
     return os.exec(cmd)
 end
