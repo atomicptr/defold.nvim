@@ -47,4 +47,7 @@
 
     (cond
       (not  (fs/exists? (executable-path)))      (install-neovide)
-      (not= (installed-version) neovide-version) (install-neovide))))
+      (not= (installed-version) neovide-version) (install-neovide)
+      :else (log/debug "neovide: Nothing to do...."))
+
+    (log/debug "neovide: Installed at" (executable-path))))

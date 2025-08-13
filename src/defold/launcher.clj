@@ -184,6 +184,9 @@
         root-dir    (find-project-root-from-file file-name)
         class-name  (format base-class-name (project-id root-dir))
         edit-cmd    (make-neovim-edit-command file-name line)]
+    (when (or (nil? (:cmd launcher)) (not (command-exists? (:cmd launcher))))
+      (log/error "Could not create launcher" (:cmd launcher))
+      (System/exit 1))
     (when (not (command-exists? neovim))
       (log/error "Could not find neovim" neovim)
       (System/exit 1))

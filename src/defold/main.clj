@@ -49,8 +49,10 @@
     (print-json (editor-config/set-default-editor config-file (conf "bb_path")))))
 
 (defmethod run :install-dependencies
-  ([_ config game-project] (run :install-dependencies config game-project false))
-  ([_ _ game-project force-redownload] (print-json (project/install-dependencies game-project force-redownload))))
+  ([_ _ game-project]
+   (print-json (project/install-dependencies game-project false)))
+  ([_ _ game-project force-redownload]
+   (print-json (project/install-dependencies game-project force-redownload))))
 
 (defmethod run :list-commands [_ _]
   (print-json (editor/list-commands)))
@@ -63,7 +65,8 @@
 
 (defmethod run :launch-neovim
   ([_ config-file filename]
-   (run :launch-neovim config-file filename nil))
+   (let [conf (parse-config config-file)]
+     (launcher/run (get-in conf ["plugin_config" "launcher"]) filename nil)))
   ([_ config-file filename line]
    (let [conf (parse-config config-file)]
      (launcher/run (get-in conf ["plugin_config" "launcher"]) filename line))))

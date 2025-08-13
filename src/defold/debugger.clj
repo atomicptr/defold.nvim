@@ -49,5 +49,8 @@
 
     (cond
       (not  (fs/exists? (executable-path)))     (install-mobdap)
-      (not= (installed-version) mobdap-version) (install-mobdap))))
+      (not= (installed-version) mobdap-version) (install-mobdap)
+      :else (log/debug "mobdap: Nothing to do..."))
+
+    (log/debug "mobdap: Installed at" (executable-path))))
 

@@ -8,11 +8,7 @@
    [taoensso.timbre :as log]))
 
 (defn command-exists? [cmd]
-  (try
-    (not (nil? (fs/which cmd)))
-    (catch Throwable t
-      (println t)
-      false)))
+  (some? (fs/which cmd)))
 
 (defn determine-os []
   (let [os-name (string/lower-case (System/getProperty "os.name"))]
