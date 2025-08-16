@@ -87,58 +87,78 @@ You're in luck, powershell is surprisingly capable so there is nothing else need
     },
 
     opts = {
-        defold = {
-            -- Automatically set defold.nvim as the default editor in Defold (default: true)
-            set_default_editor = true,
-
-            -- Automatically fetch dependencies on launch (default: true)
-            auto_fetch_dependencies = true,
-
-            -- Enable hot reloading when saving scripts in Neovim (default: true)
-            hot_reload_enabled = true,
-        },
-
-
-        launcher = {
-            -- How to run neovim "neovide" or "terminal" (default: neovide)
-            type = "neovide",
-
-            -- path to your neovim or terminal executable (optional)
-            executable = nil,
-
-            -- extra arguments passed to the `executable` (or neovide)
-            extra_arguments = nil,
-
-            -- configure how the terminal is run (optional)
-            terminal = {
-                -- argument to define how to set the class name of the terminal, usually something like "--class="
-                class_argument = nil,
-
-                -- argument to define how to run neovim, usually "-e"
-                run_argument = nil,
-            }
-        },
-
-        debugger = {
-            -- Enable the debugger (default: true)
-            enable = true,
-
-            -- Use a custom executable for the debugger (default: nil)
-            custom_executable = nil,
-
-            -- Add custom arguments to the debugger (default: nil)
-            custom_arguments = nil,
-        },
-
-        babashka = {
-            -- Use a custom executable for babashka (default: nil)
-            custom_executable = nil,
-        },
-
-        -- Force the plugin to be always enabled (even if we can't find the game.project file) (default: false)
-        force_plugin_enabled = false,
+        -- config options, see below
     },
 }
+```
+
+### Other
+
+defold.nvim utilizes lazy loading backed into the plugin, so all you gotta do is call our `.setup(opts)` function to use it
+
+```lua
+local defold = require "defold"
+defold.setup(config) -- config options, see below
+```
+
+## Configuration
+
+```lua
+local config = {
+    defold = {
+        -- Automatically set defold.nvim as the default editor in Defold (default: true)
+        set_default_editor = true,
+
+        -- Automatically fetch dependencies on launch (default: true)
+        auto_fetch_dependencies = true,
+
+        -- Enable hot reloading when saving scripts in Neovim (default: true)
+        hot_reload_enabled = true,
+    },
+
+
+    launcher = {
+        -- How to run neovim "neovide" or "terminal" (default: neovide)
+        type = "neovide",
+
+        -- path to your neovim or terminal executable (optional)
+        executable = nil,
+
+        -- extra arguments passed to the `executable` (or neovide)
+        extra_arguments = nil,
+
+        -- configure how the terminal is run (optional)
+        terminal = {
+            -- argument to define how to set the class name of the terminal, usually something like "--class="
+            class_argument = nil,
+
+            -- argument to define how to run neovim, usually "-e"
+            run_argument = nil,
+        }
+    },
+
+    debugger = {
+        -- Enable the debugger (default: true)
+        enable = true,
+
+        -- Use a custom executable for the debugger (default: nil)
+        custom_executable = nil,
+
+        -- Add custom arguments to the debugger (default: nil)
+        custom_arguments = nil,
+    },
+
+    babashka = {
+        -- Use a custom executable for babashka (default: nil)
+        custom_executable = nil,
+    },
+
+    -- Force the plugin to be always enabled (even if we can't find the game.project file) (default: false)
+    force_plugin_enabled = false,
+}
+
+local defold = require "defold"
+defold.setup(config)
 ```
 
 ## Setup
