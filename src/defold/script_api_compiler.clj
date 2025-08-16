@@ -2,6 +2,19 @@
   (:require [clj-yaml.core :as yaml]
             [clojure.string :as string]))
 
+(defn- optional? [name]
+  (string/ends-with? name "[optional]"))
+
+(defn- get-param-name [p]
+  (-> p
+    :name
+    (string/replace #"\[optional\]" "")))
+
+(defn- get-param-type [p]
+  (if (optional? (:name p))
+    (format "%s|nil" (:type p))
+    (:type p)))
+
 (defn- split-long-string [s max-len]
   (loop [remaining-s s
          result []]
@@ -36,15 +49,15 @@
     (= (:type param) "function")
     (do
       (print "---@param"
-        (:name param)
-        (str "fun("  (string/join ", " (map #(str (:name %) ": " (:type %)) (:parameters param))) ")"))
+        (get-param-name param)
+        (str "fun("  (string/join ", " (map #(str (get-param-name %) ": " (get-param-type %)) (:parameters param))) ")"))
       (when (:returns param)
         (print ":" (string/join "|" (map :type (:returns param)))))
       (println ""))
 
     :else
     (do
-      (print "---@param" (:name param) (:type param))
+      (print "---@param" (get-param-name param) (get-param-type param))
       (when (:desc param)
         (print " ")
         (compile-comment-description (:desc param) "    ")))))
@@ -58,7 +71,7 @@
     (compile-comment-description (:desc return) "    ")))
 
 (defn- compile-params-list [parameters]
-  (string/join ", " (map :name parameters)))
+  (string/join ", " (map get-param-name parameters)))
 
 (defn- compile-function [function parent]
   (println "")
