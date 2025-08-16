@@ -1,12 +1,4 @@
-local babashka = require "defold.service.babashka"
-local debugger = require "defold.service.debugger"
-local editor = require "defold.editor"
-local log = require "defold.service.logger"
-local os = require "defold.service.os"
-local project = require "defold.project"
-local snippets = require "defold.service.snippets"
-
-local root_markers = { "game.project", ".git" }
+local root_markers = { "game.project" }
 
 ---@class DefoldEditorSettings Settings for the Defold Game Engine
 ---@field set_default_editor boolean Automatically set defold.nvim as the default editor in Defold
@@ -69,6 +61,9 @@ local default_config = {
 
 local M = {}
 
+---@type boolean
+M.loaded = false
+
 ---@type DefoldNvimConfig
 M.config = default_config
 
@@ -86,13 +81,15 @@ end
 
 ---@return string
 function M.plugin_root()
+    local os = require "defold.service.os"
     return os.plugin_root()
 end
 
-local function prepare() end
-
 ---@param opts DefoldNvimConfig|nil
 function M.setup(opts)
+    local babashka = require "defold.service.babashka"
+    local log = require "defold.service.logger"
+
     M.config = vim.tbl_deep_extend("force", default_config, opts or {})
 
     -- persist config for babashka
@@ -105,7 +102,10 @@ function M.setup(opts)
         },
     }, config_path)
 
+    -- add setup defold command
     vim.api.nvim_create_user_command("SetupDefold", function()
+        local debugger = require "defold.service.debugger"
+
         local ok = babashka.setup(M.config.babashka.custom_executable)
 
         if not ok then
@@ -120,38 +120,6 @@ function M.setup(opts)
 
         log.info "Defold setup successfully"
     end, { nargs = 0, desc = "Setup Defold to use Neovim as its default editor" })
-
-    local co = coroutine.create(function()
-        -- prepare plugin components before loading
-        local ok = babashka.setup(M.config.babashka.custom_executable)
-
-        if not ok then
-            return
-        end
-
-        if M.config.defold.set_default_editor then
-            babashka.run_task_json "set-default-editor"
-        end
-
-        if M.config.debugger.enable then
-            debugger.setup(M.config.debugger.custom_executable, M.config.debugger.custom_arguments)
-        end
-
-        if not M.config.force_plugin_enabled and not M.is_defold_project() then
-            return
-        end
-
-        M.load_plugin()
-    end)
-
-    coroutine.resume(co)
-end
-
-function M.load_plugin()
-    log.debug "============= defold.nvim: Loaded plugin"
-    log.debug("Babashka Path: " .. babashka.bb_path())
-    log.debug("Mobdap Path: " .. debugger.mobdap_path())
-    log.debug("Config: " .. vim.inspect(M.config))
 
     -- register filetypes
     vim.filetype.add(require "defold.config.filetype")
@@ -169,21 +137,76 @@ function M.load_plugin()
                     return
                 end
 
+                -- cant connect to client?
                 local client = vim.lsp.get_client_by_id(ev.data.client_id)
                 if not client then
                     return
                 end
 
+                local lsp_config = require "defold.config.lsp"
+
+                log.debug(string.format("For %s, loaded lsp config %s", root, vim.inspect(lsp_config)))
+
                 client.root_dir = root
-                client.settings = vim.tbl_deep_extend("force", client.settings or {}, require "defold.config.lsp")
+                client.settings = vim.tbl_deep_extend("force", client.settings or {}, lsp_config)
+
+                -- load plugin, if not already loaded
+                M.load_plugin()
             end
         end,
     })
 
+    vim.defer_fn(function()
+        local debugger = require "defold.service.debugger"
+
+        -- prepare plugin components before loading
+        local ok = babashka.setup(M.config.babashka.custom_executable)
+
+        if not ok then
+            return
+        end
+
+        if M.config.defold.set_default_editor then
+            babashka.run_task_json "set-default-editor"
+        end
+
+        if M.config.debugger.enable then
+            debugger.setup(M.config.debugger.custom_executable, M.config.debugger.custom_arguments)
+        end
+
+        if not M.config.force_plugin_enabled and not M.is_defold_project() then
+            local root_dir = vim.fs.root(0, root_markers)
+            log.debug(string.format("Project was not loaded because: '%s' was not a Defold project", root_dir))
+            return
+        end
+
+        M.load_plugin()
+    end, 0)
+end
+
+function M.load_plugin()
+    if M.loaded then
+        return
+    end
+
+    M.loaded = true
+
+    local babashka = require "defold.service.babashka"
+    local debugger = require "defold.service.debugger"
+    local editor = require "defold.editor"
+    local log = require "defold.service.logger"
+    local project = require "defold.project"
+    local snippets = require "defold.service.snippets"
+
+    log.debug "============= defold.nvim: Loaded plugin"
+    log.debug("Babashka Path: " .. babashka.bb_path())
+    log.debug("Mobdap Path: " .. debugger.mobdap_path())
+    log.debug("Config: " .. vim.inspect(M.config))
+
     -- register hot reload when saving lua files
     if M.config.defold.hot_reload_enabled then
         vim.api.nvim_create_autocmd("BufWritePost", {
-            pattern = { "*.lua", "*.script" },
+            pattern = { "*.lua", "*.script", "*.gui_script" },
             callback = function()
                 editor.send_command("hot-reload", true)
             end,
@@ -202,8 +225,8 @@ function M.load_plugin()
         end
 
         for cmd, desc in pairs(commands) do
-            -- hide debugger related commands as they'd give the user the impression that these work with our debugger integration
-            -- which they dont
+            -- hide debugger related commands as they'd give the user the impression that these
+            -- work with our debugger integration
             local is_debugger_command = string.find(cmd, "debugger")
 
             if not is_debugger_command then

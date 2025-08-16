@@ -1,10 +1,10 @@
-local log = require "defold.service.logger"
-
 local M = {}
 
 ---@param command string
 ---@return string
 function M.exec(command)
+    local log = require "defold.service.logger"
+
     log.debug("Exec: " .. command)
     local res = vim.fn.system(command)
     log.debug("Result => " .. res)
@@ -50,6 +50,8 @@ end
 ---@param url string
 ---@param to_path string
 function M.download(url, to_path)
+    local log = require "defold.service.logger"
+
     log.debug(string.format("Downloading '%s' to '%s'", url, to_path))
 
     if M.is_windows() then
@@ -104,9 +106,11 @@ end
 ---Find the root dir of our plugin
 ---@return string
 function M.plugin_root()
+    local log = require "defold.service.logger"
+
     local script_path = debug.getinfo(1, "S").source
 
-    if not string.sub(script_path, 1, 1) == "@" then
+    if string.sub(script_path, 1, 1) ~= "@" then
         log.error "Could not find plugin root"
         return ""
     end

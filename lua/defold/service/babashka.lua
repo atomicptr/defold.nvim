@@ -1,6 +1,3 @@
-local os = require "defold.service.os"
-local log = require "defold.service.logger"
-
 local bb_version = "1.12.207"
 local bb_url = "https://github.com/babashka/babashka/releases/download/v%s/babashka-%s-%s-%s.%s"
 
@@ -10,6 +7,9 @@ M.custom_executable = nil
 
 ---@return string|nil
 function M.local_bb_path()
+    local os = require "defold.service.os"
+    local log = require "defold.service.logger"
+
     local meta_data_path = vim.fs.joinpath(vim.fn.stdpath "data", "defold.nvim", "meta.json")
     local bb_path = vim.fs.joinpath(vim.fn.stdpath "data", "defold.nvim", "bin", "bb")
 
@@ -89,6 +89,8 @@ end
 
 ---@return string|nil
 function M.bb_path()
+    local os = require "defold.service.os"
+
     if M.custom_executable then
         return M.custom_executable
     end
@@ -101,6 +103,8 @@ function M.bb_path()
 end
 
 function M.bb_edn_path()
+    local os = require "defold.service.os"
+
     local plugin_root = os.plugin_root()
     return vim.fs.joinpath(plugin_root, "bb.edn")
 end
@@ -112,6 +116,8 @@ end
 ---@param custom_executable string|nil
 ---@return boolean
 function M.setup(custom_executable)
+    local log = require "defold.service.logger"
+
     M.custom_executable = custom_executable
 
     -- make sure bb is available
@@ -127,6 +133,9 @@ function M.setup(custom_executable)
 end
 
 function M.run_task(task, args)
+    local os = require "defold.service.os"
+    local log = require "defold.service.logger"
+
     log.debug(string.format("Run Babashka task: %s %s", task, vim.inspect(args)))
 
     local args_to_send = {}

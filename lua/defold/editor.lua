@@ -1,11 +1,11 @@
-local babashka = require "defold.service.babashka"
-local log = require "defold.service.logger"
-
 local M = {}
 
 ---List all available Defold commands
 ---@return table|nil
 function M.list_commands()
+    local babashka = require "defold.service.babashka"
+    local log = require "defold.service.logger"
+
     local res = babashka.run_task_json "list-commands"
 
     if not res then
@@ -25,6 +25,9 @@ end
 ---@param command string
 ---@param dont_report_error boolean|nil
 function M.send_command(command, dont_report_error)
+    local babashka = require "defold.service.babashka"
+    local log = require "defold.service.logger"
+
     local res = babashka.run_task_json("send-command", { command })
 
     if res.status == 202 then

@@ -1,9 +1,3 @@
-local editor = require "defold.editor"
-local os = require "defold.service.os"
-local project = require "defold.project"
-local babashka = require "defold.service.babashka"
-local log = require "defold.service.logger"
-
 local M = {}
 
 M.custom_executable = nil
@@ -12,6 +6,10 @@ M.path = nil
 
 ---@return string|nil
 function M.mobdap_path()
+    local os = require "defold.service.os"
+    local babashka = require "defold.service.babashka"
+    local log = require "defold.service.logger"
+
     if M.custom_executable then
         return M.custom_executable
     end
@@ -45,12 +43,18 @@ function M.setup(custom_executable, custom_arguments)
 end
 
 function M.register_nvim_dap()
+    local log = require "defold.service.logger"
+
     local ok, dap = pcall(require, "dap")
 
     if not ok then
         log.error "Debugger enabled but could not find plugin: mfussenegger/nvim-dap"
         return
     end
+
+    local babashka = require "defold.service.babashka"
+    local editor = require "defold.editor"
+    local project = require "defold.project"
 
     dap.adapters.defold_nvim = {
         id = "defold_nvim",
