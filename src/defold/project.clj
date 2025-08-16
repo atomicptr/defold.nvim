@@ -85,14 +85,14 @@
 (defn install-dependencies [game-project-file force-redownload]
   (try (when (not (fs/exists? game-project-file))
          (throw (ex-info (str "Could not find game.project file at: " game-project-file) {})))
+       (when force-redownload
+         (fs/delete-tree deps-dir)
+         (fs/delete-tree cache-dir))
        (let [ident     (make-ident game-project-file)
              ini       (iniconfig/read-ini game-project-file)
              deps      (get-dependencies ini)
              deps-dir  (deps-dir ident)
              cache-dir (cache-dir ident)]
-         (when force-redownload
-           (fs/delete-tree deps-dir)
-           (fs/delete-tree cache-dir))
          (doseq [url deps]
            (let [url-ident  (make-ident url)
                  cache-path (fs/path cache-dir url-ident)
