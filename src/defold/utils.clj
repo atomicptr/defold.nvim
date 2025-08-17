@@ -71,15 +71,16 @@
   (string/replace s #"\x1B\[([0-9A-Za-z;?])*[\w@]" ""))
 
 (defn run-shell [& cmd]
-  (log/info "run-shell:" cmd)
-  (let [res (apply shell {:out :string :err :string} cmd)
-        out (remove-ansi-codes (:out res))
-        err (remove-ansi-codes (:err res))]
-    (when (and (some? out) (not-empty out))
-      (log/debug "run-shell result:" out))
-    (when (and (some? err) (not-empty err))
-      (log/error "run-shell error:" err))
-    res))
+  (let [cmd (vec (filter some? cmd))]
+    (log/info "run-shell:" cmd)
+    (let [res (apply shell {:out :string :err :string} cmd)
+          out (remove-ansi-codes (:out res))
+          err (remove-ansi-codes (:err res))]
+      (when (and (some? out) (not-empty out))
+        (log/debug "run-shell result:" out))
+      (when (and (some? err) (not-empty err))
+        (log/error "run-shell error:" err))
+      res)))
 
 (defn download-file [url path]
   (let [response (http/get url {:as :stream})]
@@ -126,3 +127,5 @@
         (recur (conj result (str x y)) rest)
         (recur (conj result x) (cons y rest))))))
 
+(defn project-id [project-root]
+  (subs (sha3 project-root) 0 8))

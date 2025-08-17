@@ -1,8 +1,6 @@
 (ns defold.project
   (:require
    [babashka.fs :as fs]
-   [babashka.http-client :as http]
-   [clojure.java.io :as io]
    [clojure.string :as string]
    [com.brainbot.iniconfig :as iniconfig]
    [defold.script-api-compiler :as script-api-compiler]

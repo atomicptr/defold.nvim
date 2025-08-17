@@ -4,6 +4,7 @@
    [babashka.process :refer [shell]]
    [cheshire.core :as json]
    [clojure.string :as string]
+   [defold.constants :refer [mobdap-port]]
    [defold.utils :refer [command-exists?]]
    [taoensso.timbre :as log]))
 
@@ -11,7 +12,7 @@
   (str "http://127.0.0.1:" port "/command/" (string/lower-case cmd)))
 
 (defn- is-defold-port? [port]
-  (when (not= (Integer/parseInt port) 18172) ; TODO: the debugger port, get this from a config or something
+  (when (not= (Integer/parseInt port) mobdap-port)
     (try (let [res    (http/head (make-command-url port "") {:timeout 100})
                status (:status res)]
            (= status 200))

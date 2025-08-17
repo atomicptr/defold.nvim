@@ -2,10 +2,10 @@
   (:require
    [babashka.fs :as fs]
    [cheshire.core :as json]
-   [clojure.string :as string]
    [defold.debugger :as debugger]
    [defold.editor :as editor]
    [defold.editor-config :as editor-config]
+   [defold.focus :as focus]
    [defold.launcher :as launcher]
    [defold.logging :as logging]
    [defold.neovide :as neovide]
@@ -72,10 +72,10 @@
      (launcher/run (get-in conf ["plugin_config" "launcher"]) filename line))))
 
 (defmethod run :focus-neovim [_ _ root-dir]
-  (print-json (launcher/focus-neovim root-dir)))
+  (print-json (focus/focus-neovim root-dir)))
 
 (defmethod run :focus-game [_ _ root-dir]
-  (print-json (launcher/focus-game root-dir)))
+  (print-json (focus/focus-game root-dir)))
 
 (defmethod run :mobdap-path [_ _]
   (let [path (debugger/executable-path)]

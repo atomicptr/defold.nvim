@@ -3,14 +3,13 @@
    [babashka.fs :as fs]
    [babashka.process :refer [shell]]
    [clojure.string :as string]
-   [com.brainbot.iniconfig :as iniconfig]
+   [defold.constants :refer [base-class-name]]
+   [defold.focus :refer [switch-focus]]
    [defold.neovide :as neovide]
-   [defold.utils :refer [cache-dir command-exists? escape-spaces
-                         linux? merge-seq-setters run-shell seq-replace-var
-                         sha3 windows?]]
+   [defold.utils :refer [cache-dir command-exists? escape-spaces linux?
+                         merge-seq-setters project-id run-shell
+                         seq-replace-var windows?]]
    [taoensso.timbre :as log]))
-
-(def base-class-name "com.defold.nvim.%s")
 
 (defn- find-project-root-from-file [file]
   (loop [current-dir (fs/parent (fs/path file))]
@@ -21,28 +20,10 @@
           (str current-dir)
           (recur (fs/parent current-dir)))))))
 
-(defn- project-id [project-root]
-  (subs (sha3 project-root) 0 8))
-
 (defn- runtime-dir [project-root]
   (let [p (cache-dir "defold.nvim" "runtime" (project-id project-root))]
     (fs/create-dirs p)
     p))
-
-(defn- switch-focus [type name]
-  (let [target (case type
-                 :class (format "class:%s" name)
-                 :title (format "title:%s" name)
-                 (throw (ex-info (format "Unknown type: %s" type) {})))]
-    (log/info "Switching to:" target)
-    (try
-      (cond
-        (command-exists? "hyprctl") (run-shell "hyprctl" "dispatch" "focuswindow" target)
-
-        :else
-        (log/error "No supported focus switcher found, do nothing..."))
-      (catch Exception e
-        (log/error "Could not switch focus, do nothing..." e)))))
 
 (defn- make-neovim-edit-command [file-name line]
   (if line
@@ -194,28 +175,3 @@
       (windows?) (run-netsock launcher neovim root-dir class-name file-name line edit-cmd)
       :else      (run-fsock   launcher neovim root-dir class-name file-name line edit-cmd))
     (switch-focus :class class-name)))
-
-(defn focus-neovim [root-dir]
-  (try
-    (assert (some? root-dir))
-    (assert (fs/exists? (fs/path root-dir "game.project")))
-    (let [class-name (format base-class-name (project-id root-dir))
-          res (with-out-str (switch-focus :class class-name))]
-      {"status" 200 "res" res})
-    (catch Throwable t
-      (log/error "focus-neovim: Error" (ex-message t) t)
-      {"error" (ex-message t)})))
-
-(defn focus-game [root-dir]
-  (try
-    (assert (some? root-dir))
-    (let [game-project (fs/path root-dir "game.project")
-          _            (assert (fs/exists? game-project))
-          config       (iniconfig/read-ini (str game-project))
-          title        (get-in config ["project" "title"])
-          _            (assert (some? title))
-          res (with-out-str (switch-focus :title title))]
-      {"status" 200 "res" res})
-    (catch Throwable t
-      (log/error "focus-game: Error" (ex-message t) t)
-      {"error" (ex-message t)})))
