@@ -253,6 +253,9 @@ function M.load_plugin()
 
     -- add the ":DefoldFetch" command to fetch dependencies & annoatations
     vim.api.nvim_create_user_command("DefoldFetch", function(opt)
+        -- when a user runs DefoldFetch I recon they also expect us to update the dependencies
+        editor.send_command("fetch-libraries", true)
+
         project.install_dependencies(opt.bang)
     end, { bang = true, nargs = 0, desc = "Fetch & create Defold project dependency annotations" })
 
