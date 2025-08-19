@@ -1,8 +1,8 @@
 (ns defold.focus
   (:require
    [babashka.fs :as fs]
-   [com.brainbot.iniconfig :as iniconfig]
    [defold.constants :refer [base-class-name]]
+   [defold.mini :as mini]
    [defold.utils :refer [command-exists? determine-os project-id run-shell]]
    [taoensso.timbre :as log]))
 
@@ -97,7 +97,7 @@
     (assert (some? root-dir))
     (let [game-project (fs/path root-dir "game.project")
           _            (assert (fs/exists? game-project))
-          config       (iniconfig/read-ini (str game-project))
+          config       (mini/parse-string (slurp (str game-project)))
           title        (get-in config ["project" "title"])
           _            (assert (some? title))]
       (case (determine-os)

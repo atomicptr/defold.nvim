@@ -2,7 +2,7 @@
   (:require
    [babashka.fs :as fs]
    [clojure.string :as string]
-   [com.brainbot.iniconfig :as iniconfig]
+   [defold.mini :as mini]
    [defold.script-api-compiler :as script-api-compiler]
    [defold.utils :as utils]
    [taoensso.timbre :as log])
@@ -55,7 +55,7 @@
   (let [game-projects (find-game-project-files in-dir)]
     (flatten (map (fn [game-project]
                     (let [project-dir (fs/parent game-project)
-                          config      (iniconfig/read-ini (str game-project))
+                          config      (mini/parse-string (slurp (str game-project)))
                           libs        (get-in config ["library" "include_dirs"])]
                       (map #(str (fs/path project-dir %)) (string/split libs #","))))
                game-projects))))
@@ -87,7 +87,7 @@
          (fs/delete-tree deps-dir)
          (fs/delete-tree cache-dir))
        (let [ident     (make-ident game-project-file)
-             ini       (iniconfig/read-ini game-project-file)
+             ini       (mini/parse-string (slurp game-project-file))
              deps      (get-dependencies ini)
              deps-dir  (deps-dir ident)
              cache-dir (cache-dir ident)]

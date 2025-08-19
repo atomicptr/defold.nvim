@@ -1,5 +1,5 @@
 {:min-bb-version "1.12.0"
- :paths ["src" "vendor"]
+ :paths ["src"]
  :tasks {:requires ([defold.main :as defold])
          setup                {:task (apply defold/run :setup *command-line-args*)}
          set-default-editor   {:task (apply defold/run :set-default-editor *command-line-args*)}
