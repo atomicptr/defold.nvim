@@ -82,3 +82,9 @@
     (if (fs/exists? path)
       (print-json {:status 200 :mobdap_path path})
       (print-json {:status 500 :error (str "Could not find file: " path)}))))
+
+(defn run-wrapped [& args]
+  (try
+    (apply run args)
+    (catch Throwable t
+      (log/error (ex-message t) t))))

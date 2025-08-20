@@ -1,13 +1,13 @@
 {:min-bb-version "1.12.0"
  :paths ["src"]
  :tasks {:requires ([defold.main :as defold])
-         setup                {:task (apply defold/run :setup *command-line-args*)}
-         set-default-editor   {:task (apply defold/run :set-default-editor *command-line-args*)}
-         install-dependencies {:task (apply defold/run :install-dependencies *command-line-args*)}
-         list-commands        {:task (apply defold/run :list-commands *command-line-args*)}
-         list-dependency-dirs {:task (apply defold/run :list-dependency-dirs *command-line-args*)}
-         send-command         {:task (apply defold/run :send-command *command-line-args*)}
-         launch-neovim        {:task (apply defold/run :launch-neovim *command-line-args*)}
-         focus-neovim         {:task (apply defold/run :focus-neovim *command-line-args*)}
-         focus-game           {:task (apply defold/run :focus-game *command-line-args*)}
-         mobdap-path          {:task (apply defold/run :mobdap-path *command-line-args*)}}}
+         setup                {:task (apply defold/run-wrapped :setup *command-line-args*)}
+         set-default-editor   {:task (apply defold/run-wrapped :set-default-editor *command-line-args*)}
+         install-dependencies {:task (apply defold/run-wrapped :install-dependencies *command-line-args*)}
+         list-commands        {:task (apply defold/run-wrapped :list-commands *command-line-args*)}
+         list-dependency-dirs {:task (apply defold/run-wrapped :list-dependency-dirs *command-line-args*)}
+         send-command         {:task (apply defold/run-wrapped :send-command *command-line-args*)}
+         launch-neovim        {:task (apply defold/run-wrapped :launch-neovim *command-line-args*)}
+         focus-neovim         {:task (apply defold/run-wrapped :focus-neovim *command-line-args*)}
+         focus-game           {:task (apply defold/run-wrapped :focus-game *command-line-args*)}
+         mobdap-path          {:task (apply defold/run-wrapped :mobdap-path *command-line-args*)}}}
