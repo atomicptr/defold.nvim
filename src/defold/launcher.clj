@@ -20,6 +20,20 @@
           (str current-dir)
           (recur (fs/parent current-dir)))))))
 
+; TODO: #33 this is not a good solution, but it works for most use cases presumably
+(defn- find-project-root-from-file-or-use-old-one [file]
+  (let [path (cache-dir "defold.nvim")
+        last-used (str (fs/path path ".last-used-project-root"))]
+    (fs/create-dirs path)
+    (try
+      (let [project-root (find-project-root-from-file file)]
+        (spit last-used project-root)
+        project-root)
+      (catch Throwable t
+        (log/error (ex-message t))
+        (assert (fs/exists? last-used))
+        (slurp last-used)))))
+
 (defn- runtime-dir [project-root]
   (let [p (cache-dir "defold.nvim" "runtime" (project-id project-root))]
     (fs/create-dirs p)
@@ -162,7 +176,7 @@
   (let [neovim      (str (fs/which "nvim"))
         launcher    (create-launcher launcher-config neovim)
         line        (when line (Integer/parseInt line))
-        root-dir    (find-project-root-from-file file-name)
+        root-dir    (find-project-root-from-file-or-use-old-one file-name)
         class-name  (format base-class-name (project-id root-dir))
         edit-cmd    (make-neovim-edit-command file-name line)]
     (when (or (nil? (:cmd launcher)) (not (command-exists? (:cmd launcher))))
