@@ -196,7 +196,6 @@ function M.load_plugin()
     local editor = require "defold.editor"
     local log = require "defold.service.logger"
     local project = require "defold.project"
-    local snippets = require "defold.service.snippets"
 
     log.debug "============= defold.nvim: Loaded plugin"
     log.debug("Babashka Path: " .. babashka.bb_path())
@@ -265,7 +264,10 @@ function M.load_plugin()
     end
 
     -- add snippets
-    snippets.install()
+    require("defold.service.snippets").install()
+
+    -- add icons
+    require("defold.service.icons").install()
 
     -- fetch dependencies
     if M.config.defold.auto_fetch_dependencies then
