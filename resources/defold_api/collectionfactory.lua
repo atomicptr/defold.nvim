@@ -45,9 +45,9 @@ function collectionfactory.create(url, position, rotation, properties, scale) en
 ---@param url? string|hash|url the collection factory component to get status from
 ---@return constant status status of the collection factory component
 ---
----collectionfactory.STATUS_UNLOADED
----collectionfactory.STATUS_LOADING
----collectionfactory.STATUS_LOADED
+---`collectionfactory.STATUS_UNLOADED`
+---`collectionfactory.STATUS_LOADING`
+---`collectionfactory.STATUS_LOADED`
 ---
 function collectionfactory.get_status(url) end
 
@@ -56,11 +56,11 @@ function collectionfactory.get_status(url) end
 ---@param url? string|hash|url the collection factory component to load
 ---@param complete_function? fun(self, url, result) function to call when resources are loaded.
 ---
----self
+---`self`
 ---object The current object.
----url
+---`url`
 ---url url of the collection factory component
----result
+---`result`
 ---boolean True if resource were loaded successfully
 ---
 function collectionfactory.load(url, complete_function) end
@@ -68,7 +68,7 @@ function collectionfactory.load(url, complete_function) end
 ---Changes the prototype for the collection factory.
 ---Setting the prototype to "nil" will revert back to the original prototype.
 ---@param url? string|hash|url the collection factory component
----@param prototype? string|nil the path to the new prototype, or nil
+---@param prototype? string|nil the path to the new prototype, or `nil`
 function collectionfactory.set_prototype(url, prototype) end
 
 ---This decreases the reference count for each resource loaded with collectionfactory.load. If reference is zero, the resource is destroyed.

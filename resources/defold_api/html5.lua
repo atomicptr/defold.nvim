@@ -20,7 +20,7 @@ html5 = {}
 
 ---Executes the supplied string as JavaScript inside the browser.
 ---A call to this function is blocking, the result is returned as-is, as a string.
----(Internally this will execute the string using the eval() JavaScript function.)
+---(Internally this will execute the string using the `eval()` JavaScript function.)
 ---@param code string Javascript code to run
 ---@return string result result as string
 function html5.run(code) end
@@ -29,9 +29,9 @@ function html5.run(code) end
 ---invoked when a user interacts with the web page by clicking, touching or typing.
 ---The callback can then call DOM restricted actions like requesting a pointer lock,
 ---or start playing sounds the first time the callback is invoked.
----@param callback fun(self)|nil The interaction callback. Pass an empty function or nil if you no longer wish to receive callbacks.
+---@param callback fun(self)|nil The interaction callback. Pass an empty function or `nil` if you no longer wish to receive callbacks.
 ---
----self
+---`self`
 ---object The calling script
 ---
 function html5.set_interaction_listener(callback) end

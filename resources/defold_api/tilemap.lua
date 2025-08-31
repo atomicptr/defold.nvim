@@ -56,7 +56,7 @@ function tilemap.get_tile_info(url, layer, x, y) end
 ---Retrieves all the tiles for the specified layer in the tilemap.
 ---It returns a table of rows where the keys are the
 ---tile positions (see tilemap.get_bounds()).
----You can iterate it using tiles[row_index][column_index].
+---You can iterate it using `tiles[row_index][column_index]`.
 ---@param url string|hash|url the tilemap
 ---@param layer string|hash the name of the layer for the tiles
 ---@return table tiles a table of rows representing the layer
@@ -78,8 +78,8 @@ function tilemap.get_tiles(url, layer) end
 ---The coordinates must be within the bounds of the tile map as it were created.
 ---That is, it is not possible to extend the size of a tile map by setting tiles outside the edges.
 ---To clear a tile, set the tile to number 0. Which tile map and layer to manipulate is identified by the URL and the layer name parameters.
----Transform bitmask is arithmetic sum of one or both FLIP constants (tilemap.H_FLIP, tilemap.V_FLIP) and/or one of ROTATION constants
----(tilemap.ROTATE_90, tilemap.ROTATE_180, tilemap.ROTATE_270).
+---Transform bitmask is arithmetic sum of one or both FLIP constants (`tilemap.H_FLIP`, `tilemap.V_FLIP`) and/or one of ROTATION constants
+---(`tilemap.ROTATE_90`, `tilemap.ROTATE_180`, `tilemap.ROTATE_270`).
 ---Flip always applies before rotation (clockwise).
 ---@param url string|hash|url the tile map
 ---@param layer string|hash name of the layer for the tile

@@ -36,11 +36,11 @@ function timer.cancel(handle) end
 ---@param repeating boolean true = repeat timer until cancel, false = one-shot timer
 ---@param callback fun(self, handle, time_elapsed) timer callback function
 ---
----self
+---`self`
 ---object The current object
----handle
+---`handle`
 ---number The handle of the timer
----time_elapsed
+---`time_elapsed`
 ---number The elapsed time - on first trigger it is time since timer.delay call, otherwise time since last trigger
 ---
 ---@return number handle identifier for the create timer, returns timer.INVALID_TIMER_HANDLE if the timer can not be created
@@ -48,13 +48,13 @@ function timer.delay(delay, repeating, callback) end
 
 ---Get information about timer.
 ---@param handle number the timer handle returned by timer.delay()
----@return { time_remaining:number, delay:number, repeating:boolean }|nil data table or nil if timer is cancelled/completed. table with data in the following fields:
+---@return { time_remaining:number, delay:number, repeating:boolean }|nil data table or `nil` if timer is cancelled/completed. table with data in the following fields:
 ---
----time_remaining
+---`time_remaining`
 ---number Time remaining until the next time a timer.delay() fires.
----delay
+---`delay`
 ---number Time interval.
----repeating
+---`repeating`
 ---boolean true = repeat timer until cancel, false = one-shot timer.
 ---
 function timer.get_info(handle) end
