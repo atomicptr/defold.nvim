@@ -21,22 +21,22 @@ go = {}
 
 ---This is only supported for numerical properties. If the node property is already being
 ---animated, that animation will be canceled and replaced by the new one.
----If a complete_function (lua function) is specified, that function will be called when the animation has completed.
+---If a `complete_function` (lua function) is specified, that function will be called when the animation has completed.
 ---By starting a new animation in that function, several animations can be sequenced together. See the examples for more information.
---- If you call go.animate() from a game object's final() function,
----any passed complete_function will be ignored and never called upon animation completion.
+--- If you call `go.animate()` from a game object's `final()` function,
+---any passed `complete_function` will be ignored and never called upon animation completion.
 ---See the properties guide for which properties can be animated and the animation guide for how
 ---them.
 ---@param url string|hash|url url of the game object or component having the property
 ---@param property string|hash id of the property to animate
 ---@param playback constant playback mode of the animation
 ---
----go.PLAYBACK_ONCE_FORWARD
----go.PLAYBACK_ONCE_BACKWARD
----go.PLAYBACK_ONCE_PINGPONG
----go.PLAYBACK_LOOP_FORWARD
----go.PLAYBACK_LOOP_BACKWARD
----go.PLAYBACK_LOOP_PINGPONG
+---`go.PLAYBACK_ONCE_FORWARD`
+---`go.PLAYBACK_ONCE_BACKWARD`
+---`go.PLAYBACK_ONCE_PINGPONG`
+---`go.PLAYBACK_LOOP_FORWARD`
+---`go.PLAYBACK_LOOP_BACKWARD`
+---`go.PLAYBACK_LOOP_PINGPONG`
 ---
 ---@param to number|vector3|vector4|quaternion target property value
 ---@param easing vector|constant easing to use during animation. Either specify a constant, see the animation guide for a complete list, or a vmath.vector with a curve
@@ -44,15 +44,15 @@ go = {}
 ---@param delay? number delay before the animation starts in seconds
 ---@param complete_function? fun(self, url, property) optional function to call when the animation has completed
 ---
----self
+---`self`
 ---
 ---object The current object.
 ---
----url
+---`url`
 ---
 ---url The game object or component instance for which the property is animated.
 ---
----property
+---`property`
 ---
 ---hash The id of the animated property.
 ---
@@ -68,9 +68,9 @@ function go.cancel_animations(url, property) end
 ---Delete one or more game objects identified by id. Deletion is asynchronous meaning that
 ---the game object(s) are scheduled for deletion which will happen at the end of the current
 ---frame. Note that game objects scheduled for deletion will be counted against
----max_instances in "game.project" until they are actually removed.
---- Deleting a game object containing a particle FX component emitting particles will not immediately stop the particle FX from emitting particles. You need to manually stop the particle FX using particlefx.stop().
---- Deleting a game object containing a sound component that is playing will not immediately stop the sound from playing. You need to manually stop the sound using sound.stop().
+---`max_instances` in "game.project" until they are actually removed.
+--- Deleting a game object containing a particle FX component emitting particles will not immediately stop the particle FX from emitting particles. You need to manually stop the particle FX using `particlefx.stop()`.
+--- Deleting a game object containing a sound component that is playing will not immediately stop the sound from playing. You need to manually stop the sound using `sound.stop()`.
 ---@param id? string|hash|url|table optional id or table of id's of the instance(s) to delete, the instance of the calling script is deleted by default
 ---@param recursive? boolean optional boolean, set to true to recursively delete child hiearchy in child to parent order
 function go.delete(id, recursive) end
@@ -92,15 +92,15 @@ function go.get(url, property, options) end
 
 ---Returns or constructs an instance identifier. The instance id is a hash
 ---of the absolute path to the instance.
----If path is specified, it can either be absolute or relative to the instance of the calling script.
----If path is not specified, the id of the game object instance the script is attached to will be returned.
+---If `path` is specified, it can either be absolute or relative to the instance of the calling script.
+---If `path` is not specified, the id of the game object instance the script is attached to will be returned.
 ---@param path? string path of the instance for which to return the id
 ---@return hash id instance id
 function go.get_id(path) end
 
 ---Get the parent for a game object instance.
 ---@param id? string|hash|url optional id of the game object instance to get parent for, defaults to the instance containing the calling script
----@return hash|nil parent_id parent instance or nil
+---@return hash|nil parent_id parent instance or `nil`
 function go.get_parent(id) end
 
 ---The position is relative the parent (if any). Use go.get_world_position to retrieve the global world position.
@@ -173,7 +173,7 @@ function go.set(url, property, value, options) end
 ---Sets the parent for a game object instance. This means that the instance will exist in the geometrical space of its parent,
 ---like a basic transformation hierarchy or scene graph. If no parent is specified, the instance will be detached from any parent and exist in world
 ---space.
----This function will generate a set_parent message. It is not until the message has been processed that the change actually takes effect. This
+---This function will generate a `set_parent` message. It is not until the message has been processed that the change actually takes effect. This
 ---typically happens later in the same frame or the beginning of the next frame. Refer to the manual to learn how messages are processed by the
 ---engine.
 ---@param id? string|hash|url optional id of the game object instance to set parent for, defaults to the instance containing the calling script

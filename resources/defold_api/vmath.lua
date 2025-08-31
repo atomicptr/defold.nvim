@@ -49,7 +49,7 @@ function vmath.clamp(value, min, max) end
 ---Calculates the conjugate of a quaternion. The result is a
 ---quaternion with the same magnitudes but with the sign of
 ---the imaginary (vector) parts changed:
----q* = [w, -v]
+---`q* = [w, -v]`
 ---@param q1 quaternion quaternion of which to calculate the conjugate
 ---@return quaternion q the conjugate
 function vmath.conj(q1) end
@@ -66,7 +66,7 @@ function vmath.conj(q1) end
 function vmath.cross(v1, v2) end
 
 ---The returned value is a scalar defined as:
----P ⋅ Q = |P| |Q| cos θ
+---`P ⋅ Q = |P| |Q| cos θ`
 ---where θ is the angle between the vectors P and Q.
 ---If the dot product is positive then the angle between the vectors is below 90 degrees.
 ---If the dot product is zero the vectors are perpendicular (at right-angles to each other).
@@ -88,7 +88,7 @@ function vmath.euler_to_quat(x, y, z) end
 
 ---The resulting matrix is the inverse of the supplied matrix.
 --- For ortho-normal matrices, e.g. regular object transformation,
----use vmath.ortho_inv() instead.
+---use `vmath.ortho_inv()` instead.
 ---The specialized inverse for ortho-normalized matrices is much faster
 ---than the general inverse.
 ---@param m1 matrix4 matrix to invert
@@ -256,7 +256,7 @@ function vmath.matrix4_translation(position) end
 
 ---Performs an element wise multiplication between two vectors of the same type
 ---The returned value is a vector defined as (e.g. for a vector3):
----v = vmath.mul_per_elem(a, b) = vmath.vector3(a.x * b.x, a.y * b.y, a.z * b.z)
+---`v = vmath.mul_per_elem(a, b) = vmath.vector3(a.x * b.x, a.y * b.y, a.z * b.z)`
 ---@generic T: vector3|vector4
 ---@param v1 T first vector
 ---@param v2 T second vector
@@ -276,14 +276,14 @@ function vmath.normalize(v1) end
 ---The supplied matrix has to be an ortho-normal matrix, e.g.
 ---describe a regular object transformation.
 --- For matrices that are not ortho-normal
----use the general inverse vmath.inv() instead.
+---use the general inverse `vmath.inv()` instead.
 ---@param m1 matrix4 ortho-normalized matrix to invert
 ---@return matrix4 m inverse of the supplied matrix
 function vmath.ortho_inv(m1) end
 
 ---Calculates the extent the projection of the first vector onto the second.
 ---The returned value is a scalar p defined as:
----p = |P| cos θ / |Q|
+---`p = |P| cos θ / |Q|`
 ---where θ is the angle between the vectors P and Q.
 ---@param v1 vector3 vector to be projected on the second
 ---@param v2 vector3 vector onto which the first will be projected, must not have zero length
@@ -292,7 +292,7 @@ function vmath.project(v1, v2) end
 
 ---Creates a new identity quaternion. The identity
 ---quaternion is equal to:
----vmath.quat(0, 0, 0, 1)
+---`vmath.quat(0, 0, 0, 1)`
 ---@return quaternion q new identity quaternion
 function vmath.quat() end
 
@@ -312,8 +312,8 @@ function vmath.quat(q1) end
 ---@return quaternion q new quaternion
 function vmath.quat(x, y, z, w) end
 
----The resulting quaternion describes a rotation of angle
----radians around the axis described by the unit vector v.
+---The resulting quaternion describes a rotation of `angle`
+---radians around the axis described by the unit vector `v`.
 ---@param v vector3 axis
 ---@param angle number angle
 ---@return quaternion q quaternion representing the axis-angle rotation
@@ -344,19 +344,19 @@ function vmath.quat_from_to(v1, v2) end
 ---@return quaternion q new quaternion
 function vmath.quat_matrix4(matrix) end
 
----The resulting quaternion describes a rotation of angle
+---The resulting quaternion describes a rotation of `angle`
 ---radians around the x-axis.
 ---@param angle number angle in radians around x-axis
 ---@return quaternion q quaternion representing the rotation around the x-axis
 function vmath.quat_rotation_x(angle) end
 
----The resulting quaternion describes a rotation of angle
+---The resulting quaternion describes a rotation of `angle`
 ---radians around the y-axis.
 ---@param angle number angle in radians around y-axis
 ---@return quaternion q quaternion representing the rotation around the y-axis
 function vmath.quat_rotation_y(angle) end
 
----The resulting quaternion describes a rotation of angle
+---The resulting quaternion describes a rotation of `angle`
 ---radians around the z-axis.
 ---@param angle number angle in radians around z-axis
 ---@return quaternion q quaternion representing the rotation around the z-axis

@@ -20,14 +20,14 @@ font = {}
 ---@param text string A string with unique unicode characters to be loaded
 ---@param callback? fun(self, request_id, result, errstring) (optional) A callback function that is called after the request is finished
 ---
----self
+---`self`
 ---object The current object.
----request_id
+---`request_id`
 ---number The request id
----result
+---`result`
 ---boolean True if request was succesful
----errstring
----string nil if the request was successful
+---`errstring`
+---string `nil` if the request was successful
 ---
 ---@return number request_id Returns the asynchronous request id
 function font.add_glyphs(path, text, callback) end

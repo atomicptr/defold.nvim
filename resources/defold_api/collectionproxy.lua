@@ -46,7 +46,7 @@ function collectionproxy.missing_resources(collectionproxy) end
 ---The collection proxy shouldn't be loaded and should have the 'Exclude' checkbox checked.
 ---This functionality is designed to simplify the management of Live Update resources.
 ---@param url? string|hash|url the collection proxy component
----@param prototype? string|nil the path to the new collection, or nil
+---@param prototype? string|nil the path to the new collection, or `nil`
 ---@return boolean success collection change was successful
 ---@return number code one of the collectionproxy.RESULT_* codes if unsuccessful
 function collectionproxy.set_collection(url, prototype) end

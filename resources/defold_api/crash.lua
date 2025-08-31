@@ -43,7 +43,7 @@ function crash.get_signum(handle) end
 ---reads a system field from a loaded crash dump
 ---@param handle number crash dump handle
 ---@param index number system field enum. Must be less than crash.SYSFIELD_MAX
----@return string|nil value value recorded in the crash dump, or nil if it didn't exist
+---@return string|nil value value recorded in the crash dump, or `nil` if it didn't exist
 function crash.get_sys_field(handle, index) end
 
 ---reads user field from a loaded crash dump
@@ -54,7 +54,7 @@ function crash.get_user_field(handle, index) end
 
 ---The crash dump will be removed from disk upon a successful
 ---load, so loading is one-shot.
----@return number|nil handle handle to the loaded dump, or nil if no dump was found
+---@return number|nil handle handle to the loaded dump, or `nil` if no dump was found
 function crash.load_previous() end
 
 ---releases a previously loaded crash dump

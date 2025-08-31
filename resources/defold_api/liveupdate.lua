@@ -57,14 +57,14 @@ function liveupdate.remove_mount(name) end
 ---@param callback fun(self, status) the callback function
 ---executed after the storage has completed
 ---
----self
+---`self`
 ---object The current object.
----status
+---`status`
 ---constant the status of the store operation (See liveupdate.store_manifest)
 ---
 ---@param options? table optional table with extra parameters. Supported entries:
 ---
----boolean verify: if archive should be verified as well as stored (defaults to true)
+---boolean `verify`: if archive should be verified as well as stored (defaults to true)
 ---
 function liveupdate.store_archive(path, callback, options) end
 
@@ -80,19 +80,19 @@ function liveupdate.store_archive(path, callback, options) end
 ---@param callback fun(self, status) the callback function
 ---executed once the engine has attempted to store the manifest.
 ---
----self
+---`self`
 ---object The current object.
----status
+---`status`
 ---constant the status of the store operation:
 ---
 ---
----liveupdate.LIVEUPDATE_OK
----liveupdate.LIVEUPDATE_INVALID_RESOURCE
----liveupdate.LIVEUPDATE_VERSION_MISMATCH
----liveupdate.LIVEUPDATE_ENGINE_VERSION_MISMATCH
----liveupdate.LIVEUPDATE_SIGNATURE_MISMATCH
----liveupdate.LIVEUPDATE_BUNDLED_RESOURCE_MISMATCH
----liveupdate.LIVEUPDATE_FORMAT_ERROR
+---`liveupdate.LIVEUPDATE_OK`
+---`liveupdate.LIVEUPDATE_INVALID_RESOURCE`
+---`liveupdate.LIVEUPDATE_VERSION_MISMATCH`
+---`liveupdate.LIVEUPDATE_ENGINE_VERSION_MISMATCH`
+---`liveupdate.LIVEUPDATE_SIGNATURE_MISMATCH`
+---`liveupdate.LIVEUPDATE_BUNDLED_RESOURCE_MISMATCH`
+---`liveupdate.LIVEUPDATE_FORMAT_ERROR`
 ---
 function liveupdate.store_manifest(manifest_buffer, callback) end
 
@@ -106,11 +106,11 @@ function liveupdate.store_manifest(manifest_buffer, callback) end
 ---function that is executed once the engine has been attempted to store
 ---the resource.
 ---
----self
+---`self`
 ---object The current object.
----hexdigest
+---`hexdigest`
 ---string The hexdigest of the resource.
----status
+---`status`
 ---boolean Whether or not the resource was successfully stored.
 ---
 function liveupdate.store_resource(manifest_reference, data, hexdigest, callback) end

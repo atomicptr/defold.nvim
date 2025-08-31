@@ -48,121 +48,121 @@ function resource.buffer(path) end
 ---
 ---
 ---
----texture
+---`texture`
 ---string | hash the path to the texture resource, e.g "/main/my_texture.texturec"
 ---
 ---
 ---
 ---
----animations
+---`animations`
 ---table a list of the animations in the atlas. Supports the following fields:
 ---
 ---
 ---
 ---
----id
+---`id`
 ---string the id of the animation, used in e.g sprite.play_animation
 ---
 ---
 ---
 ---
----width
+---`width`
 ---number the width of the animation
 ---
 ---
 ---
 ---
----height
+---`height`
 ---number the height of the animation
 ---
 ---
 ---
 ---
----frame_start
+---`frame_start`
 ---number index to the first geometry of the animation. Indices are lua based and must be in the range of 1 ..  in atlas.
 ---
 ---
 ---
 ---
----frame_end
+---`frame_end`
 ---number index to the last geometry of the animation (non-inclusive). Indices are lua based and must be in the range of 1 ..  in atlas.
 ---
 ---
 ---
 ---
----playback
+---`playback`
 ---constant optional playback mode of the animation, the default value is go.PLAYBACK_ONCE_FORWARD
 ---
 ---
 ---
 ---
----fps
+---`fps`
 ---number optional fps of the animation, the default value is 30
 ---
 ---
 ---
 ---
----flip_vertical
+---`flip_vertical`
 ---boolean optional flip the animation vertically, the default value is false
 ---
 ---
 ---
 ---
----flip_horizontal
+---`flip_horizontal`
 ---boolean optional flip the animation horizontally, the default value is false
 ---
 ---
 ---
 ---
----geometries
+---`geometries`
 ---table A list of the geometries that should map to the texture data. Supports the following fields:
 ---
 ---
 ---
 ---
----id
+---`id`
 ---string The name of the geometry. Used when matching animations between multiple atlases
 ---
 ---
 ---
 ---
----width
+---`width`
 ---number The width of the image the sprite geometry represents
 ---
 ---
 ---
 ---
----height
+---`height`
 ---number The height of the image the sprite geometry represents
 ---
 ---
 ---
 ---
----pivot_x
+---`pivot_x`
 ---number The pivot x value of the image in unit coords. (0,0) is upper left corner, (1,1) is bottom right. Default is 0.5.
 ---
 ---
 ---
 ---
----pivot_y
+---`pivot_y`
 ---number The pivot y value of the image in unit coords. (0,0) is upper left corner, (1,1) is bottom right. Default is 0.5.
 ---
 ---
 ---
 ---
----vertices
+---`vertices`
 ---table a list of the vertices in image space of the geometry in the form {px0, py0, px1, py1, ..., pxn, pyn}
 ---
 ---
 ---
 ---
----uvs
+---`uvs`
 ---table a list of the uv coordinates in image space of the geometry in the form of {u0, v0, u1, v1, ..., un, vn}.
 ---
 ---
 ---
 ---
----indices
+---`indices`
 ---table a list of the indices of the geometry in the form {i0, i1, i2, ..., in}. Each tripe in the list represents a triangle.
 ---
 ---
@@ -183,13 +183,13 @@ function resource.create_atlas(path, table) end
 ---
 ---
 ---
----buffer
+---`buffer`
 ---buffer the buffer to bind to this resource
 ---
 ---
 ---
 ---
----transfer_ownership
+---`transfer_ownership`
 ---boolean optional flag to determine wether or not the resource should take over ownership of the buffer object (default true)
 ---
 ---
@@ -202,11 +202,11 @@ function resource.create_buffer(path, table) end
 ---@param path string the path to the resource. Must not already exist.
 ---@param options? { data?:string, filesize?:number, partial?:boolean } A table containing parameters for the text. Supported entries:
 ---
----data
+---`data`
 ---string The raw data of the file. May be partial, but must include the header of the file
----filesize
+---`filesize`
 ---number If the file is partial, it must also specify the full size of the complete file.
----partial
+---`partial`
 ---boolean Is the data not representing the full file, but just the initial chunk?
 ---
 ---@return hash path_hash the resulting path hash to the resource
@@ -221,80 +221,80 @@ function resource.create_sound_data(path, options) end
 ---@param path string The path to the resource.
 ---@param table { type:number, width:number, height:number, depth:number, format:number, flags?:number, max_mipmaps?:number, compression_type?:number} A table containing info about how to create the texture. Supported entries:
 ---
----type
+---`type`
 ---number The texture type. Supported values:
 ---
 ---
----graphics.TEXTURE_TYPE_2D
----graphics.TEXTURE_TYPE_IMAGE_2D
----graphics.TEXTURE_TYPE_3D
----graphics.TEXTURE_TYPE_IMAGE_3D
----graphics.TEXTURE_TYPE_CUBE_MAP
+---`graphics.TEXTURE_TYPE_2D`
+---`graphics.TEXTURE_TYPE_IMAGE_2D`
+---`graphics.TEXTURE_TYPE_3D`
+---`graphics.TEXTURE_TYPE_IMAGE_3D`
+---`graphics.TEXTURE_TYPE_CUBE_MAP`
 ---
 ---
----width
+---`width`
 ---number The width of the texture (in pixels). Must be larger than 0.
----height
+---`height`
 ---number The width of the texture (in pixels). Must be larger than 0.
----depth
----number The depth of the texture (in pixels). Must be larger than 0. Only used when type is graphics.TEXTURE_TYPE_3D or graphics.TEXTURE_TYPE_IMAGE_3D.
----format
+---`depth`
+---number The depth of the texture (in pixels). Must be larger than 0. Only used when `type` is `graphics.TEXTURE_TYPE_3D` or `graphics.TEXTURE_TYPE_IMAGE_3D`.
+---`format`
 ---number The texture format, note that some of these formats might not be supported by the running device. Supported values:
 ---
 ---
----graphics.TEXTURE_FORMAT_LUMINANCE
----graphics.TEXTURE_FORMAT_RGB
----graphics.TEXTURE_FORMAT_RGBA
+---`graphics.TEXTURE_FORMAT_LUMINANCE`
+---`graphics.TEXTURE_FORMAT_RGB`
+---`graphics.TEXTURE_FORMAT_RGBA`
 ---
 ---These constants might not be available on the device:
 ---
----graphics.TEXTURE_FORMAT_RGB_PVRTC_2BPPV1
----graphics.TEXTURE_FORMAT_RGB_PVRTC_4BPPV1
----graphics.TEXTURE_FORMAT_RGBA_PVRTC_2BPPV1
----graphics.TEXTURE_FORMAT_RGBA_PVRTC_4BPPV1
----graphics.TEXTURE_FORMAT_RGB_ETC1
----graphics.TEXTURE_FORMAT_RGBA_ETC2
----graphics.TEXTURE_FORMAT_RGBA_ASTC_4x4
----graphics.TEXTURE_FORMAT_RGB_BC1
----graphics.TEXTURE_FORMAT_RGBA_BC3
----graphics.TEXTURE_FORMAT_R_BC4
----graphics.TEXTURE_FORMAT_RG_BC5
----graphics.TEXTURE_FORMAT_RGBA_BC7
----graphics.TEXTURE_FORMAT_RGB16F
----graphics.TEXTURE_FORMAT_RGB32F
----graphics.TEXTURE_FORMAT_RGBA16F
----graphics.TEXTURE_FORMAT_RGBA32F
----graphics.TEXTURE_FORMAT_R16F
----graphics.TEXTURE_FORMAT_RG16F
----graphics.TEXTURE_FORMAT_R32F
----graphics.TEXTURE_FORMAT_RG32F
+---`graphics.TEXTURE_FORMAT_RGB_PVRTC_2BPPV1`
+---`graphics.TEXTURE_FORMAT_RGB_PVRTC_4BPPV1`
+---`graphics.TEXTURE_FORMAT_RGBA_PVRTC_2BPPV1`
+---`graphics.TEXTURE_FORMAT_RGBA_PVRTC_4BPPV1`
+---`graphics.TEXTURE_FORMAT_RGB_ETC1`
+---`graphics.TEXTURE_FORMAT_RGBA_ETC2`
+---`graphics.TEXTURE_FORMAT_RGBA_ASTC_4x4`
+---`graphics.TEXTURE_FORMAT_RGB_BC1`
+---`graphics.TEXTURE_FORMAT_RGBA_BC3`
+---`graphics.TEXTURE_FORMAT_R_BC4`
+---`graphics.TEXTURE_FORMAT_RG_BC5`
+---`graphics.TEXTURE_FORMAT_RGBA_BC7`
+---`graphics.TEXTURE_FORMAT_RGB16F`
+---`graphics.TEXTURE_FORMAT_RGB32F`
+---`graphics.TEXTURE_FORMAT_RGBA16F`
+---`graphics.TEXTURE_FORMAT_RGBA32F`
+---`graphics.TEXTURE_FORMAT_R16F`
+---`graphics.TEXTURE_FORMAT_RG16F`
+---`graphics.TEXTURE_FORMAT_R32F`
+---`graphics.TEXTURE_FORMAT_RG32F`
 ---
 ---You can test if the device supports these values by checking if a specific enum is nil or not:
----if graphics.TEXTURE_FORMAT_RGBA16F ~= nil then
+---`if graphics.TEXTURE_FORMAT_RGBA16F ~= nil then
 ---    -- it is safe to use this format
 ---end
+---`
 ---
 ---
----
----flags
+---`flags`
 ---number Texture creation flags that can be used to dictate how the texture is created. The default value is graphics.TEXTURE_USAGE_FLAG_SAMPLE, which means that the texture can be sampled from a shader.
 ---These flags may or may not be supported on the running device and/or the underlying graphics API and is simply used internally as a 'hint' when creating the texture. There is no guarantee that any of these will have any effect. Supported values:
 ---
 ---
----graphics.TEXTURE_USAGE_FLAG_SAMPLE - The texture can be sampled from a shader (default)
----graphics.TEXTURE_USAGE_FLAG_MEMORYLESS - The texture can be used as a memoryless texture, i.e only transient memory for the texture is used during rendering
----graphics.TEXTURE_USAGE_FLAG_STORAGE - The texture can be used as a storage texture, which is required for a shader to write to the texture
+---`graphics.TEXTURE_USAGE_FLAG_SAMPLE` - The texture can be sampled from a shader (default)
+---`graphics.TEXTURE_USAGE_FLAG_MEMORYLESS` - The texture can be used as a memoryless texture, i.e only transient memory for the texture is used during rendering
+---`graphics.TEXTURE_USAGE_FLAG_STORAGE` - The texture can be used as a storage texture, which is required for a shader to write to the texture
 ---
 ---
----max_mipmaps
+---`max_mipmaps`
 ---number optional max number of mipmaps. Defaults to zero, i.e no mipmap support
----compression_type
+---`compression_type`
 ---number optional specify the compression type for the data in the buffer object that holds the texture data. Will only be used when a compressed buffer has been passed into the function.
 ---Creating an empty texture with no buffer data is not supported as a core feature. Defaults to graphics.COMPRESSION_TYPE_DEFAULT, i.e no compression. Supported values:
 ---
 ---
----COMPRESSION_TYPE_DEFAULT
----COMPRESSION_TYPE_BASIS_UASTC
+---`COMPRESSION_TYPE_DEFAULT`
+---`COMPRESSION_TYPE_BASIS_UASTC`
 ---
 ---@param buffer buffer_data optional buffer of precreated pixel data
 ---@return hash path The path to the resource.
@@ -317,79 +317,79 @@ function resource.create_texture(path, table, buffer) end
 ---new texture. Be careful when using the initial texture handle handle as it will not be valid after the upload has finished.
 ---@param path string|hash The path to the resource.
 ---@param table { type:number, width:number, height:number, depth:number, format:number, flags?:number, max_mipmaps?:number, compression_type?:number} A table containing info about how to create the texture. Supported entries:
----type
+---`type`
 ---number The texture type. Supported values:
 ---
 ---
----graphics.TEXTURE_TYPE_2D
----graphics.TEXTURE_TYPE_IMAGE_2D
----graphics.TEXTURE_TYPE_3D
----graphics.TEXTURE_TYPE_IMAGE_3D
----graphics.TEXTURE_TYPE_CUBE_MAP
+---`graphics.TEXTURE_TYPE_2D`
+---`graphics.TEXTURE_TYPE_IMAGE_2D`
+---`graphics.TEXTURE_TYPE_3D`
+---`graphics.TEXTURE_TYPE_IMAGE_3D`
+---`graphics.TEXTURE_TYPE_CUBE_MAP`
 ---
 ---
----width
+---`width`
 ---number The width of the texture (in pixels). Must be larger than 0.
----height
+---`height`
 ---number The width of the texture (in pixels). Must be larger than 0.
----depth
----number The depth of the texture (in pixels). Must be larger than 0. Only used when type is graphics.TEXTURE_TYPE_3D or graphics.TEXTURE_TYPE_IMAGE_3D.
----format
+---`depth`
+---number The depth of the texture (in pixels). Must be larger than 0. Only used when `type` is `graphics.TEXTURE_TYPE_3D` or `graphics.TEXTURE_TYPE_IMAGE_3D`.
+---`format`
 ---number The texture format, note that some of these formats might not be supported by the running device. Supported values:
 ---
 ---
----graphics.TEXTURE_FORMAT_LUMINANCE
----graphics.TEXTURE_FORMAT_RGB
----graphics.TEXTURE_FORMAT_RGBA
+---`graphics.TEXTURE_FORMAT_LUMINANCE`
+---`graphics.TEXTURE_FORMAT_RGB`
+---`graphics.TEXTURE_FORMAT_RGBA`
 ---
 ---These constants might not be available on the device:
 ---
----graphics.TEXTURE_FORMAT_RGB_PVRTC_2BPPV1
----graphics.TEXTURE_FORMAT_RGB_PVRTC_4BPPV1
----graphics.TEXTURE_FORMAT_RGBA_PVRTC_2BPPV1
----graphics.TEXTURE_FORMAT_RGBA_PVRTC_4BPPV1
----graphics.TEXTURE_FORMAT_RGB_ETC1
----graphics.TEXTURE_FORMAT_RGBA_ETC2
----graphics.TEXTURE_FORMAT_RGBA_ASTC_4x4
----graphics.TEXTURE_FORMAT_RGB_BC1
----graphics.TEXTURE_FORMAT_RGBA_BC3
----graphics.TEXTURE_FORMAT_R_BC4
----graphics.TEXTURE_FORMAT_RG_BC5
----graphics.TEXTURE_FORMAT_RGBA_BC7
----graphics.TEXTURE_FORMAT_RGB16F
----graphics.TEXTURE_FORMAT_RGB32F
----graphics.TEXTURE_FORMAT_RGBA16F
----graphics.TEXTURE_FORMAT_RGBA32F
----graphics.TEXTURE_FORMAT_R16F
----graphics.TEXTURE_FORMAT_RG16F
----graphics.TEXTURE_FORMAT_R32F
----graphics.TEXTURE_FORMAT_RG32F
+---`graphics.TEXTURE_FORMAT_RGB_PVRTC_2BPPV1`
+---`graphics.TEXTURE_FORMAT_RGB_PVRTC_4BPPV1`
+---`graphics.TEXTURE_FORMAT_RGBA_PVRTC_2BPPV1`
+---`graphics.TEXTURE_FORMAT_RGBA_PVRTC_4BPPV1`
+---`graphics.TEXTURE_FORMAT_RGB_ETC1`
+---`graphics.TEXTURE_FORMAT_RGBA_ETC2`
+---`graphics.TEXTURE_FORMAT_RGBA_ASTC_4x4`
+---`graphics.TEXTURE_FORMAT_RGB_BC1`
+---`graphics.TEXTURE_FORMAT_RGBA_BC3`
+---`graphics.TEXTURE_FORMAT_R_BC4`
+---`graphics.TEXTURE_FORMAT_RG_BC5`
+---`graphics.TEXTURE_FORMAT_RGBA_BC7`
+---`graphics.TEXTURE_FORMAT_RGB16F`
+---`graphics.TEXTURE_FORMAT_RGB32F`
+---`graphics.TEXTURE_FORMAT_RGBA16F`
+---`graphics.TEXTURE_FORMAT_RGBA32F`
+---`graphics.TEXTURE_FORMAT_R16F`
+---`graphics.TEXTURE_FORMAT_RG16F`
+---`graphics.TEXTURE_FORMAT_R32F`
+---`graphics.TEXTURE_FORMAT_RG32F`
 ---
 ---You can test if the device supports these values by checking if a specific enum is nil or not:
----if graphics.TEXTURE_FORMAT_RGBA16F ~= nil then
+---`if graphics.TEXTURE_FORMAT_RGBA16F ~= nil then
 ---    -- it is safe to use this format
 ---end
+---`
 ---
 ---
----
----flags
+---`flags`
 ---number Texture creation flags that can be used to dictate how the texture is created. Supported values:
 ---
 ---
----graphics.TEXTURE_USAGE_FLAG_SAMPLE - The texture can be sampled from a shader (default)
----graphics.TEXTURE_USAGE_FLAG_MEMORYLESS - The texture can be used as a memoryless texture, i.e only transient memory for the texture is used during rendering
----graphics.TEXTURE_USAGE_FLAG_STORAGE - The texture can be used as a storage texture, which is required for a shader to write to the texture
+---`graphics.TEXTURE_USAGE_FLAG_SAMPLE` - The texture can be sampled from a shader (default)
+---`graphics.TEXTURE_USAGE_FLAG_MEMORYLESS` - The texture can be used as a memoryless texture, i.e only transient memory for the texture is used during rendering
+---`graphics.TEXTURE_USAGE_FLAG_STORAGE` - The texture can be used as a storage texture, which is required for a shader to write to the texture
 ---
 ---
----max_mipmaps
+---`max_mipmaps`
 ---number optional max number of mipmaps. Defaults to zero, i.e no mipmap support
----compression_type
+---`compression_type`
 ---number optional specify the compression type for the data in the buffer object that holds the texture data. Will only be used when a compressed buffer has been passed into the function.
 ---Creating an empty texture with no buffer data is not supported as a core feature. Defaults to graphics.COMPRESSION_TYPE_DEFAULT, i.e no compression. Supported values:
 ---
 ---
----COMPRESSION_TYPE_DEFAULT
----COMPRESSION_TYPE_BASIS_UASTC
+---`COMPRESSION_TYPE_DEFAULT`
+---`COMPRESSION_TYPE_BASIS_UASTC`
 ---
 ---@param buffer buffer_data optional buffer of precreated pixel data
 ---@return number request_id The request id for the async request.
@@ -428,42 +428,42 @@ function resource.get_buffer(path) end
 ---@param path hash|string|number The path to the resource or a render target handle
 ---@return { handle:number, attachments:{ handle:number, width:number, height:number, depth:number, mipmaps:number, type:number, buffer_type:number, texture:hash }[] } table A table containing info about the render target:
 ---
----handle
+---`handle`
 ---number the opaque handle to the texture resource
 ---'attachments'
 ---table a table of attachments, where each attachment contains the following entries:
----width
+---`width`
 ---number width of the texture
----height
+---`height`
 ---number height of the texture
----depth
+---`depth`
 ---number depth of the texture (i.e 1 for a 2D texture and 6 for a cube map)
----mipmaps
+---`mipmaps`
 ---number number of mipmaps of the texture
----type
+---`type`
 ---number The texture type. Supported values:
 ---
 ---
----graphics.TEXTURE_TYPE_2D
----graphics.TEXTURE_TYPE_CUBE_MAP
----graphics.TEXTURE_TYPE_2D_ARRAY
+---`graphics.TEXTURE_TYPE_2D`
+---`graphics.TEXTURE_TYPE_CUBE_MAP`
+---`graphics.TEXTURE_TYPE_2D_ARRAY`
 ---
 ---
----buffer_type
+---`buffer_type`
 ---number The attachment buffer type. Supported values:
 ---
 ---
----resource.BUFFER_TYPE_COLOR0
----resource.BUFFER_TYPE_COLOR1
----resource.BUFFER_TYPE_COLOR2
----resource.BUFFER_TYPE_COLOR3
----resource.BUFFER_TYPE_DEPTH
+---`resource.BUFFER_TYPE_COLOR0`
+---`resource.BUFFER_TYPE_COLOR1`
+---`resource.BUFFER_TYPE_COLOR2`
+---`resource.BUFFER_TYPE_COLOR3`
+---`resource.BUFFER_TYPE_DEPTH`
 ---
----resource.BUFFER_TYPE_STENCIL
+---`resource.BUFFER_TYPE_STENCIL`
 ---
 ---
 ---
----texture
+---`texture`
 ---hash The hashed path to the attachment texture resource. This field is only available if the render target passed in is a resource.
 ---
 ---
@@ -475,13 +475,13 @@ function resource.get_render_target_info(path) end
 ---@param text string text to measure
 ---@param options? { width?:number, leading?:number, tracking?:number, line_break?:boolean} A table containing parameters for the text. Supported entries:
 ---
----width
----number The width of the text field. Not used if line_break is false.
----leading
+---`width`
+---number The width of the text field. Not used if `line_break` is false.
+---`leading`
 ---number The leading (default 1.0)
----tracking
+---`tracking`
 ---number The tracking (default 0.0)
----line_break
+---`line_break`
 ---boolean If the calculation should consider line breaks (default false)
 ---
 ---@return { width:number, height:number, max_ascent:number, max_descent:number } metrics a table with the following fields:
@@ -497,30 +497,30 @@ function resource.get_text_metrics(url, text, options) end
 ---@param path hash|string|number The path to the resource or a texture handle
 ---@return { handle:number, width:number, height:number, depth:number, mipmaps:number, flags:number, type:number } table A table containing info about the texture:
 ---
----handle
+---`handle`
 ---number the opaque handle to the texture resource
----width
+---`width`
 ---number width of the texture
----height
+---`height`
 ---number height of the texture
----depth
+---`depth`
 ---number depth of the texture (i.e 1 for a 2D texture, 6 for a cube map, the actual depth of a 3D texture)
----page_count
+---`page_count`
 ---number number of pages of the texture array. For 2D texture value is 1. For cube map - 6
----mipmaps
+---`mipmaps`
 ---number number of mipmaps of the texture
----flags
+---`flags`
 ---number usage hints of the texture.
----type
+---`type`
 ---number The texture type. Supported values:
 ---
 ---
----graphics.TEXTURE_TYPE_2D
----graphics.TEXTURE_TYPE_2D_ARRAY
----graphics.TEXTURE_TYPE_IMAGE_2D
----graphics.TEXTURE_TYPE_3D
----graphics.TEXTURE_TYPE_IMAGE_3D
----graphics.TEXTURE_TYPE_CUBE_MAP
+---`graphics.TEXTURE_TYPE_2D`
+---`graphics.TEXTURE_TYPE_2D_ARRAY`
+---`graphics.TEXTURE_TYPE_IMAGE_2D`
+---`graphics.TEXTURE_TYPE_3D`
+---`graphics.TEXTURE_TYPE_IMAGE_3D`
+---`graphics.TEXTURE_TYPE_CUBE_MAP`
 ---
 function resource.get_texture_info(path) end
 
@@ -571,91 +571,91 @@ function resource.set(path, buffer) end
 ---
 ---
 ---
----texture
+---`texture`
 ---string | hash the path to the texture resource, e.g "/main/my_texture.texturec"
 ---
 ---
 ---
 ---
----animations
+---`animations`
 ---table a list of the animations in the atlas. Supports the following fields:
 ---
 ---
 ---
 ---
----id
+---`id`
 ---string the id of the animation, used in e.g sprite.play_animation
 ---
 ---
 ---
 ---
----width
+---`width`
 ---number the width of the animation
 ---
 ---
 ---
 ---
----height
+---`height`
 ---number the height of the animation
 ---
 ---
 ---
 ---
----frame_start
+---`frame_start`
 ---number index to the first geometry of the animation. Indices are lua based and must be in the range of 1 ..  in atlas.
 ---
 ---
 ---
 ---
----frame_end
+---`frame_end`
 ---number index to the last geometry of the animation (non-inclusive). Indices are lua based and must be in the range of 1 ..  in atlas.
 ---
 ---
 ---
 ---
----playback
+---`playback`
 ---constant optional playback mode of the animation, the default value is go.PLAYBACK_ONCE_FORWARD
 ---
 ---
 ---
 ---
----fps
+---`fps`
 ---number optional fps of the animation, the default value is 30
 ---
 ---
 ---
 ---
----flip_vertical
+---`flip_vertical`
 ---boolean optional flip the animation vertically, the default value is false
 ---
 ---
 ---
 ---
----flip_horizontal
+---`flip_horizontal`
 ---boolean optional flip the animation horizontally, the default value is false
 ---
 ---
 ---
 ---
----geometries
+---`geometries`
 ---table A list of the geometries that should map to the texture data. Supports the following fields:
 ---
 ---
 ---
 ---
----vertices
+---`vertices`
 ---table a list of the vertices in texture space of the geometry in the form {px0, py0, px1, py1, ..., pxn, pyn}
 ---
 ---
 ---
 ---
----uvs
+---`uvs`
 ---table a list of the uv coordinates in texture space of the geometry in the form of {u0, v0, u1, v1, ..., un, vn}
 ---
 ---
 ---
 ---
----indices
+---`indices`
 ---table a list of the indices of the geometry in the form {i0, i1, i2, ..., in}. Each tripe in the list represents a triangle.
 ---
 ---
@@ -665,17 +665,17 @@ function resource.set_atlas(path, table) end
 ---Sets the buffer of a resource. By default, setting the resource buffer will either copy the data from the incoming buffer object
 ---to the buffer stored in the destination resource, or make a new buffer object if the sizes between the source buffer and the destination buffer
 ---stored in the resource differs. In some cases, e.g performance reasons, it might be beneficial to just set the buffer object on the resource without copying or cloning.
----To achieve this, set the transfer_ownership flag to true in the argument table. Transferring ownership from a lua buffer to a resource with this function
+---To achieve this, set the `transfer_ownership` flag to true in the argument table. Transferring ownership from a lua buffer to a resource with this function
 ---works exactly the same as resource.create_buffer: the destination resource will take ownership of the buffer held by the lua reference, i.e the buffer will not automatically be removed
 ---when the lua reference to the buffer is garbage collected.
----Note: When setting a buffer with transfer_ownership = true, the currently bound buffer in the resource will be destroyed.
+---Note: When setting a buffer with `transfer_ownership = true`, the currently bound buffer in the resource will be destroyed.
 ---@param path hash|string The path to the resource
 ---@param buffer buffer_data The resource buffer
 ---@param table? { transfer_ownership?: boolean } A table containing info about how to set the buffer. Supported entries:
 ---
 ---
 ---
----transfer_ownership
+---`transfer_ownership`
 ---boolean optional flag to determine wether or not the resource should take over ownership of the buffer object (default false)
 ---
 ---
@@ -691,73 +691,73 @@ function resource.set_sound(path, buffer) end
 ---@param path hash|string The path to the resource
 ---@param table { type:number, width:number, height:number, format:number, x?:number, y?:number, z?:number, mipmap?:number, compression_type?:number} A table containing info about the texture. Supported entries:
 ---
----type
+---`type`
 ---number The texture type. Supported values:
 ---
 ---
----graphics.TEXTURE_TYPE_2D
----graphics.TEXTURE_TYPE_IMAGE_2D
----graphics.TEXTURE_TYPE_3D
----graphics.TEXTURE_TYPE_IMAGE_3D
----graphics.TEXTURE_TYPE_CUBE_MAP
+---`graphics.TEXTURE_TYPE_2D`
+---`graphics.TEXTURE_TYPE_IMAGE_2D`
+---`graphics.TEXTURE_TYPE_3D`
+---`graphics.TEXTURE_TYPE_IMAGE_3D`
+---`graphics.TEXTURE_TYPE_CUBE_MAP`
 ---
 ---
----width
+---`width`
 ---number The width of the texture (in pixels)
----height
+---`height`
 ---number The width of the texture (in pixels)
----format
+---`format`
 ---number The texture format, note that some of these formats are platform specific. Supported values:
 ---
 ---
----graphics.TEXTURE_FORMAT_LUMINANCE
----graphics.TEXTURE_FORMAT_RGB
----graphics.TEXTURE_FORMAT_RGBA
+---`graphics.TEXTURE_FORMAT_LUMINANCE`
+---`graphics.TEXTURE_FORMAT_RGB`
+---`graphics.TEXTURE_FORMAT_RGBA`
 ---
 ---These constants might not be available on the device:
----- graphics.TEXTURE_FORMAT_RGB_PVRTC_2BPPV1
----- graphics.TEXTURE_FORMAT_RGB_PVRTC_4BPPV1
----- graphics.TEXTURE_FORMAT_RGBA_PVRTC_2BPPV1
----- graphics.TEXTURE_FORMAT_RGBA_PVRTC_4BPPV1
----- graphics.TEXTURE_FORMAT_RGB_ETC1
----- graphics.TEXTURE_FORMAT_RGBA_ETC2
----- graphics.TEXTURE_FORMAT_RGBA_ASTC_4x4
----- graphics.TEXTURE_FORMAT_RGB_BC1
----- graphics.TEXTURE_FORMAT_RGBA_BC3
----- graphics.TEXTURE_FORMAT_R_BC4
----- graphics.TEXTURE_FORMAT_RG_BC5
----- graphics.TEXTURE_FORMAT_RGBA_BC7
----- graphics.TEXTURE_FORMAT_RGB16F
----- graphics.TEXTURE_FORMAT_RGB32F
----- graphics.TEXTURE_FORMAT_RGBA16F
----- graphics.TEXTURE_FORMAT_RGBA32F
----- graphics.TEXTURE_FORMAT_R16F
----- graphics.TEXTURE_FORMAT_RG16F
----- graphics.TEXTURE_FORMAT_R32F
----- graphics.TEXTURE_FORMAT_RG32F
+---- `graphics.TEXTURE_FORMAT_RGB_PVRTC_2BPPV1`
+---- `graphics.TEXTURE_FORMAT_RGB_PVRTC_4BPPV1`
+---- `graphics.TEXTURE_FORMAT_RGBA_PVRTC_2BPPV1`
+---- `graphics.TEXTURE_FORMAT_RGBA_PVRTC_4BPPV1`
+---- `graphics.TEXTURE_FORMAT_RGB_ETC1`
+---- `graphics.TEXTURE_FORMAT_RGBA_ETC2`
+---- `graphics.TEXTURE_FORMAT_RGBA_ASTC_4x4`
+---- `graphics.TEXTURE_FORMAT_RGB_BC1`
+---- `graphics.TEXTURE_FORMAT_RGBA_BC3`
+---- `graphics.TEXTURE_FORMAT_R_BC4`
+---- `graphics.TEXTURE_FORMAT_RG_BC5`
+---- `graphics.TEXTURE_FORMAT_RGBA_BC7`
+---- `graphics.TEXTURE_FORMAT_RGB16F`
+---- `graphics.TEXTURE_FORMAT_RGB32F`
+---- `graphics.TEXTURE_FORMAT_RGBA16F`
+---- `graphics.TEXTURE_FORMAT_RGBA32F`
+---- `graphics.TEXTURE_FORMAT_R16F`
+---- `graphics.TEXTURE_FORMAT_RG16F`
+---- `graphics.TEXTURE_FORMAT_R32F`
+---- `graphics.TEXTURE_FORMAT_RG32F`
 ---You can test if the device supports these values by checking if a specific enum is nil or not:
----if graphics.TEXTURE_FORMAT_RGBA16F ~= nil then
+---`if graphics.TEXTURE_FORMAT_RGBA16F ~= nil then
 ---    -- it is safe to use this format
 ---end
+---`
 ---
 ---
----
----x
+---`x`
 ---number optional x offset of the texture (in pixels)
----y
+---`y`
 ---number optional y offset of the texture (in pixels)
----z
+---`z`
 ---number optional z offset of the texture (in pixels). Only applies to 3D textures
----page
+---`page`
 ---number optional slice of the array texture. Only applies to 2D texture arrays. Zero-based
----mipmap
+---`mipmap`
 ---number optional mipmap to upload the data to
----compression_type
+---`compression_type`
 ---number optional specify the compression type for the data in the buffer object that holds the texture data. Defaults to graphics.COMPRESSION_TYPE_DEFAULT, i.e no compression. Supported values:
 ---
 ---
----COMPRESSION_TYPE_DEFAULT
----COMPRESSION_TYPE_BASIS_UASTC
+---`COMPRESSION_TYPE_DEFAULT`
+---`COMPRESSION_TYPE_BASIS_UASTC`
 ---
 ---@param buffer buffer_data The buffer of precreated pixel data
 --- To update a cube map texture you need to pass in six times the amount of data via the buffer, since a cube map has six sides!

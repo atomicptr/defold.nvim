@@ -23,7 +23,7 @@ label = {}
 function label.get_text(url) end
 
 ---Sets the text of a label component
---- This method uses the message passing that means the value will be set after dispatch messages step.
+--- This method uses the message passing that means the value will be set after `dispatch messages` step.
 ---More information is available in the Application Lifecycle manual.
 ---@param url string|hash|url the label that should have a constant set
 ---@param text string|number the text

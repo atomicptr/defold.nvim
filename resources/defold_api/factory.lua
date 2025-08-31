@@ -25,10 +25,10 @@ factory = {}
 --- Calling factory.create on a factory that is marked as dynamic without having loaded resources
 ---using factory.load will synchronously load and create resources which may affect application performance.
 ---@param url string|hash|url the factory that should create a game object.
----@param position? vector3 the position of the new game object, the position of the game object calling factory.create() is used by default, or if the value is nil.
----@param rotation? quaternion the rotation of the new game object, the rotation of the game object calling factory.create() is used by default, or if the value is nil.
+---@param position? vector3 the position of the new game object, the position of the game object calling `factory.create()` is used by default, or if the value is `nil`.
+---@param rotation? quaternion the rotation of the new game object, the rotation of the game object calling `factory.create()` is used by default, or if the value is `nil`.
 ---@param properties? table the properties defined in a script attached to the new game object.
----@param scale? number|vector3 the scale of the new game object (must be greater than 0), the scale of the game object containing the factory is used by default, or if the value is nil
+---@param scale? number|vector3 the scale of the new game object (must be greater than 0), the scale of the game object containing the factory is used by default, or if the value is `nil`
 ---@return hash id the global id of the spawned game object
 function factory.create(url, position, rotation, properties, scale) end
 
@@ -38,9 +38,9 @@ function factory.create(url, position, rotation, properties, scale) end
 ---@param url? string|hash|url the factory component to get status from
 ---@return constant status status of the factory component
 ---
----factory.STATUS_UNLOADED
----factory.STATUS_LOADING
----factory.STATUS_LOADED
+---`factory.STATUS_UNLOADED`
+---`factory.STATUS_LOADING`
+---`factory.STATUS_LOADED`
 ---
 function factory.get_status(url) end
 
@@ -49,18 +49,18 @@ function factory.get_status(url) end
 ---@param url? string|hash|url the factory component to load
 ---@param complete_function? fun(self, url, result) function to call when resources are loaded.
 ---
----self
+---`self`
 ---object The current object.
----url
+---`url`
 ---url url of the factory component
----result
+---`result`
 ---boolean True if resources were loaded successfully
 ---
 function factory.load(url, complete_function) end
 
 ---Changes the prototype for the factory.
 ---@param url? string|hash|url the factory component
----@param prototype? string|nil the path to the new prototype, or nil
+---@param prototype? string|nil the path to the new prototype, or `nil`
 function factory.set_prototype(url, prototype) end
 
 ---This decreases the reference count for each resource loaded with factory.load. If reference is zero, the resource is destroyed.

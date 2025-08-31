@@ -45,9 +45,9 @@ function buffer.copy_stream(dst, dstoffset, src, srcoffset, count) end
 ---@param element_count number The number of elements the buffer should hold
 ---@param declaration { name:hash|string, type:constant, count:number }[] A table where each entry (table) describes a stream
 ---
----hash | string name: The name of the stream
----constant type: The data type of the stream
----number count: The number of values each element should hold
+---hash | string `name`: The name of the stream
+---constant `type`: The data type of the stream
+---number `count`: The number of values each element should hold
 ---
 ---@return buffer_data buffer the new buffer
 function buffer.create(element_count, declaration) end
@@ -61,8 +61,8 @@ function buffer.get_bytes(buffer, stream_name) end
 ---Get a named metadata entry from a buffer along with its type.
 ---@param buf buffer_data the buffer to get the metadata from
 ---@param metadata_name hash|string name of the metadata entry
----@return number[]|nil values table of metadata values or nil if the entry does not exist
----@return constant|nil value_type numeric type of values or nil
+---@return number[]|nil values table of metadata values or `nil` if the entry does not exist
+---@return constant|nil value_type numeric type of values or `nil`
 function buffer.get_metadata(buf, metadata_name) end
 
 ---Get a specified stream from a buffer.

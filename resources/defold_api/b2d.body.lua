@@ -19,7 +19,7 @@ b2d.body = {}
 
 ---Apply an angular impulse.
 ---@param body b2Body body
----@param impulse number impulse the angular impulse in units of kgmm/s
+---@param impulse number impulse the angular impulse in units of kg*m*m/s
 function b2d.body.apply_angular_impulse(body, impulse) end
 
 ---Apply a force at a world point. If the force is not
