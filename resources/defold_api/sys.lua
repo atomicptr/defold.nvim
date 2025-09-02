@@ -73,9 +73,9 @@ function sys.get_config_string(key, default_value) end
 ---On desktop, this function always return `sys.NETWORK_CONNECTED`.
 ---@return constant status network connectivity status:
 ---
----`sys.NETWORK_DISCONNECTED` (no network connection is found)
----`sys.NETWORK_CONNECTED_CELLULAR` (connected through mobile cellular)
----`sys.NETWORK_CONNECTED` (otherwise, Wifi)
+---- `sys.NETWORK_DISCONNECTED` (no network connection is found)
+---- `sys.NETWORK_CONNECTED_CELLULAR` (connected through mobile cellular)
+---- `sys.NETWORK_CONNECTED` (otherwise, Wifi)
 ---
 function sys.get_connectivity() end
 
@@ -188,9 +188,9 @@ function sys.load_buffer(path) end
 ---number The status of the request, supported values are:
 ---
 ---
----`resource.REQUEST_STATUS_FINISHED`
----`resource.REQUEST_STATUS_ERROR_IO_ERROR`
----`resource.REQUEST_STATUS_ERROR_NOT_FOUND`
+---- `resource.REQUEST_STATUS_FINISHED`
+---- `resource.REQUEST_STATUS_ERROR_IO_ERROR`
+---- `resource.REQUEST_STATUS_ERROR_NOT_FOUND`
 ---
 ---
 ---`buffer`

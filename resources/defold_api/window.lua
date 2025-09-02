@@ -23,9 +23,9 @@ window = {}
 ---On platforms that does not support dimming, `window.DIMMING_UNKNOWN` is always returned.
 ---@return constant mode The mode for screen dimming
 ---
----`window.DIMMING_UNKNOWN`
----`window.DIMMING_ON`
----`window.DIMMING_OFF`
+---- `window.DIMMING_UNKNOWN`
+---- `window.DIMMING_ON`
+---- `window.DIMMING_OFF`
 ---
 function window.get_dim_mode() end
 
@@ -47,8 +47,8 @@ function window.get_size() end
 ---This function has no effect on platforms that does not support dimming.
 ---@param mode constant The mode for screen dimming
 ---
----`window.DIMMING_ON`
----`window.DIMMING_OFF`
+---- `window.DIMMING_ON`
+---- `window.DIMMING_OFF`
 ---
 function window.set_dim_mode(mode) end
 
@@ -61,19 +61,19 @@ function window.set_dim_mode(mode) end
 ---constant The type of event. Can be one of these:
 ---
 ---
----`window.WINDOW_EVENT_FOCUS_LOST`
----`window.WINDOW_EVENT_FOCUS_GAINED`
----`window.WINDOW_EVENT_RESIZED`
----`window.WINDOW_EVENT_ICONIFIED`
----`window.WINDOW_EVENT_DEICONIFIED`
+---- `window.WINDOW_EVENT_FOCUS_LOST`
+---- `window.WINDOW_EVENT_FOCUS_GAINED`
+---- `window.WINDOW_EVENT_RESIZED`
+---- `window.WINDOW_EVENT_ICONIFIED`
+---- `window.WINDOW_EVENT_DEICONIFIED`
 ---
 ---
 ---`data`
 ---table The callback value `data` is a table which currently holds these values
 ---
 ---
----number `width`: The width of a resize event. nil otherwise.
----number `height`: The height of a resize event. nil otherwise.
+---- number `width`: The width of a resize event. nil otherwise.
+---- number `height`: The height of a resize event. nil otherwise.
 ---
 function window.set_listener(callback) end
 

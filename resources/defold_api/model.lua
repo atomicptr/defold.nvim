@@ -56,19 +56,19 @@ function model.get_mesh_enabled(url, mesh_id) end
 --- The callback is not called (or message sent) if the animation is
 ---cancelled with model.cancel. The callback is called (or message sent) only for
 ---animations that play with the following playback modes:
----`go.PLAYBACK_ONCE_FORWARD`
----`go.PLAYBACK_ONCE_BACKWARD`
----`go.PLAYBACK_ONCE_PINGPONG`
+---- `go.PLAYBACK_ONCE_FORWARD`
+---- `go.PLAYBACK_ONCE_BACKWARD`
+---- `go.PLAYBACK_ONCE_PINGPONG`
 ---@param url string|hash|url the model for which to play the animation
 ---@param anim_id string|hash id of the animation to play
 ---@param playback constant playback mode of the animation
 ---
----`go.PLAYBACK_ONCE_FORWARD`
----`go.PLAYBACK_ONCE_BACKWARD`
----`go.PLAYBACK_ONCE_PINGPONG`
----`go.PLAYBACK_LOOP_FORWARD`
----`go.PLAYBACK_LOOP_BACKWARD`
----`go.PLAYBACK_LOOP_PINGPONG`
+---- `go.PLAYBACK_ONCE_FORWARD`
+---- `go.PLAYBACK_ONCE_BACKWARD`
+---- `go.PLAYBACK_ONCE_PINGPONG`
+---- `go.PLAYBACK_LOOP_FORWARD`
+---- `go.PLAYBACK_LOOP_BACKWARD`
+---- `go.PLAYBACK_LOOP_PINGPONG`
 ---
 ---@param play_properties? { blend_duration?:number, offset?:number, playback_rate?:number} optional table with properties
 ---Play properties table:
@@ -90,8 +90,8 @@ function model.get_mesh_enabled(url, mesh_id) end
 ---table Information about the completion:
 ---
 ---
----hash `animation_id` - the animation that was completed.
----constant `playback` - the playback mode for the animation.
+---- hash `animation_id` - the animation that was completed.
+---- constant `playback` - the playback mode for the animation.
 ---
 ---
 ---`sender`

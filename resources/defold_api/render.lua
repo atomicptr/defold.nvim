@@ -27,9 +27,9 @@ render = {}
 ---color attachments, all buffers will be cleared with the same value.
 ---@param buffers table table with keys specifying which buffers to clear and values set to clear values. Available keys are:
 ---
----`graphics.BUFFER_TYPE_COLOR0_BIT`
----`graphics.BUFFER_TYPE_DEPTH_BIT`
----`graphics.BUFFER_TYPE_STENCIL_BIT`
+---- `graphics.BUFFER_TYPE_COLOR0_BIT`
+---- `graphics.BUFFER_TYPE_DEPTH_BIT`
+---- `graphics.BUFFER_TYPE_STENCIL_BIT`
 ---
 function render.clear(buffers) end
 
@@ -51,12 +51,12 @@ function render.disable_material() end
 ---Disables a render state.
 ---@param state constant state to disable
 ---
----`graphics.STATE_DEPTH_TEST`
----`graphics.STATE_STENCIL_TEST`
----`graphics.STATE_BLEND`
----`graphics.STATE_ALPHA_TEST` ( not available on iOS and Android)
----`graphics.STATE_CULL_FACE`
----`graphics.STATE_POLYGON_OFFSET_FILL`
+---- `graphics.STATE_DEPTH_TEST`
+---- `graphics.STATE_STENCIL_TEST`
+---- `graphics.STATE_BLEND`
+---- `graphics.STATE_ALPHA_TEST` ( not available on iOS and Android)
+---- `graphics.STATE_CULL_FACE`
+---- `graphics.STATE_POLYGON_OFFSET_FILL`
 ---
 function render.disable_state(state) end
 
@@ -92,8 +92,8 @@ function render.dispatch_compute(x, y, z, options) end
 ---int Determines which sides of the frustum will be used. Default is render.FRUSTUM_PLANES_SIDES.
 ---
 ---
----render.FRUSTUM_PLANES_SIDES : The left, right, top and bottom sides of the frustum.
----render.FRUSTUM_PLANES_ALL : All 6 sides of the frustum.
+---- render.FRUSTUM_PLANES_SIDES : The left, right, top and bottom sides of the frustum.
+---- render.FRUSTUM_PLANES_ALL : All 6 sides of the frustum.
 ---
 ---
 ---`constants`
@@ -110,8 +110,8 @@ function render.draw(predicate, options) end
 ---int Determines which sides of the frustum will be used. Default is render.FRUSTUM_PLANES_SIDES.
 ---
 ---
----render.FRUSTUM_PLANES_SIDES : The left, right, top and bottom sides of the frustum.
----render.FRUSTUM_PLANES_ALL : All sides of the frustum.
+---- render.FRUSTUM_PLANES_SIDES : The left, right, top and bottom sides of the frustum.
+---- render.FRUSTUM_PLANES_ALL : All sides of the frustum.
 ---
 function render.draw_debug3d(options) end
 
@@ -125,12 +125,12 @@ function render.enable_material(material_id) end
 ---Enables a particular render state. The state will be enabled until disabled.
 ---@param state constant state to enable
 ---
----`graphics.STATE_DEPTH_TEST`
----`graphics.STATE_STENCIL_TEST`
----`graphics.STATE_BLEND`
----`graphics.STATE_ALPHA_TEST` ( not available on iOS and Android)
----`graphics.STATE_CULL_FACE`
----`graphics.STATE_POLYGON_OFFSET_FILL`
+---- `graphics.STATE_DEPTH_TEST`
+---- `graphics.STATE_STENCIL_TEST`
+---- `graphics.STATE_BLEND`
+---- `graphics.STATE_ALPHA_TEST` ( not available on iOS and Android)
+---- `graphics.STATE_CULL_FACE`
+---- `graphics.STATE_POLYGON_OFFSET_FILL`
 ---
 function render.enable_state(state) end
 
@@ -149,20 +149,20 @@ function render.enable_state(state) end
 ---@param handle_or_name number|string|hash render target or texture handle that should be bound, or a named resource in the "Render Resource" table in the currently assigned .render file
 ---@param buffer_type? constant optional buffer type from which to enable the texture. Note that this argument only applies to render targets. Defaults to `graphics.BUFFER_TYPE_COLOR0_BIT`. These values are supported:
 ---
----`graphics.BUFFER_TYPE_COLOR0_BIT`
+---- `graphics.BUFFER_TYPE_COLOR0_BIT`
 ---
 ---If The render target has been created as depth and/or stencil textures, these buffer types can be used:
 ---
----`graphics.BUFFER_TYPE_DEPTH_BIT`
----`graphics.BUFFER_TYPE_STENCIL_BIT`
+---- `graphics.BUFFER_TYPE_DEPTH_BIT`
+---- `graphics.BUFFER_TYPE_STENCIL_BIT`
 ---
 ---If the render target has been created with multiple color attachments, these buffer types can be used
 ---to enable those textures as well. Currently 4 color attachments are supported:
 ---
----`graphics.BUFFER_TYPE_COLOR0_BIT`
----`graphics.BUFFER_TYPE_COLOR1_BIT`
----`graphics.BUFFER_TYPE_COLOR2_BIT`
----`graphics.BUFFER_TYPE_COLOR3_BIT`
+---- `graphics.BUFFER_TYPE_COLOR0_BIT`
+---- `graphics.BUFFER_TYPE_COLOR1_BIT`
+---- `graphics.BUFFER_TYPE_COLOR2_BIT`
+---- `graphics.BUFFER_TYPE_COLOR3_BIT`
 ---
 function render.enable_texture(binding, handle_or_name, buffer_type) end
 
@@ -176,9 +176,9 @@ function render.get_height() end
 ---@param render_target render_target render target from which to retrieve the buffer height
 ---@param buffer_type constant which type of buffer to retrieve the height from
 ---
----`graphics.BUFFER_TYPE_COLOR0_BIT`
----`graphics.BUFFER_TYPE_DEPTH_BIT`
----`graphics.BUFFER_TYPE_STENCIL_BIT`
+---- `graphics.BUFFER_TYPE_COLOR0_BIT`
+---- `graphics.BUFFER_TYPE_DEPTH_BIT`
+---- `graphics.BUFFER_TYPE_STENCIL_BIT`
 ---
 ---@return number height the height of the render target buffer texture
 function render.get_render_target_height(render_target, buffer_type) end
@@ -187,10 +187,10 @@ function render.get_render_target_height(render_target, buffer_type) end
 ---@param render_target render_target render target from which to retrieve the buffer width
 ---@param buffer_type constant which type of buffer to retrieve the width from
 ---
----`graphics.BUFFER_TYPE_COLOR0_BIT`
----`graphics.BUFFER_TYPE_COLOR[x]_BIT` (x: [0..3], if supported!)
----`graphics.BUFFER_TYPE_DEPTH_BIT`
----`graphics.BUFFER_TYPE_STENCIL_BIT`
+---- `graphics.BUFFER_TYPE_COLOR0_BIT`
+---- `graphics.BUFFER_TYPE_COLOR[x]_BIT` (x: [0..3], if supported!)
+---- `graphics.BUFFER_TYPE_DEPTH_BIT`
+---- `graphics.BUFFER_TYPE_STENCIL_BIT`
 ---
 ---@return number width the width of the render target buffer texture
 function render.get_render_target_width(render_target, buffer_type) end
@@ -308,10 +308,10 @@ function render.render_target(name, parameters) end
 ---`graphics.BLEND_FACTOR_SRC_ALPHA_SATURATE`
 ---(i,i,i,1) where i = min(As, kA - Ad) /kA
 ---The blended RGBA values of a pixel comes from the following equations:
----Rd = min(kR, Rs * sR + Rd * dR)
----Gd = min(kG, Gs * sG + Gd * dG)
----Bd = min(kB, Bs * sB + Bd * dB)
----Ad = min(kA, As * sA + Ad * dA)
+---- Rd = min(kR, Rs * sR + Rd * dR)
+---- Gd = min(kG, Gs * sG + Gd * dG)
+---- Bd = min(kB, Bs * sB + Bd * dB)
+---- Ad = min(kA, As * sA + Ad * dA)
 ---Blend function `(graphics.BLEND_FACTOR_SRC_ALPHA, graphics.BLEND_FACTOR_ONE_MINUS_SRC_ALPHA)` is useful for
 ---drawing with transparency when the drawn objects are sorted from farthest to nearest.
 ---It is also useful for drawing antialiased points and lines in arbitrary order.
@@ -355,9 +355,9 @@ function render.set_compute(compute) end
 ---`face_type` is `graphics.FACE_TYPE_BACK`.
 ---@param face_type number face type
 ---
----`graphics.FACE_TYPE_FRONT`
----`graphics.FACE_TYPE_BACK`
----`graphics.FACE_TYPE_FRONT_AND_BACK`
+---- `graphics.FACE_TYPE_FRONT`
+---- `graphics.FACE_TYPE_BACK`
+---- `graphics.FACE_TYPE_FRONT_AND_BACK`
 ---
 function render.set_cull_face(face_type) end
 
@@ -366,14 +366,14 @@ function render.set_cull_face(face_type) end
 ---The comparison is performed only if depth testing is enabled and specifies
 ---the conditions under which a pixel will be drawn.
 ---Function constants:
----`graphics.COMPARE_FUNC_NEVER` (never passes)
----`graphics.COMPARE_FUNC_LESS` (passes if the incoming depth value is less than the stored value)
----`graphics.COMPARE_FUNC_LEQUAL` (passes if the incoming depth value is less than or equal to the stored value)
----`graphics.COMPARE_FUNC_GREATER` (passes if the incoming depth value is greater than the stored value)
----`graphics.COMPARE_FUNC_GEQUAL` (passes if the incoming depth value is greater than or equal to the stored value)
----`graphics.COMPARE_FUNC_EQUAL` (passes if the incoming depth value is equal to the stored value)
----`graphics.COMPARE_FUNC_NOTEQUAL` (passes if the incoming depth value is not equal to the stored value)
----`graphics.COMPARE_FUNC_ALWAYS` (always passes)
+---- `graphics.COMPARE_FUNC_NEVER` (never passes)
+---- `graphics.COMPARE_FUNC_LESS` (passes if the incoming depth value is less than the stored value)
+---- `graphics.COMPARE_FUNC_LEQUAL` (passes if the incoming depth value is less than or equal to the stored value)
+---- `graphics.COMPARE_FUNC_GREATER` (passes if the incoming depth value is greater than the stored value)
+---- `graphics.COMPARE_FUNC_GEQUAL` (passes if the incoming depth value is greater than or equal to the stored value)
+---- `graphics.COMPARE_FUNC_EQUAL` (passes if the incoming depth value is equal to the stored value)
+---- `graphics.COMPARE_FUNC_NOTEQUAL` (passes if the incoming depth value is not equal to the stored value)
+---- `graphics.COMPARE_FUNC_ALWAYS` (always passes)
 ---The depth function is initially set to `graphics.COMPARE_FUNC_LESS`.
 ---@param func number depth test function, see the description for available values
 function render.set_depth_func(func) end
@@ -435,9 +435,9 @@ function render.set_projection(matrix) end
 --- A buffer type defined that doesn't exist in the render target is silently ignored.
 ---
 ---
----`graphics.BUFFER_TYPE_COLOR0_BIT`
----`graphics.BUFFER_TYPE_DEPTH_BIT`
----`graphics.BUFFER_TYPE_STENCIL_BIT`
+---- `graphics.BUFFER_TYPE_COLOR0_BIT`
+---- `graphics.BUFFER_TYPE_DEPTH_BIT`
+---- `graphics.BUFFER_TYPE_STENCIL_BIT`
 ---
 function render.set_render_target(render_target, options) end
 
@@ -462,14 +462,14 @@ function render.set_render_target_size(render_target, width, height) end
 ---`mask` is ANDed with both the reference value and the stored stencil value when the test
 ---is done. The initial value is all `1`'s.
 ---Function constant:
----`graphics.COMPARE_FUNC_NEVER` (never passes)
----`graphics.COMPARE_FUNC_LESS` (passes if (ref & mask) < (stencil & mask))
----`graphics.COMPARE_FUNC_LEQUAL` (passes if (ref & mask) <= (stencil & mask))
----`graphics.COMPARE_FUNC_GREATER` (passes if (ref & mask) > (stencil & mask))
----`graphics.COMPARE_FUNC_GEQUAL` (passes if (ref & mask) >= (stencil & mask))
----`graphics.COMPARE_FUNC_EQUAL` (passes if (ref & mask) = (stencil & mask))
----`graphics.COMPARE_FUNC_NOTEQUAL` (passes if (ref & mask) != (stencil & mask))
----`graphics.COMPARE_FUNC_ALWAYS` (always passes)
+---- `graphics.COMPARE_FUNC_NEVER` (never passes)
+---- `graphics.COMPARE_FUNC_LESS` (passes if (ref & mask) < (stencil & mask))
+---- `graphics.COMPARE_FUNC_LEQUAL` (passes if (ref & mask) <= (stencil & mask))
+---- `graphics.COMPARE_FUNC_GREATER` (passes if (ref & mask) > (stencil & mask))
+---- `graphics.COMPARE_FUNC_GEQUAL` (passes if (ref & mask) >= (stencil & mask))
+---- `graphics.COMPARE_FUNC_EQUAL` (passes if (ref & mask) = (stencil & mask))
+---- `graphics.COMPARE_FUNC_NOTEQUAL` (passes if (ref & mask) != (stencil & mask))
+---- `graphics.COMPARE_FUNC_ALWAYS` (always passes)
 ---@param func number stencil test function, see the description for available values
 ---@param ref number reference value for the stencil test
 ---@param mask number mask that is ANDed with both the reference value and the stored stencil value when the test is done
@@ -493,14 +493,14 @@ function render.set_stencil_mask(mask) end
 ---pixel's color or depth buffers, and `sfail` specifies what happens to the stencil buffer
 ---contents.
 ---Operator constants:
----`graphics.STENCIL_OP_KEEP` (keeps the current value)
----`graphics.STENCIL_OP_ZERO` (sets the stencil buffer value to 0)
----`graphics.STENCIL_OP_REPLACE` (sets the stencil buffer value to `ref`, as specified by render.set_stencil_func)
----`graphics.STENCIL_OP_INCR` (increments the stencil buffer value and clamp to the maximum representable unsigned value)
----`graphics.STENCIL_OP_INCR_WRAP` (increments the stencil buffer value and wrap to zero when incrementing the maximum representable unsigned value)
----`graphics.STENCIL_OP_DECR` (decrements the current stencil buffer value and clamp to 0)
----`graphics.STENCIL_OP_DECR_WRAP` (decrements the current stencil buffer value and wrap to the maximum representable unsigned value when decrementing zero)
----`graphics.STENCIL_OP_INVERT` (bitwise inverts the current stencil buffer value)
+---- `graphics.STENCIL_OP_KEEP` (keeps the current value)
+---- `graphics.STENCIL_OP_ZERO` (sets the stencil buffer value to 0)
+---- `graphics.STENCIL_OP_REPLACE` (sets the stencil buffer value to `ref`, as specified by render.set_stencil_func)
+---- `graphics.STENCIL_OP_INCR` (increments the stencil buffer value and clamp to the maximum representable unsigned value)
+---- `graphics.STENCIL_OP_INCR_WRAP` (increments the stencil buffer value and wrap to zero when incrementing the maximum representable unsigned value)
+---- `graphics.STENCIL_OP_DECR` (decrements the current stencil buffer value and clamp to 0)
+---- `graphics.STENCIL_OP_DECR_WRAP` (decrements the current stencil buffer value and wrap to the maximum representable unsigned value when decrementing zero)
+---- `graphics.STENCIL_OP_INVERT` (bitwise inverts the current stencil buffer value)
 ---`dppass` and `dpfail` specify the stencil buffer actions depending on whether subsequent
 ---depth buffer tests succeed (dppass) or fail (dpfail).
 ---The initial value for all operators is `graphics.STENCIL_OP_KEEP`.

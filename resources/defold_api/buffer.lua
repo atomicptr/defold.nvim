@@ -45,9 +45,9 @@ function buffer.copy_stream(dst, dstoffset, src, srcoffset, count) end
 ---@param element_count number The number of elements the buffer should hold
 ---@param declaration { name:hash|string, type:constant, count:number }[] A table where each entry (table) describes a stream
 ---
----hash | string `name`: The name of the stream
----constant `type`: The data type of the stream
----number `count`: The number of values each element should hold
+---- hash | string `name`: The name of the stream
+---- constant `type`: The data type of the stream
+---- number `count`: The number of values each element should hold
 ---
 ---@return buffer_data buffer the new buffer
 function buffer.create(element_count, declaration) end

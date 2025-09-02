@@ -64,7 +64,7 @@ function liveupdate.remove_mount(name) end
 ---
 ---@param options? table optional table with extra parameters. Supported entries:
 ---
----boolean `verify`: if archive should be verified as well as stored (defaults to true)
+---- boolean `verify`: if archive should be verified as well as stored (defaults to true)
 ---
 function liveupdate.store_archive(path, callback, options) end
 
@@ -86,13 +86,13 @@ function liveupdate.store_archive(path, callback, options) end
 ---constant the status of the store operation:
 ---
 ---
----`liveupdate.LIVEUPDATE_OK`
----`liveupdate.LIVEUPDATE_INVALID_RESOURCE`
----`liveupdate.LIVEUPDATE_VERSION_MISMATCH`
----`liveupdate.LIVEUPDATE_ENGINE_VERSION_MISMATCH`
----`liveupdate.LIVEUPDATE_SIGNATURE_MISMATCH`
----`liveupdate.LIVEUPDATE_BUNDLED_RESOURCE_MISMATCH`
----`liveupdate.LIVEUPDATE_FORMAT_ERROR`
+---- `liveupdate.LIVEUPDATE_OK`
+---- `liveupdate.LIVEUPDATE_INVALID_RESOURCE`
+---- `liveupdate.LIVEUPDATE_VERSION_MISMATCH`
+---- `liveupdate.LIVEUPDATE_ENGINE_VERSION_MISMATCH`
+---- `liveupdate.LIVEUPDATE_SIGNATURE_MISMATCH`
+---- `liveupdate.LIVEUPDATE_BUNDLED_RESOURCE_MISMATCH`
+---- `liveupdate.LIVEUPDATE_FORMAT_ERROR`
 ---
 function liveupdate.store_manifest(manifest_buffer, callback) end
 

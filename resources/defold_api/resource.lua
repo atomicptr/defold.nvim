@@ -18,16 +18,16 @@
 resource = {}
 
 ---Constructor-like function with two purposes:
----Load the specified resource as part of loading the script
----Return a hash to the run-time version of the resource
+---- Load the specified resource as part of loading the script
+---- Return a hash to the run-time version of the resource
 --- This function can only be called within go.property function calls.
 ---@param path? string optional resource path string to the resource
 ---@return hash path a path hash to the binary version of the resource
 function resource.atlas(path) end
 
 ---Constructor-like function with two purposes:
----Load the specified resource as part of loading the script
----Return a hash to the run-time version of the resource
+---- Load the specified resource as part of loading the script
+---- Return a hash to the run-time version of the resource
 --- This function can only be called within go.property function calls.
 ---@param path? string optional resource path string to the resource
 ---@return hash path a path hash to the binary version of the resource
@@ -46,121 +46,121 @@ function resource.buffer(path) end
 ---@param path string The path to the resource.
 ---@param table resource.atlas A table containing info about how to create the atlas. Supported entries:
 ---
----
+---- 
 ---
 ---`texture`
 ---string | hash the path to the texture resource, e.g "/main/my_texture.texturec"
 ---
 ---
----
+---- 
 ---
 ---`animations`
 ---table a list of the animations in the atlas. Supports the following fields:
 ---
 ---
----
+---- 
 ---
 ---`id`
 ---string the id of the animation, used in e.g sprite.play_animation
 ---
 ---
----
+---- 
 ---
 ---`width`
 ---number the width of the animation
 ---
 ---
----
+---- 
 ---
 ---`height`
 ---number the height of the animation
 ---
 ---
----
+---- 
 ---
 ---`frame_start`
 ---number index to the first geometry of the animation. Indices are lua based and must be in the range of 1 ..  in atlas.
 ---
 ---
----
+---- 
 ---
 ---`frame_end`
 ---number index to the last geometry of the animation (non-inclusive). Indices are lua based and must be in the range of 1 ..  in atlas.
 ---
 ---
----
+---- 
 ---
 ---`playback`
 ---constant optional playback mode of the animation, the default value is go.PLAYBACK_ONCE_FORWARD
 ---
 ---
----
+---- 
 ---
 ---`fps`
 ---number optional fps of the animation, the default value is 30
 ---
 ---
----
+---- 
 ---
 ---`flip_vertical`
 ---boolean optional flip the animation vertically, the default value is false
 ---
 ---
----
+---- 
 ---
 ---`flip_horizontal`
 ---boolean optional flip the animation horizontally, the default value is false
 ---
 ---
----
+---- 
 ---
 ---`geometries`
 ---table A list of the geometries that should map to the texture data. Supports the following fields:
 ---
 ---
----
+---- 
 ---
 ---`id`
 ---string The name of the geometry. Used when matching animations between multiple atlases
 ---
 ---
----
+---- 
 ---
 ---`width`
 ---number The width of the image the sprite geometry represents
 ---
 ---
----
+---- 
 ---
 ---`height`
 ---number The height of the image the sprite geometry represents
 ---
 ---
----
+---- 
 ---
 ---`pivot_x`
 ---number The pivot x value of the image in unit coords. (0,0) is upper left corner, (1,1) is bottom right. Default is 0.5.
 ---
 ---
----
+---- 
 ---
 ---`pivot_y`
 ---number The pivot y value of the image in unit coords. (0,0) is upper left corner, (1,1) is bottom right. Default is 0.5.
 ---
 ---
----
+---- 
 ---
 ---`vertices`
 ---table a list of the vertices in image space of the geometry in the form {px0, py0, px1, py1, ..., pxn, pyn}
 ---
 ---
----
+---- 
 ---
 ---`uvs`
 ---table a list of the uv coordinates in image space of the geometry in the form of {u0, v0, u1, v1, ..., un, vn}.
 ---
 ---
----
+---- 
 ---
 ---`indices`
 ---table a list of the indices of the geometry in the form {i0, i1, i2, ..., in}. Each tripe in the list represents a triangle.
@@ -181,13 +181,13 @@ function resource.create_atlas(path, table) end
 ---@param path string The path to the resource.
 ---@param table? { buffer:buffer_data, transfer_ownership?:boolean } A table containing info about how to create the buffer. Supported entries:
 ---
----
+---- 
 ---
 ---`buffer`
 ---buffer the buffer to bind to this resource
 ---
 ---
----
+---- 
 ---
 ---`transfer_ownership`
 ---boolean optional flag to determine wether or not the resource should take over ownership of the buffer object (default true)
@@ -225,11 +225,11 @@ function resource.create_sound_data(path, options) end
 ---number The texture type. Supported values:
 ---
 ---
----`graphics.TEXTURE_TYPE_2D`
----`graphics.TEXTURE_TYPE_IMAGE_2D`
----`graphics.TEXTURE_TYPE_3D`
----`graphics.TEXTURE_TYPE_IMAGE_3D`
----`graphics.TEXTURE_TYPE_CUBE_MAP`
+---- `graphics.TEXTURE_TYPE_2D`
+---- `graphics.TEXTURE_TYPE_IMAGE_2D`
+---- `graphics.TEXTURE_TYPE_3D`
+---- `graphics.TEXTURE_TYPE_IMAGE_3D`
+---- `graphics.TEXTURE_TYPE_CUBE_MAP`
 ---
 ---
 ---`width`
@@ -242,32 +242,32 @@ function resource.create_sound_data(path, options) end
 ---number The texture format, note that some of these formats might not be supported by the running device. Supported values:
 ---
 ---
----`graphics.TEXTURE_FORMAT_LUMINANCE`
----`graphics.TEXTURE_FORMAT_RGB`
----`graphics.TEXTURE_FORMAT_RGBA`
+---- `graphics.TEXTURE_FORMAT_LUMINANCE`
+---- `graphics.TEXTURE_FORMAT_RGB`
+---- `graphics.TEXTURE_FORMAT_RGBA`
 ---
 ---These constants might not be available on the device:
 ---
----`graphics.TEXTURE_FORMAT_RGB_PVRTC_2BPPV1`
----`graphics.TEXTURE_FORMAT_RGB_PVRTC_4BPPV1`
----`graphics.TEXTURE_FORMAT_RGBA_PVRTC_2BPPV1`
----`graphics.TEXTURE_FORMAT_RGBA_PVRTC_4BPPV1`
----`graphics.TEXTURE_FORMAT_RGB_ETC1`
----`graphics.TEXTURE_FORMAT_RGBA_ETC2`
----`graphics.TEXTURE_FORMAT_RGBA_ASTC_4x4`
----`graphics.TEXTURE_FORMAT_RGB_BC1`
----`graphics.TEXTURE_FORMAT_RGBA_BC3`
----`graphics.TEXTURE_FORMAT_R_BC4`
----`graphics.TEXTURE_FORMAT_RG_BC5`
----`graphics.TEXTURE_FORMAT_RGBA_BC7`
----`graphics.TEXTURE_FORMAT_RGB16F`
----`graphics.TEXTURE_FORMAT_RGB32F`
----`graphics.TEXTURE_FORMAT_RGBA16F`
----`graphics.TEXTURE_FORMAT_RGBA32F`
----`graphics.TEXTURE_FORMAT_R16F`
----`graphics.TEXTURE_FORMAT_RG16F`
----`graphics.TEXTURE_FORMAT_R32F`
----`graphics.TEXTURE_FORMAT_RG32F`
+---- `graphics.TEXTURE_FORMAT_RGB_PVRTC_2BPPV1`
+---- `graphics.TEXTURE_FORMAT_RGB_PVRTC_4BPPV1`
+---- `graphics.TEXTURE_FORMAT_RGBA_PVRTC_2BPPV1`
+---- `graphics.TEXTURE_FORMAT_RGBA_PVRTC_4BPPV1`
+---- `graphics.TEXTURE_FORMAT_RGB_ETC1`
+---- `graphics.TEXTURE_FORMAT_RGBA_ETC2`
+---- `graphics.TEXTURE_FORMAT_RGBA_ASTC_4x4`
+---- `graphics.TEXTURE_FORMAT_RGB_BC1`
+---- `graphics.TEXTURE_FORMAT_RGBA_BC3`
+---- `graphics.TEXTURE_FORMAT_R_BC4`
+---- `graphics.TEXTURE_FORMAT_RG_BC5`
+---- `graphics.TEXTURE_FORMAT_RGBA_BC7`
+---- `graphics.TEXTURE_FORMAT_RGB16F`
+---- `graphics.TEXTURE_FORMAT_RGB32F`
+---- `graphics.TEXTURE_FORMAT_RGBA16F`
+---- `graphics.TEXTURE_FORMAT_RGBA32F`
+---- `graphics.TEXTURE_FORMAT_R16F`
+---- `graphics.TEXTURE_FORMAT_RG16F`
+---- `graphics.TEXTURE_FORMAT_R32F`
+---- `graphics.TEXTURE_FORMAT_RG32F`
 ---
 ---You can test if the device supports these values by checking if a specific enum is nil or not:
 ---`if graphics.TEXTURE_FORMAT_RGBA16F ~= nil then
@@ -281,9 +281,9 @@ function resource.create_sound_data(path, options) end
 ---These flags may or may not be supported on the running device and/or the underlying graphics API and is simply used internally as a 'hint' when creating the texture. There is no guarantee that any of these will have any effect. Supported values:
 ---
 ---
----`graphics.TEXTURE_USAGE_FLAG_SAMPLE` - The texture can be sampled from a shader (default)
----`graphics.TEXTURE_USAGE_FLAG_MEMORYLESS` - The texture can be used as a memoryless texture, i.e only transient memory for the texture is used during rendering
----`graphics.TEXTURE_USAGE_FLAG_STORAGE` - The texture can be used as a storage texture, which is required for a shader to write to the texture
+---- `graphics.TEXTURE_USAGE_FLAG_SAMPLE` - The texture can be sampled from a shader (default)
+---- `graphics.TEXTURE_USAGE_FLAG_MEMORYLESS` - The texture can be used as a memoryless texture, i.e only transient memory for the texture is used during rendering
+---- `graphics.TEXTURE_USAGE_FLAG_STORAGE` - The texture can be used as a storage texture, which is required for a shader to write to the texture
 ---
 ---
 ---`max_mipmaps`
@@ -293,8 +293,8 @@ function resource.create_sound_data(path, options) end
 ---Creating an empty texture with no buffer data is not supported as a core feature. Defaults to graphics.COMPRESSION_TYPE_DEFAULT, i.e no compression. Supported values:
 ---
 ---
----`COMPRESSION_TYPE_DEFAULT`
----`COMPRESSION_TYPE_BASIS_UASTC`
+---- `COMPRESSION_TYPE_DEFAULT`
+---- `COMPRESSION_TYPE_BASIS_UASTC`
 ---
 ---@param buffer buffer_data optional buffer of precreated pixel data
 ---@return hash path The path to the resource.
@@ -321,11 +321,11 @@ function resource.create_texture(path, table, buffer) end
 ---number The texture type. Supported values:
 ---
 ---
----`graphics.TEXTURE_TYPE_2D`
----`graphics.TEXTURE_TYPE_IMAGE_2D`
----`graphics.TEXTURE_TYPE_3D`
----`graphics.TEXTURE_TYPE_IMAGE_3D`
----`graphics.TEXTURE_TYPE_CUBE_MAP`
+---- `graphics.TEXTURE_TYPE_2D`
+---- `graphics.TEXTURE_TYPE_IMAGE_2D`
+---- `graphics.TEXTURE_TYPE_3D`
+---- `graphics.TEXTURE_TYPE_IMAGE_3D`
+---- `graphics.TEXTURE_TYPE_CUBE_MAP`
 ---
 ---
 ---`width`
@@ -338,32 +338,32 @@ function resource.create_texture(path, table, buffer) end
 ---number The texture format, note that some of these formats might not be supported by the running device. Supported values:
 ---
 ---
----`graphics.TEXTURE_FORMAT_LUMINANCE`
----`graphics.TEXTURE_FORMAT_RGB`
----`graphics.TEXTURE_FORMAT_RGBA`
+---- `graphics.TEXTURE_FORMAT_LUMINANCE`
+---- `graphics.TEXTURE_FORMAT_RGB`
+---- `graphics.TEXTURE_FORMAT_RGBA`
 ---
 ---These constants might not be available on the device:
 ---
----`graphics.TEXTURE_FORMAT_RGB_PVRTC_2BPPV1`
----`graphics.TEXTURE_FORMAT_RGB_PVRTC_4BPPV1`
----`graphics.TEXTURE_FORMAT_RGBA_PVRTC_2BPPV1`
----`graphics.TEXTURE_FORMAT_RGBA_PVRTC_4BPPV1`
----`graphics.TEXTURE_FORMAT_RGB_ETC1`
----`graphics.TEXTURE_FORMAT_RGBA_ETC2`
----`graphics.TEXTURE_FORMAT_RGBA_ASTC_4x4`
----`graphics.TEXTURE_FORMAT_RGB_BC1`
----`graphics.TEXTURE_FORMAT_RGBA_BC3`
----`graphics.TEXTURE_FORMAT_R_BC4`
----`graphics.TEXTURE_FORMAT_RG_BC5`
----`graphics.TEXTURE_FORMAT_RGBA_BC7`
----`graphics.TEXTURE_FORMAT_RGB16F`
----`graphics.TEXTURE_FORMAT_RGB32F`
----`graphics.TEXTURE_FORMAT_RGBA16F`
----`graphics.TEXTURE_FORMAT_RGBA32F`
----`graphics.TEXTURE_FORMAT_R16F`
----`graphics.TEXTURE_FORMAT_RG16F`
----`graphics.TEXTURE_FORMAT_R32F`
----`graphics.TEXTURE_FORMAT_RG32F`
+---- `graphics.TEXTURE_FORMAT_RGB_PVRTC_2BPPV1`
+---- `graphics.TEXTURE_FORMAT_RGB_PVRTC_4BPPV1`
+---- `graphics.TEXTURE_FORMAT_RGBA_PVRTC_2BPPV1`
+---- `graphics.TEXTURE_FORMAT_RGBA_PVRTC_4BPPV1`
+---- `graphics.TEXTURE_FORMAT_RGB_ETC1`
+---- `graphics.TEXTURE_FORMAT_RGBA_ETC2`
+---- `graphics.TEXTURE_FORMAT_RGBA_ASTC_4x4`
+---- `graphics.TEXTURE_FORMAT_RGB_BC1`
+---- `graphics.TEXTURE_FORMAT_RGBA_BC3`
+---- `graphics.TEXTURE_FORMAT_R_BC4`
+---- `graphics.TEXTURE_FORMAT_RG_BC5`
+---- `graphics.TEXTURE_FORMAT_RGBA_BC7`
+---- `graphics.TEXTURE_FORMAT_RGB16F`
+---- `graphics.TEXTURE_FORMAT_RGB32F`
+---- `graphics.TEXTURE_FORMAT_RGBA16F`
+---- `graphics.TEXTURE_FORMAT_RGBA32F`
+---- `graphics.TEXTURE_FORMAT_R16F`
+---- `graphics.TEXTURE_FORMAT_RG16F`
+---- `graphics.TEXTURE_FORMAT_R32F`
+---- `graphics.TEXTURE_FORMAT_RG32F`
 ---
 ---You can test if the device supports these values by checking if a specific enum is nil or not:
 ---`if graphics.TEXTURE_FORMAT_RGBA16F ~= nil then
@@ -376,9 +376,9 @@ function resource.create_texture(path, table, buffer) end
 ---number Texture creation flags that can be used to dictate how the texture is created. Supported values:
 ---
 ---
----`graphics.TEXTURE_USAGE_FLAG_SAMPLE` - The texture can be sampled from a shader (default)
----`graphics.TEXTURE_USAGE_FLAG_MEMORYLESS` - The texture can be used as a memoryless texture, i.e only transient memory for the texture is used during rendering
----`graphics.TEXTURE_USAGE_FLAG_STORAGE` - The texture can be used as a storage texture, which is required for a shader to write to the texture
+---- `graphics.TEXTURE_USAGE_FLAG_SAMPLE` - The texture can be sampled from a shader (default)
+---- `graphics.TEXTURE_USAGE_FLAG_MEMORYLESS` - The texture can be used as a memoryless texture, i.e only transient memory for the texture is used during rendering
+---- `graphics.TEXTURE_USAGE_FLAG_STORAGE` - The texture can be used as a storage texture, which is required for a shader to write to the texture
 ---
 ---
 ---`max_mipmaps`
@@ -388,8 +388,8 @@ function resource.create_texture(path, table, buffer) end
 ---Creating an empty texture with no buffer data is not supported as a core feature. Defaults to graphics.COMPRESSION_TYPE_DEFAULT, i.e no compression. Supported values:
 ---
 ---
----`COMPRESSION_TYPE_DEFAULT`
----`COMPRESSION_TYPE_BASIS_UASTC`
+---- `COMPRESSION_TYPE_DEFAULT`
+---- `COMPRESSION_TYPE_BASIS_UASTC`
 ---
 ---@param buffer buffer_data optional buffer of precreated pixel data
 ---@return number request_id The request id for the async request.
@@ -401,8 +401,8 @@ function resource.create_texture(path, table, buffer) end
 function resource.create_texture_async(path, table, buffer) end
 
 ---Constructor-like function with two purposes:
----Load the specified resource as part of loading the script
----Return a hash to the run-time version of the resource
+---- Load the specified resource as part of loading the script
+---- Return a hash to the run-time version of the resource
 --- This function can only be called within go.property function calls.
 ---@param path? string optional resource path string to the resource
 ---@return hash path a path hash to the binary version of the resource
@@ -412,9 +412,9 @@ function resource.font(path) end
 ---@param path hash|string The path to the atlas resource
 ---@return resource.atlas data A table with the following entries:
 ---
----texture
----geometries
----animations
+---- texture
+---- geometries
+---- animations
 ---
 ---See resource.set_atlas for a detailed description of each field
 function resource.get_atlas(path) end
@@ -444,24 +444,24 @@ function resource.get_buffer(path) end
 ---number The texture type. Supported values:
 ---
 ---
----`graphics.TEXTURE_TYPE_2D`
----`graphics.TEXTURE_TYPE_CUBE_MAP`
----`graphics.TEXTURE_TYPE_2D_ARRAY`
+---- `graphics.TEXTURE_TYPE_2D`
+---- `graphics.TEXTURE_TYPE_CUBE_MAP`
+---- `graphics.TEXTURE_TYPE_2D_ARRAY`
 ---
 ---
 ---`buffer_type`
 ---number The attachment buffer type. Supported values:
 ---
 ---
----`resource.BUFFER_TYPE_COLOR0`
----`resource.BUFFER_TYPE_COLOR1`
----`resource.BUFFER_TYPE_COLOR2`
----`resource.BUFFER_TYPE_COLOR3`
----`resource.BUFFER_TYPE_DEPTH`
----
+---- `resource.BUFFER_TYPE_COLOR0`
+---- `resource.BUFFER_TYPE_COLOR1`
+---- `resource.BUFFER_TYPE_COLOR2`
+---- `resource.BUFFER_TYPE_COLOR3`
+---- `resource.BUFFER_TYPE_DEPTH`
+---- 
 ---`resource.BUFFER_TYPE_STENCIL`
 ---
----
+---- 
 ---
 ---`texture`
 ---hash The hashed path to the attachment texture resource. This field is only available if the render target passed in is a resource.
@@ -486,10 +486,10 @@ function resource.get_render_target_info(path) end
 ---
 ---@return { width:number, height:number, max_ascent:number, max_descent:number } metrics a table with the following fields:
 ---
----width
----height
----max_ascent
----max_descent
+---- width
+---- height
+---- max_ascent
+---- max_descent
 ---
 function resource.get_text_metrics(url, text, options) end
 
@@ -515,12 +515,12 @@ function resource.get_text_metrics(url, text, options) end
 ---number The texture type. Supported values:
 ---
 ---
----`graphics.TEXTURE_TYPE_2D`
----`graphics.TEXTURE_TYPE_2D_ARRAY`
----`graphics.TEXTURE_TYPE_IMAGE_2D`
----`graphics.TEXTURE_TYPE_3D`
----`graphics.TEXTURE_TYPE_IMAGE_3D`
----`graphics.TEXTURE_TYPE_CUBE_MAP`
+---- `graphics.TEXTURE_TYPE_2D`
+---- `graphics.TEXTURE_TYPE_2D_ARRAY`
+---- `graphics.TEXTURE_TYPE_IMAGE_2D`
+---- `graphics.TEXTURE_TYPE_3D`
+---- `graphics.TEXTURE_TYPE_IMAGE_3D`
+---- `graphics.TEXTURE_TYPE_CUBE_MAP`
 ---
 function resource.get_texture_info(path) end
 
@@ -530,8 +530,8 @@ function resource.get_texture_info(path) end
 function resource.load(path) end
 
 ---Constructor-like function with two purposes:
----Load the specified resource as part of loading the script
----Return a hash to the run-time version of the resource
+---- Load the specified resource as part of loading the script
+---- Return a hash to the run-time version of the resource
 --- This function can only be called within go.property function calls.
 ---@param path? string optional resource path string to the resource
 ---@return hash path a path hash to the binary version of the resource
@@ -543,8 +543,8 @@ function resource.material(path) end
 function resource.release(path) end
 
 ---Constructor-like function with two purposes:
----Load the specified resource as part of loading the script
----Return a hash to the run-time version of the resource
+---- Load the specified resource as part of loading the script
+---- Return a hash to the run-time version of the resource
 --- This function can only be called within go.property function calls.
 ---@param path? string optional resource path string to the resource
 ---@return hash path a path hash to the binary version of the resource
@@ -569,91 +569,91 @@ function resource.set(path, buffer) end
 ---@param path hash|string The path to the atlas resource
 ---@param table resource.atlas A table containing info about the atlas. Supported entries:
 ---
----
+---- 
 ---
 ---`texture`
 ---string | hash the path to the texture resource, e.g "/main/my_texture.texturec"
 ---
 ---
----
+---- 
 ---
 ---`animations`
 ---table a list of the animations in the atlas. Supports the following fields:
 ---
 ---
----
+---- 
 ---
 ---`id`
 ---string the id of the animation, used in e.g sprite.play_animation
 ---
 ---
----
+---- 
 ---
 ---`width`
 ---number the width of the animation
 ---
 ---
----
+---- 
 ---
 ---`height`
 ---number the height of the animation
 ---
 ---
----
+---- 
 ---
 ---`frame_start`
 ---number index to the first geometry of the animation. Indices are lua based and must be in the range of 1 ..  in atlas.
 ---
 ---
----
+---- 
 ---
 ---`frame_end`
 ---number index to the last geometry of the animation (non-inclusive). Indices are lua based and must be in the range of 1 ..  in atlas.
 ---
 ---
----
+---- 
 ---
 ---`playback`
 ---constant optional playback mode of the animation, the default value is go.PLAYBACK_ONCE_FORWARD
 ---
 ---
----
+---- 
 ---
 ---`fps`
 ---number optional fps of the animation, the default value is 30
 ---
 ---
----
+---- 
 ---
 ---`flip_vertical`
 ---boolean optional flip the animation vertically, the default value is false
 ---
 ---
----
+---- 
 ---
 ---`flip_horizontal`
 ---boolean optional flip the animation horizontally, the default value is false
 ---
 ---
----
+---- 
 ---
 ---`geometries`
 ---table A list of the geometries that should map to the texture data. Supports the following fields:
 ---
 ---
----
+---- 
 ---
 ---`vertices`
 ---table a list of the vertices in texture space of the geometry in the form {px0, py0, px1, py1, ..., pxn, pyn}
 ---
 ---
----
+---- 
 ---
 ---`uvs`
 ---table a list of the uv coordinates in texture space of the geometry in the form of {u0, v0, u1, v1, ..., un, vn}
 ---
 ---
----
+---- 
 ---
 ---`indices`
 ---table a list of the indices of the geometry in the form {i0, i1, i2, ..., in}. Each tripe in the list represents a triangle.
@@ -673,7 +673,7 @@ function resource.set_atlas(path, table) end
 ---@param buffer buffer_data The resource buffer
 ---@param table? { transfer_ownership?: boolean } A table containing info about how to set the buffer. Supported entries:
 ---
----
+---- 
 ---
 ---`transfer_ownership`
 ---boolean optional flag to determine wether or not the resource should take over ownership of the buffer object (default false)
@@ -695,11 +695,11 @@ function resource.set_sound(path, buffer) end
 ---number The texture type. Supported values:
 ---
 ---
----`graphics.TEXTURE_TYPE_2D`
----`graphics.TEXTURE_TYPE_IMAGE_2D`
----`graphics.TEXTURE_TYPE_3D`
----`graphics.TEXTURE_TYPE_IMAGE_3D`
----`graphics.TEXTURE_TYPE_CUBE_MAP`
+---- `graphics.TEXTURE_TYPE_2D`
+---- `graphics.TEXTURE_TYPE_IMAGE_2D`
+---- `graphics.TEXTURE_TYPE_3D`
+---- `graphics.TEXTURE_TYPE_IMAGE_3D`
+---- `graphics.TEXTURE_TYPE_CUBE_MAP`
 ---
 ---
 ---`width`
@@ -710,9 +710,9 @@ function resource.set_sound(path, buffer) end
 ---number The texture format, note that some of these formats are platform specific. Supported values:
 ---
 ---
----`graphics.TEXTURE_FORMAT_LUMINANCE`
----`graphics.TEXTURE_FORMAT_RGB`
----`graphics.TEXTURE_FORMAT_RGBA`
+---- `graphics.TEXTURE_FORMAT_LUMINANCE`
+---- `graphics.TEXTURE_FORMAT_RGB`
+---- `graphics.TEXTURE_FORMAT_RGBA`
 ---
 ---These constants might not be available on the device:
 ---- `graphics.TEXTURE_FORMAT_RGB_PVRTC_2BPPV1`
@@ -756,8 +756,8 @@ function resource.set_sound(path, buffer) end
 ---number optional specify the compression type for the data in the buffer object that holds the texture data. Defaults to graphics.COMPRESSION_TYPE_DEFAULT, i.e no compression. Supported values:
 ---
 ---
----`COMPRESSION_TYPE_DEFAULT`
----`COMPRESSION_TYPE_BASIS_UASTC`
+---- `COMPRESSION_TYPE_DEFAULT`
+---- `COMPRESSION_TYPE_BASIS_UASTC`
 ---
 ---@param buffer buffer_data The buffer of precreated pixel data
 --- To update a cube map texture you need to pass in six times the amount of data via the buffer, since a cube map has six sides!
@@ -769,16 +769,16 @@ function resource.set_sound(path, buffer) end
 function resource.set_texture(path, table, buffer) end
 
 ---Constructor-like function with two purposes:
----Load the specified resource as part of loading the script
----Return a hash to the run-time version of the resource
+---- Load the specified resource as part of loading the script
+---- Return a hash to the run-time version of the resource
 --- This function can only be called within go.property function calls.
 ---@param path? string optional resource path string to the resource
 ---@return hash path a path hash to the binary version of the resource
 function resource.texture(path) end
 
 ---Constructor-like function with two purposes:
----Load the specified resource as part of loading the script
----Return a hash to the run-time version of the resource
+---- Load the specified resource as part of loading the script
+---- Return a hash to the run-time version of the resource
 --- This function can only be called within go.property function calls.
 ---@param path? string optional resource path string to the resource
 ---@return hash path a path hash to the binary version of the resource

@@ -33,8 +33,8 @@ sprite = {}
 ---table Information about the completion:
 ---
 ---
----number `current_tile` - the current tile of the sprite.
----hash `id` - id of the animation that was completed.
+---- number `current_tile` - the current tile of the sprite.
+---- hash `id` - id of the animation that was completed.
 ---
 ---
 ---`sender`

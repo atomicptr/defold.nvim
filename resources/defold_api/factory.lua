@@ -38,9 +38,9 @@ function factory.create(url, position, rotation, properties, scale) end
 ---@param url? string|hash|url the factory component to get status from
 ---@return constant status status of the factory component
 ---
----`factory.STATUS_UNLOADED`
----`factory.STATUS_LOADING`
----`factory.STATUS_LOADED`
+---- `factory.STATUS_UNLOADED`
+---- `factory.STATUS_LOADING`
+---- `factory.STATUS_LOADED`
 ---
 function factory.get_status(url) end
 
