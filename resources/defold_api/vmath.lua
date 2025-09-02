@@ -68,9 +68,9 @@ function vmath.cross(v1, v2) end
 ---The returned value is a scalar defined as:
 ---`P ⋅ Q = |P| |Q| cos θ`
 ---where θ is the angle between the vectors P and Q.
----If the dot product is positive then the angle between the vectors is below 90 degrees.
----If the dot product is zero the vectors are perpendicular (at right-angles to each other).
----If the dot product is negative then the angle between the vectors is more than 90 degrees.
+---- If the dot product is positive then the angle between the vectors is below 90 degrees.
+---- If the dot product is zero the vectors are perpendicular (at right-angles to each other).
+---- If the dot product is negative then the angle between the vectors is more than 90 degrees.
 ---@generic T: vector3|vector4
 ---@param v1 T first vector
 ---@param v2 T second vector

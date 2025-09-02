@@ -35,10 +35,10 @@ particlefx = {}
 ---constant the new state of the emitter:
 ---
 ---
----`particlefx.EMITTER_STATE_SLEEPING`
----`particlefx.EMITTER_STATE_PRESPAWN`
----`particlefx.EMITTER_STATE_SPAWNING`
----`particlefx.EMITTER_STATE_POSTSPAWN`
+---- `particlefx.EMITTER_STATE_SLEEPING`
+---- `particlefx.EMITTER_STATE_PRESPAWN`
+---- `particlefx.EMITTER_STATE_SPAWNING`
+---- `particlefx.EMITTER_STATE_POSTSPAWN`
 ---
 function particlefx.play(url, emitter_state_function) end
 
@@ -68,7 +68,7 @@ function particlefx.set_constant(url, emitter, constant, value) end
 ---@param url string|hash|url the particle fx that should stop playing
 ---@param options? { clear?:boolean } Options when stopping the particle fx. Supported options:
 ---
----boolean `clear`: instantly clear spawned particles
+---- boolean `clear`: instantly clear spawned particles
 ---
 function particlefx.stop(url, options) end
 

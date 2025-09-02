@@ -31,12 +31,12 @@ go = {}
 ---@param property string|hash id of the property to animate
 ---@param playback constant playback mode of the animation
 ---
----`go.PLAYBACK_ONCE_FORWARD`
----`go.PLAYBACK_ONCE_BACKWARD`
----`go.PLAYBACK_ONCE_PINGPONG`
----`go.PLAYBACK_LOOP_FORWARD`
----`go.PLAYBACK_LOOP_BACKWARD`
----`go.PLAYBACK_LOOP_PINGPONG`
+---- `go.PLAYBACK_ONCE_FORWARD`
+---- `go.PLAYBACK_ONCE_BACKWARD`
+--- `go.PLAYBACK_ONCE_PINGPONG`
+----- `go.PLAYBACK_LOOP_FORWARD`
+---- `go.PLAYBACK_LOOP_BACKWARD`
+---- `go.PLAYBACK_LOOP_PINGPONG`
 ---
 ---@param to number|vector3|vector4|quaternion target property value
 ---@param easing vector|constant easing to use during animation. Either specify a constant, see the animation guide for a complete list, or a vmath.vector with a curve
@@ -92,8 +92,8 @@ function go.get(url, property, options) end
 
 ---Returns or constructs an instance identifier. The instance id is a hash
 ---of the absolute path to the instance.
----If `path` is specified, it can either be absolute or relative to the instance of the calling script.
----If `path` is not specified, the id of the game object instance the script is attached to will be returned.
+---- If `path` is specified, it can either be absolute or relative to the instance of the calling script.
+---- If `path` is not specified, the id of the game object instance the script is attached to will be returned.
 ---@param path? string path of the instance for which to return the id
 ---@return hash id instance id
 function go.get_id(path) end

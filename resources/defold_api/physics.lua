@@ -62,7 +62,7 @@ function physics.get_group(url) end
 ---@param joint_id string|hash id of the joint
 ---@return { collide_connected?:boolean } properties properties table. See the joint types for what fields are available, the only field available for all types is:
 ---
----boolean `collide_connected`: Set this flag to true if the attached bodies should collide.
+---- boolean `collide_connected`: Set this flag to true if the attached bodies should collide.
 ---
 function physics.get_joint_properties(collisionobject, joint_id) end
 
@@ -104,10 +104,10 @@ function physics.get_maskbit(url, group) end
 ---number The shape type. Supported values:
 ---
 ---
----`physics.SHAPE_TYPE_SPHERE`
----`physics.SHAPE_TYPE_BOX`
----`physics.SHAPE_TYPE_CAPSULE` *Only supported for 3D physics*
----`physics.SHAPE_TYPE_HULL`
+---- `physics.SHAPE_TYPE_SPHERE`
+---- `physics.SHAPE_TYPE_BOX`
+---- `physics.SHAPE_TYPE_CAPSULE` *Only supported for 3D physics*
+---- `physics.SHAPE_TYPE_HULL`
 ---
 ---The returned table contains different fields depending on which type the shape is.
 ---If the shape is a sphere:
@@ -158,8 +158,8 @@ function physics.raycast(from, to, groups, options) end
 ---Which collision objects to hit is filtered by their collision groups and can be configured
 ---through `groups`.
 ---The actual ray cast will be performed during the physics-update.
----If an object is hit, the result will be reported via a ray_cast_response message.
----If there is no object hit, the result will be reported via a ray_cast_missed message.
+---- If an object is hit, the result will be reported via a ray_cast_response message.
+---- If there is no object hit, the result will be reported via a ray_cast_missed message.
 ---NOTE: Ray casts will ignore collision objects that contain the starting point of the ray. This is a limitation in Box2D.
 ---@param from vector3 the world position of the start of the ray
 ---@param to vector3 the world position of the end of the ray
@@ -176,11 +176,11 @@ function physics.raycast_async(from, to, groups, request_id) end
 ---constant The type of event. Can be one of these messages:
 ---
 ---
----contact_point_event
----collision_event
----trigger_event
----ray_cast_response
----ray_cast_missed
+---- contact_point_event
+---- collision_event
+---- trigger_event
+---- ray_cast_response
+---- ray_cast_missed
 ---
 ---
 ---`data`

@@ -28,16 +28,16 @@ image = {}
 ---
 ---@return { width:number, height:number, type:constant, buffer:string }|nil image object or `nil` if loading fails. The object is a table with the following fields:
 ---
----number `width`: image width
----number `height`: image height
----constant `type`: image type
+---- number `width`: image width
+---- number `height`: image height
+---- constant `type`: image type
 ---`image.TYPE_RGB`
----`image.TYPE_RGBA`
----`image.TYPE_LUMINANCE`
----`image.TYPE_LUMINANCE_ALPHA`
+---- `image.TYPE_RGBA`
+---- `image.TYPE_LUMINANCE`
+---- `image.TYPE_LUMINANCE_ALPHA`
 ---
 ---
----string `buffer`: the raw image data
+---- string `buffer`: the raw image data
 ---
 function image.load(buffer, options) end
 
@@ -52,16 +52,16 @@ function image.load(buffer, options) end
 ---
 ---@return { width:number, height:number, type:constant, buffer:buffer_data }|nil image object or `nil` if loading fails. The object is a table with the following fields:
 ---
----number `width`: image width
----number `height`: image height
----constant `type`: image type
+---- number `width`: image width
+---- number `height`: image height
+---- constant `type`: image type
 ---`image.TYPE_RGB`
----`image.TYPE_RGBA`
----`image.TYPE_LUMINANCE`
----`image.TYPE_LUMINANCE_ALPHA`
+---- `image.TYPE_RGBA`
+---- `image.TYPE_LUMINANCE`
+---- `image.TYPE_LUMINANCE_ALPHA`
 ---
 ---
----buffer `buffer`: the script buffer that holds the decompressed image data. See buffer.create how to use the buffer.
+---- buffer `buffer`: the script buffer that holds the decompressed image data. See buffer.create how to use the buffer.
 ---
 function image.load_buffer(buffer, options) end
 

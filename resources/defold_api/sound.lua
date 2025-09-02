@@ -69,8 +69,8 @@ function sound.get_rms(group, window) end
 ---in the Android SDK. If your game is playing any sounds, *even with a gain of zero*, this
 ---function will return `false`.
 ---The best time to call this function is:
----In the `init` function of your main collection script before any sounds are triggered
----In a window listener callback when the window.WINDOW_EVENT_FOCUS_GAINED event is received
+---- In the `init` function of your main collection script before any sounds are triggered
+---- In a window listener callback when the window.WINDOW_EVENT_FOCUS_GAINED event is received
 ---Both those times will give you a correct reading of the state even when your application is
 ---swapped out and in while playing sounds and it works equally well on Android and iOS.
 ---@return boolean playing `true` if music is playing, otherwise `false`.
@@ -111,7 +111,7 @@ function sound.pause(url, pause) end
 ---table Information about the completion:
 ---
 ---
----number `play_id` - the sequential play identifier that was given by the sound.play function.
+---- number `play_id` - the sequential play identifier that was given by the sound.play function.
 ---
 ---
 ---`sender`

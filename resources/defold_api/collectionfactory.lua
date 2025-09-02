@@ -45,9 +45,9 @@ function collectionfactory.create(url, position, rotation, properties, scale) en
 ---@param url? string|hash|url the collection factory component to get status from
 ---@return constant status status of the collection factory component
 ---
----`collectionfactory.STATUS_UNLOADED`
----`collectionfactory.STATUS_LOADING`
----`collectionfactory.STATUS_LOADED`
+---- `collectionfactory.STATUS_UNLOADED`
+---- `collectionfactory.STATUS_LOADING`
+---- `collectionfactory.STATUS_LOADED`
 ---
 function collectionfactory.get_status(url) end
 
