@@ -5,7 +5,7 @@
                          windows?]]
    [taoensso.timbre :as log]))
 
-(def ^:private mobdap-version "0.1.5")
+(def ^:private mobdap-version "0.2.0")
 
 (def ^:private mobdap-urls
   {:linux   {:x86 "https://github.com/atomicptr/mobdap/releases/download/v%s/mobdap-linux-amd64.tar.gz"
