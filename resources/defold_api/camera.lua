@@ -1,6 +1,6 @@
 --[[
   Generated with github.com/astrochili/defold-annotations
-  Defold 1.10.4
+  Defold 1.11.0
 
   Camera API documentation
 
@@ -17,10 +17,19 @@
 ---@class defold_api.camera
 camera = {}
 
----get aspect ratio
+---Gets the effective aspect ratio of the camera. If auto aspect ratio is enabled,
+---returns the aspect ratio calculated from the current render target dimensions.
+---Otherwise returns the manually set aspect ratio.
 ---@param camera url|number|nil camera id
----@return number aspect_ratio the aspect ratio.
+---@return number aspect_ratio the effective aspect ratio.
 function camera.get_aspect_ratio(camera) end
+
+---Returns whether auto aspect ratio is enabled. When enabled, the camera automatically
+---calculates aspect ratio from render target dimensions. When disabled, uses the
+---manually set aspect ratio value.
+---@param camera url|number|nil camera id
+---@return boolean auto_aspect_ratio true if auto aspect ratio is enabled
+function camera.get_auto_aspect_ratio(camera) end
 
 ---This function returns a table with all the camera URLs that have been
 ---registered in the render context.
@@ -62,10 +71,19 @@ function camera.get_projection(camera) end
 ---@return matrix4 view the view matrix.
 function camera.get_view(camera) end
 
----set aspect ratio
+---Sets the manual aspect ratio for the camera. This value is only used when
+---auto aspect ratio is disabled. To disable auto aspect ratio and use this
+---manual value, call camera.set_auto_aspect_ratio(camera, false).
 ---@param camera url|number|nil camera id
----@param aspect_ratio number the aspect ratio.
+---@param aspect_ratio number the manual aspect ratio value.
 function camera.set_aspect_ratio(camera, aspect_ratio) end
+
+---Enables or disables automatic aspect ratio calculation. When enabled (true),
+---the camera automatically calculates aspect ratio from render target dimensions.
+---When disabled (false), uses the manually set aspect ratio value.
+---@param camera url|number|nil camera id
+---@param auto_aspect_ratio boolean true to enable auto aspect ratio
+function camera.set_auto_aspect_ratio(camera, auto_aspect_ratio) end
 
 ---set far z
 ---@param camera url|number|nil camera id

@@ -1,6 +1,6 @@
 --[[
   Generated with github.com/astrochili/defold-annotations
-  Defold 1.10.4
+  Defold 1.11.0
 
   Editor scripting documentation
 --]]
@@ -187,6 +187,15 @@ zip.METHOD.DEFLATED = nil
 
 ---`"stored"` compression method, i.e. no compression
 zip.METHOD.STORED = nil
+
+---`"error"`, any conflict aborts extraction
+zip.ON_CONFLICT.ERROR = nil
+
+---`"skip"`, existing file is overwritten
+zip.ON_CONFLICT.OVERWRITE = nil
+
+---`"skip"`, existing file is preserved
+zip.ON_CONFLICT.SKIP = nil
 
 ---Run bob the builder program
 ---For the full documentation of the available commands and options, see the bob manual.
@@ -778,5 +787,12 @@ function tilemap.tiles.set(tiles, x, y, tile_or_info) end
 ---@param opts? { method?:string, level?:integer } compression options, a table with the following keys:`method string`compression method, either `zip.METHOD.DEFLATED` (default) or `zip.METHOD.STORED``level integer`compression level, an integer between 0 and 9, only useful when the compression method is `zip.METHOD.DEFLATED`; defaults to 6
 ---@param entries string|table entries to compress, either a string (relative path to file or folder to include) or a table with the following keys:`1 string`required; source file or folder path to include, resolved against project root if relative`2 string`optional; target file or folder path in the zip archive. May be omitted if source is a relative path that does not go above the project directory.`method string`compression method, either `zip.METHOD.DEFLATED` (default) or `zip.METHOD.STORED``level integer`compression level, an integer between 0 and 9, only useful when the compression method is `zip.METHOD.DEFLATED`; defaults to 6
 function zip.pack(output_path, opts, entries) end
+
+---Extract a ZIP archive
+---@param archive_path string zip file path, resolved against project root if relative
+---@param target_path? string target path for extraction, defaults to parent of `archive_path` if omitted
+---@param opts? table extraction options, a table with the following keys:`on_conflict string`conflict resolution strategy, defaults to `zip.ON_CONFLICT.ERROR`
+---@param paths? table entries to extract, relative string paths
+function zip.unpack(archive_path, target_path, opts, paths) end
 
 return editor
