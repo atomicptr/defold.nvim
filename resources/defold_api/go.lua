@@ -1,6 +1,6 @@
 --[[
   Generated with github.com/astrochili/defold-annotations
-  Defold 1.10.4
+  Defold 1.11.0
 
   Game object API documentation
 
@@ -33,8 +33,8 @@ go = {}
 ---
 ---- `go.PLAYBACK_ONCE_FORWARD`
 ---- `go.PLAYBACK_ONCE_BACKWARD`
---- `go.PLAYBACK_ONCE_PINGPONG`
------ `go.PLAYBACK_LOOP_FORWARD`
+---- `go.PLAYBACK_ONCE_PINGPONG`
+---- `go.PLAYBACK_LOOP_FORWARD`
 ---- `go.PLAYBACK_LOOP_BACKWARD`
 ---- `go.PLAYBACK_LOOP_PINGPONG`
 ---
@@ -75,8 +75,8 @@ function go.cancel_animations(url, property) end
 ---@param recursive? boolean optional boolean, set to true to recursively delete child hiearchy in child to parent order
 function go.delete(id, recursive) end
 
----A lua-error will be raised if the game object belongs to another
----collection than the collection from which the function was called.
+---This function can check for game objects in any collection by specifying
+---the collection name in the URL.
 ---@param url string|hash|url url of the game object to check
 ---@return boolean exists true if the game object exists
 function go.exists(url) end
@@ -192,10 +192,16 @@ function go.set_position(position, id) end
 function go.set_rotation(rotation, id) end
 
 ---The scale factor is relative to the parent (if any). The global world scale factor cannot be manually set.
---- Physics are currently not affected when setting scale from this function.
+--- See manual to know how physics affected when setting scale from this function.
 ---@param scale number|vector3 vector or uniform scale factor, must be greater than 0
 ---@param id? string|hash|url optional id of the game object instance to get the scale for, by default the instance of the calling script
 function go.set_scale(scale, id) end
+
+---The scale factor is relative to the parent (if any). The global world scale factor cannot be manually set.
+--- See manual to know how physics affected when setting scale from this function.
+---@param scale number|vector3 vector or uniform scale factor, must be greater than 0
+---@param id? string|hash|url optional id of the game object instance to get the scale for, by default the instance of the calling script
+function go.set_scale_xy(scale, id) end
 
 --- The function uses world transformation calculated at the end of previous frame.
 ---@param position vector3 position which need to be converted

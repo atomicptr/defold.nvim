@@ -1,6 +1,6 @@
 --[[
   Generated with github.com/astrochili/defold-annotations
-  Defold 1.10.4
+  Defold 1.11.0
 
   Known types and aliases used in the Defold API
 --]]
@@ -141,10 +141,15 @@ http.server = {}
 ---@field texture string|hash The path to the texture resource, e.g "/main/my_texture.texturec"
 
 ---@class resource.geometry
+---@field height number The height of the image the sprite geometry represents
 ---@field id string The name of the geometry. Used when matching animations between multiple atlases
 ---@field indices number[] A list of the indices of the geometry in the form { i0, i1, i2, ..., in }. Each tripe in the list represents a triangle.
+---@field pivot_x number The pivot x value of the image in unit coords. (0,0) is upper left corner, (1,1) is bottom right. Default is 0.5.
+---@field pivot_y number The pivot y value of the image in unit coords. (0,0) is upper left corner, (1,1) is bottom right. Default is 0.5.
+---@field rotated boolean Whether the image is rotated 90 degrees counter-clockwise in the atlas. This affects UV coordinate generation for proper rendering. Default is false.
 ---@field uvs number[] A list of the uv coordinates in texture space of the geometry in the form of { u0, v0, u1, v1, ..., un, vn }
 ---@field vertices number[] A list of the vertices in texture space of the geometry in the form { px0, py0, px1, py1, ..., pxn, pyn }
+---@field width number The width of the image the sprite geometry represents
 
 ---@class socket.dns
 socket.dns = {}
@@ -181,6 +186,9 @@ zip = {}
 
 ---@class zip.METHOD
 zip.METHOD = {}
+
+---@class zip.ON_CONFLICT
+zip.ON_CONFLICT = {}
 
 ---@alias array table
 ---@alias b2Body userdata

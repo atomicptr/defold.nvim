@@ -1,6 +1,6 @@
 --[[
   Generated with github.com/astrochili/defold-annotations
-  Defold 1.10.4
+  Defold 1.11.0
 
   Resource API documentation
 
@@ -146,6 +146,12 @@ function resource.buffer(path) end
 ---
 ---`pivot_y`
 ---number The pivot y value of the image in unit coords. (0,0) is upper left corner, (1,1) is bottom right. Default is 0.5.
+---
+---
+---- 
+---
+---`rotated`
+---boolean Whether the image is rotated 90 degrees counter-clockwise in the atlas. This affects UV coordinate generation for proper rendering. Default is false.
 ---
 ---
 ---- 

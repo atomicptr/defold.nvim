@@ -1,8 +1,10 @@
 --[[
   Generated with github.com/astrochili/defold-annotations
-  Defold 1.10.4
+  Defold 1.11.0
 
-  
+  Font API documentation
+
+  Functions, messages and properties used to manipulate font resources.
 --]]
 
 ---@meta
