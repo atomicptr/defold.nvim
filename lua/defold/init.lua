@@ -121,8 +121,8 @@ function M.setup(opts)
         log.info "Defold setup successfully"
     end, { nargs = 0, desc = "Setup Defold to use Neovim as its default editor" })
 
-    -- register filetypes
-    vim.filetype.add(require "defold.config.filetype")
+    -- register some filetypes
+    vim.filetype.add(require("defold.config.filetype").minimal)
 
     -- attach to lsp
     vim.api.nvim_create_autocmd("LspAttach", {
@@ -190,6 +190,9 @@ function M.load_plugin()
     end
 
     M.loaded = true
+
+    -- register all filetypes
+    vim.filetype.add(require("defold.config.filetype").full)
 
     local babashka = require "defold.service.babashka"
     local debugger = require "defold.service.debugger"
