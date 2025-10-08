@@ -1,6 +1,6 @@
 --[[
   Generated with github.com/astrochili/defold-annotations
-  Defold 1.11.0
+  Defold 1.11.1
 
   Sound API documentation
 
@@ -91,7 +91,7 @@ function sound.pause(url, pause) end
 ---Make the sound component play its sound. Multiple voices are supported. The limit is set to 32 voices per sound component.
 --- A sound will continue to play even if the game object the sound component belonged to is deleted. You can call `sound.stop()` to stop the sound.
 ---@param url string|hash|url the sound that should play
----@param play_properties? { delay?:number, gain?:number, pan?:number, speed?:number } optional table with properties:
+---@param play_properties? { delay?:number, gain?:number, pan?:number, speed?:number, start_time?:number, start_frame?:number } optional table with properties:
 ---`delay`
 ---number delay in seconds before the sound starts playing, default is 0.
 ---`gain`
@@ -100,6 +100,10 @@ function sound.pause(url, pause) end
 ---number sound pan between -1 and 1, default is 0. The final pan of the sound will be an addition of this pan and the sound pan.
 ---`speed`
 ---number sound speed where 1.0 is normal speed, 0.5 is half speed and 2.0 is double speed. The final speed of the sound will be a multiplication of this speed and the sound speed.
+---`start_time`
+---number start playback offset (seconds). Optional, mutually exclusive with `start_frame`.
+---`start_frame`
+---number start playback offset (frames/samples). Optional, mutually exclusive with `start_time`. If both are provided, `start_frame` is used.
 ---
 ---@param complete_function? fun(self, message_id, message, sender) function to call when the sound has finished playing or stopped manually via sound.stop.
 ---

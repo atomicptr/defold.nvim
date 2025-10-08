@@ -1,6 +1,6 @@
 --[[
   Generated with github.com/astrochili/defold-annotations
-  Defold 1.11.0
+  Defold 1.11.1
 
   Particle effects API documentation
 

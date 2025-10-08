@@ -1,6 +1,6 @@
 --[[
   Generated with github.com/astrochili/defold-annotations
-  Defold 1.11.0
+  Defold 1.11.1
 
   GUI API documentation
 
@@ -296,6 +296,12 @@ function gui.get_layer(node) end
 ---gets the scene current layout
 ---@return hash layout layout id
 function gui.get_layout() end
+
+---Returns a table mapping each layout id hash to a vector3(width, height, 0). For the default layout,
+---the current scene resolution is returned. If a layout name is not present in the Display Profiles (or when
+---no display profiles are assigned), the width/height pair is 0.
+---@return table<hash, vector3>  layout_id_hash -> vmath.vector3(width, height, 0)
+function gui.get_layouts() end
 
 ---Returns the leading value for a text node.
 ---@param node node node from where to get the leading
@@ -779,6 +785,13 @@ function gui.set_inner_radius(node, radius) end
 ---@param node node node for which to set the layer
 ---@param layer string|hash layer id
 function gui.set_layer(node, layer) end
+
+---Applies a named layout on the GUI scene. This re-applies per-layout node descriptors
+---and, if a matching Display Profile exists, updates the scene resolution. Emits
+---the "layout_changed" message to the scene script when the layout actually changes.
+---@param layout string|hash the layout id to apply
+---@return boolean  true if the layout exists in the scene and was applied, false otherwise
+function gui.set_layout(layout) end
 
 ---Sets the leading value for a text node. This value is used to
 ---scale the line spacing of text.

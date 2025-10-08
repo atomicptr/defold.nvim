@@ -1,6 +1,6 @@
 --[[
   Generated with github.com/astrochili/defold-annotations
-  Defold 1.11.0
+  Defold 1.11.1
 
   Game object API documentation
 
@@ -124,18 +124,21 @@ function go.get_scale(id) end
 function go.get_scale_uniform(id) end
 
 ---The function will return the world position calculated at the end of the previous frame.
+---To recalculate it within the current frame, use go.update_world_transform on the instance before calling this.
 ---Use go.get_position to retrieve the position relative to the parent.
 ---@param id? string|hash|url optional id of the game object instance to get the world position for, by default the instance of the calling script
 ---@return vector3 position instance world position
 function go.get_world_position(id) end
 
 ---The function will return the world rotation calculated at the end of the previous frame.
+---To recalculate it within the current frame, use go.update_world_transform on the instance before calling this.
 ---Use go.get_rotation to retrieve the rotation relative to the parent.
 ---@param id? string|hash|url optional id of the game object instance to get the world rotation for, by default the instance of the calling script
 ---@return quaternion rotation instance world rotation
 function go.get_world_rotation(id) end
 
 ---The function will return the world 3D scale factor calculated at the end of the previous frame.
+---To recalculate it within the current frame, use go.update_world_transform on the instance before calling this.
 ---Use go.get_scale to retrieve the 3D scale factor relative to the parent.
 ---This vector is derived by decomposing the transformation matrix and should be used with care.
 ---For most cases it should be fine to use go.get_world_scale_uniform instead.
@@ -144,12 +147,14 @@ function go.get_world_rotation(id) end
 function go.get_world_scale(id) end
 
 ---The function will return the world scale factor calculated at the end of the previous frame.
+---To recalculate it within the current frame, use go.update_world_transform on the instance before calling this.
 ---Use go.get_scale_uniform to retrieve the scale factor relative to the parent.
 ---@param id? string|hash|url optional id of the game object instance to get the world scale for, by default the instance of the calling script
 ---@return number scale instance world scale factor
 function go.get_world_scale_uniform(id) end
 
 ---The function will return the world transform matrix calculated at the end of the previous frame.
+---To recalculate it within the current frame, use go.update_world_transform on the instance before calling this.
 ---@param id? string|hash|url optional id of the game object instance to get the world transform for, by default the instance of the calling script
 ---@return matrix4 transform instance world transform
 function go.get_world_transform(id) end
@@ -202,6 +207,16 @@ function go.set_scale(scale, id) end
 ---@param scale number|vector3 vector or uniform scale factor, must be greater than 0
 ---@param id? string|hash|url optional id of the game object instance to get the scale for, by default the instance of the calling script
 function go.set_scale_xy(scale, id) end
+
+---Recalculates and updates the cached world transform immediately for the target instance
+---and its ancestors (parent chain up to the collection root). Descendants (children) are
+---not updated by this function.
+---If no id is provided, the instance of the calling script is used.
+--- Use this after changing local transform mid-frame when you need the
+---new world transform right away (e.g. before end-of-frame updates). Note that child
+---instances will still have last-frame world transforms until the regular update.
+---@param id? string|hash|url optional id of the game object instance to update
+function go.update_world_transform(id) end
 
 --- The function uses world transformation calculated at the end of previous frame.
 ---@param position vector3 position which need to be converted
