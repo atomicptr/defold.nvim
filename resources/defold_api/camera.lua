@@ -1,10 +1,10 @@
 --[[
   Generated with github.com/astrochili/defold-annotations
-  Defold 1.11.0
+  Defold 1.11.1
 
   Camera API documentation
 
-  Messages to control camera components and camera focus.
+  Camera functions, messages and constants.
 --]]
 
 ---@meta
@@ -56,6 +56,12 @@ function camera.get_fov(camera) end
 ---@return number near_z the near z.
 function camera.get_near_z(camera) end
 
+---get orthographic zoom mode
+---@param camera url|number|nil camera id
+---@return number mode one of camera.ORTHO_MODE_FIXED, camera.ORTHO_MODE_AUTO_FIT or
+---camera.ORTHO_MODE_AUTO_COVER
+function camera.get_orthographic_mode(camera) end
+
 ---get orthographic zoom
 ---@param camera url|number|nil camera id
 ---@return number orthographic_zoom the zoom level when the camera uses orthographic projection.
@@ -100,9 +106,25 @@ function camera.set_fov(camera, fov) end
 ---@param near_z number the near z.
 function camera.set_near_z(camera, near_z) end
 
+---set orthographic zoom mode
+---@param camera url|number|nil camera id
+---@param mode number camera.ORTHO_MODE_FIXED, camera.ORTHO_MODE_AUTO_FIT or camera.ORTHO_MODE_AUTO_COVER
+function camera.set_orthographic_mode(camera, mode) end
+
 ---set orthographic zoom
 ---@param camera url|number|nil camera id
 ---@param orthographic_zoom number the zoom level when the camera uses orthographic projection.
 function camera.set_orthographic_zoom(camera, orthographic_zoom) end
+
+---Computes zoom so the original display area covers the entire window while preserving aspect ratio.
+---Equivalent to using max(window_width/width, window_height/height).
+camera.ORTHO_MODE_AUTO_COVER = nil
+
+---Computes zoom so the original display area (game.project width/height) fits inside the window
+---while preserving aspect ratio. Equivalent to using min(window_width/width, window_height/height).
+camera.ORTHO_MODE_AUTO_FIT = nil
+
+---Uses the manually set orthographic zoom value (camera.set_orthographic_zoom).
+camera.ORTHO_MODE_FIXED = nil
 
 return camera

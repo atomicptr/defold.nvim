@@ -1,6 +1,6 @@
 --[[
   Generated with github.com/astrochili/defold-annotations
-  Defold 1.11.0
+  Defold 1.11.1
 
   Graphics API documentation
 
@@ -249,7 +249,7 @@ graphics.TEXTURE_FORMAT_RGBA32UI = nil
 graphics.TEXTURE_FORMAT_RGBA_16BPP = nil
 
 ---May be nil if the graphics driver doesn't support it
-graphics.TEXTURE_FORMAT_RGBA_ASTC_4x4 = nil
+graphics.TEXTURE_FORMAT_RGBA_ASTC_4X4 = nil
 
 ---May be nil if the graphics driver doesn't support it
 graphics.TEXTURE_FORMAT_RGBA_BC3 = nil

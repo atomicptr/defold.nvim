@@ -1,6 +1,6 @@
 --[[
   Generated with github.com/astrochili/defold-annotations
-  Defold 1.11.0
+  Defold 1.11.1
 
   Rendering API documentation
 
@@ -84,7 +84,7 @@ function render.dispatch_compute(x, y, z, options) end
 ---system constants buffer is used containing constants as defined in materials and set through
 ---go.set (or particlefx.set_constant) on visual components.
 ---@param predicate number predicate to draw for
----@param options? { frustum?:matrix4, frustum_planes?:number, constants?:constant_buffer } optional table with properties:
+---@param options? { frustum?:matrix4, frustum_planes?:number, constants?:constant_buffer, sort_order?:integer } optional table with properties:
 ---
 ---`frustum`
 ---matrix4 A frustum matrix used to cull renderable items. (E.g. `local frustum = proj * view`). default=nil
@@ -98,6 +98,8 @@ function render.dispatch_compute(x, y, z, options) end
 ---
 ---`constants`
 ---constant_buffer optional constants to use while rendering
+---`sort_order`
+---int How to sort draw order for world-ordered entries. Default uses the renderer's preferred world sorting (back-to-front).
 ---
 function render.draw(predicate, options) end
 
@@ -528,5 +530,14 @@ render.FRUSTUM_PLANES_SIDES = nil
 
 ---
 render.RENDER_TARGET_DEFAULT = nil
+
+---Depth sort far-to-near (default; good for transparent passes).
+render.SORT_BACK_TO_FRONT = nil
+
+---Depth sort near-to-far (good for opaque passes to reduce overdraw).
+render.SORT_FRONT_TO_BACK = nil
+
+---No per-call sorting; draw entries in insertion order.
+render.SORT_NONE = nil
 
 return render

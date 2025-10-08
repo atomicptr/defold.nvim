@@ -1,6 +1,6 @@
 --[[
   Generated with github.com/astrochili/defold-annotations
-  Defold 1.11.0
+  Defold 1.11.1
 
   Resource API documentation
 
@@ -260,7 +260,7 @@ function resource.create_sound_data(path, options) end
 ---- `graphics.TEXTURE_FORMAT_RGBA_PVRTC_4BPPV1`
 ---- `graphics.TEXTURE_FORMAT_RGB_ETC1`
 ---- `graphics.TEXTURE_FORMAT_RGBA_ETC2`
----- `graphics.TEXTURE_FORMAT_RGBA_ASTC_4x4`
+---- `graphics.TEXTURE_FORMAT_RGBA_ASTC_4X4`
 ---- `graphics.TEXTURE_FORMAT_RGB_BC1`
 ---- `graphics.TEXTURE_FORMAT_RGBA_BC3`
 ---- `graphics.TEXTURE_FORMAT_R_BC4`
@@ -356,7 +356,7 @@ function resource.create_texture(path, table, buffer) end
 ---- `graphics.TEXTURE_FORMAT_RGBA_PVRTC_4BPPV1`
 ---- `graphics.TEXTURE_FORMAT_RGB_ETC1`
 ---- `graphics.TEXTURE_FORMAT_RGBA_ETC2`
----- `graphics.TEXTURE_FORMAT_RGBA_ASTC_4x4`
+---- `graphics.TEXTURE_FORMAT_RGBA_ASTC_4X4`
 ---- `graphics.TEXTURE_FORMAT_RGB_BC1`
 ---- `graphics.TEXTURE_FORMAT_RGBA_BC3`
 ---- `graphics.TEXTURE_FORMAT_R_BC4`
@@ -398,13 +398,15 @@ function resource.create_texture(path, table, buffer) end
 ---- `COMPRESSION_TYPE_BASIS_UASTC`
 ---
 ---@param buffer buffer_data optional buffer of precreated pixel data
+---@param callback fun(self, request_id, resource) callback function when texture is created (self, request_id, resource)
+---@return hash path The path to the texture resource.
 ---@return number request_id The request id for the async request.
 --- 3D Textures are currently only supported on OpenGL and Vulkan adapters. To check if your device supports 3D textures, use:
 ---```lua
 ---if graphics.TEXTURE_TYPE_3D ~= nil then
 ---    -- Device and graphics adapter support 3D textures
 ---end
-function resource.create_texture_async(path, table, buffer) end
+function resource.create_texture_async(path, table, buffer, callback) end
 
 ---Constructor-like function with two purposes:
 ---- Load the specified resource as part of loading the script
@@ -727,7 +729,7 @@ function resource.set_sound(path, buffer) end
 ---- `graphics.TEXTURE_FORMAT_RGBA_PVRTC_4BPPV1`
 ---- `graphics.TEXTURE_FORMAT_RGB_ETC1`
 ---- `graphics.TEXTURE_FORMAT_RGBA_ETC2`
----- `graphics.TEXTURE_FORMAT_RGBA_ASTC_4x4`
+---- `graphics.TEXTURE_FORMAT_RGBA_ASTC_4X4`
 ---- `graphics.TEXTURE_FORMAT_RGB_BC1`
 ---- `graphics.TEXTURE_FORMAT_RGBA_BC3`
 ---- `graphics.TEXTURE_FORMAT_R_BC4`
