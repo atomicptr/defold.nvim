@@ -137,9 +137,10 @@
           (let [k value
                 tokens (expect-token (rest tokens) :equal)
                 [v tokens] (case (peek-token tokens)
-                             :ident  (consume-token tokens)
-                             :string (consume-token tokens)
-                             (parser-error (format "Unexpected token: %s" (ffirst tokens)) (last (first tokens))))
+                             :ident   (consume-token tokens)
+                             :string  (consume-token tokens)
+                             :newline [nil tokens]
+                             (parser-error (format "Unexpected token (line): %s" (ffirst tokens)) (last (first tokens))))
                 tokens     (expect-token tokens [:newline :eof])]
             (if current-section
               (recur tokens (assoc-in result (concat current-section [k]) v) current-section nil)

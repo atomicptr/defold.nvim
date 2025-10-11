@@ -2,8 +2,8 @@
   (:require
    [babashka.fs :as fs]
    [defold.constants :refer [base-class-name]]
-   [defold.mini :as mini]
-   [defold.utils :refer [command-exists? determine-os project-id run-shell]]
+   [defold.utils :refer [command-exists? determine-os load-ini project-id
+                         run-shell]]
    [taoensso.timbre :as log]))
 
 (defn switch-focus [type name]
@@ -97,7 +97,7 @@
     (assert (some? root-dir))
     (let [game-project (fs/path root-dir "game.project")
           _            (assert (fs/exists? game-project))
-          config       (mini/parse-string (slurp (str game-project)))
+          config       (load-ini game-project)
           title        (get-in config ["project" "title"])
           _            (assert (some? title))]
       (case (determine-os)

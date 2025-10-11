@@ -5,6 +5,7 @@
    [babashka.process :refer [shell]]
    [clojure.java.io :as io]
    [clojure.string :as string]
+   [defold.mini :as mini]
    [taoensso.timbre :as log]))
 
 (defn command-exists? [cmd]
@@ -129,3 +130,7 @@
 
 (defn project-id [project-root]
   (subs (sha3 project-root) 0 8))
+
+(defn load-ini [path]
+  (log/debug "Loading .ini file" (str path))
+  (mini/parse-string (slurp (str path))))

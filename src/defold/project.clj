@@ -2,9 +2,8 @@
   (:require
    [babashka.fs :as fs]
    [clojure.string :as string]
-   [defold.mini :as mini]
    [defold.script-api-compiler :as script-api-compiler]
-   [defold.utils :as utils]
+   [defold.utils :as utils :refer [load-ini]]
    [taoensso.timbre :as log])
   (:import
    [java.nio.charset StandardCharsets]
@@ -55,7 +54,7 @@
   (let [game-projects (find-game-project-files in-dir)]
     (flatten (map (fn [game-project]
                     (let [project-dir (fs/parent game-project)
-                          config      (mini/parse-string (slurp (str game-project)))
+                          config      (load-ini game-project)
                           libs        (get-in config ["library" "include_dirs"])]
                       (map #(str (fs/path project-dir %)) (string/split libs #","))))
                game-projects))))
@@ -87,7 +86,7 @@
          (fs/delete-tree deps-dir)
          (fs/delete-tree cache-dir))
        (let [ident     (make-ident game-project-file)
-             ini       (mini/parse-string (slurp game-project-file))
+             ini       (load-ini game-project-file)
              deps      (get-dependencies ini)
              deps-dir  (deps-dir ident)
              cache-dir (cache-dir ident)]
