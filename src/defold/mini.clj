@@ -22,7 +22,7 @@
 ; OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 ; SOFTWARE.
 
-(ns defold.mini
+(ns dev.atomicptr.mini
   (:require
    [clojure.string :as string]))
 
@@ -67,46 +67,13 @@
                         (inc end)]
                        (lexer-error "Unterminated string" current)))
 
-                ; parse numbers
-                (\0 \1 \2 \3 \4 \5 \6 \7 \8 \9)
-                (let [start current
-                      [pre post has-dot curr]
-                      (loop [curr (inc current)
-                             pre [c]
-                             post []
-                             has-dot false]
-                        (if (>= curr len)
-                          [pre post has-dot curr]
-
-                          (let [c (nth data curr)]
-                            (case c
-                              (\0 \1 \2 \3 \4 \5 \6 \7 \8 \9)
-                              (if has-dot
-                                (recur (inc curr) pre (conj post c) has-dot)
-                                (recur (inc curr) (conj pre c) post has-dot))
-                              \.
-                              (if has-dot
-                                (lexer-error "Unexpected character: ." curr)
-                                (recur (inc curr) pre post true))
-                              [pre post has-dot curr]))))]
-                  (if (and has-dot (empty? post))
-                    (lexer-error "Trailing dot" current)
-                    (let [num-str (str (string/join pre) (if has-dot "." "") (string/join post))]
-                      (if has-dot
-                        (try [[:number (Double/parseDouble num-str) start] curr]
-                             (catch Exception _
-                               (lexer-error (str "Could not parse number: " num-str) curr)))
-                        (try [[:number (Integer/parseInt num-str) start] curr]
-                             (catch Exception _
-                               (lexer-error (str "Could not parse number: " num-str) curr)))))))
-
                 (let [start current
                       [ident-str new-current]
                       (loop [curr current
                              chars []]
                         (if (or (>= curr len)
-                              (let [c (nth data curr)]
-                                (or (= c \=) (= c \;) (= c \newline) (= c \]) (= c \[))))
+                                (let [c (nth data curr)]
+                                  (or (= c \=) (= c \;) (= c \newline) (= c \]) (= c \[))))
                           [(string/join chars) curr]
                           (recur (inc curr) (conj chars (nth data curr)))))]
                   [[:ident (string/trim ident-str) start] new-current]))]
@@ -124,11 +91,11 @@
       (parser-error "Unexpected end of file" pos)
 
       (and (not (coll? token-type))
-        (not= toktype token-type))
+           (not= toktype token-type))
       (parser-error (format "Expected token %s but found %s instead" token-type toktype) pos)
 
       (and (coll? token-type)
-        (not (some #(= toktype %) token-type)))
+           (not (some #(= toktype %) token-type)))
       (parser-error (format "Expected token %s but found %s instead" token-type toktype) pos)
 
       :else
@@ -166,12 +133,11 @@
                           tokens         (expect-token tokens  [:newline :eof])]
                       (recur tokens result (string/split ident #"\.") nil))
 
-          (:ident :number :string)
+          (:ident :string)
           (let [k value
                 tokens (expect-token (rest tokens) :equal)
                 [v tokens] (case (peek-token tokens)
                              :ident  (consume-token tokens)
-                             :number (consume-token tokens)
                              :string (consume-token tokens)
                              (parser-error (format "Unexpected token: %s" (ffirst tokens)) (last (first tokens))))
                 tokens     (expect-token tokens [:newline :eof])]
