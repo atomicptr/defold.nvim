@@ -36,7 +36,8 @@
         data   (vec source)
         len    (count data)]
     (loop [current 0
-           tokens  []]
+           tokens  []
+           state   :key]
       (if (>= current len)
         (conj tokens [:eof])
         (let [c (nth data current)
@@ -68,16 +69,25 @@
                        (lexer-error "Unterminated string" current)))
 
                 (let [start current
+                      stop-chars (if (= state :key)
+                                   #{\= \; \newline \] \[}
+                                   #{\; \newline \] \[})
                       [ident-str new-current]
                       (loop [curr current
                              chars []]
                         (if (or (>= curr len)
-                              (let [c (nth data curr)]
-                                (or (= c \=) (= c \;) (= c \newline) (= c \]) (= c \[))))
+                              (stop-chars (nth data curr)))
                           [(string/join chars) curr]
                           (recur (inc curr) (conj chars (nth data curr)))))]
-                  [[:ident (string/trim ident-str) start] new-current]))]
-          (recur new-current (if token (conj tokens token) tokens)))))))
+                  [[:ident (string/trim ident-str) start] new-current]))
+              next-state (if token
+                           (let [tok-type (first token)]
+                             (cond
+                               (= tok-type :equal) :value
+                               (#{:newline :rbracket} tok-type) :key
+                               :else state))
+                           state)]
+          (recur new-current (if token (conj tokens token) tokens) next-state))))))
 
 (defn- parser-error [message pos]
   (throw (ex-info (format "Parser Error: %s" message) {:position pos})))
