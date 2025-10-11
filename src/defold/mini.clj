@@ -22,7 +22,7 @@
 ; OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 ; SOFTWARE.
 
-(ns dev.atomicptr.mini
+(ns defold.mini
   (:require
    [clojure.string :as string]))
 
@@ -72,8 +72,8 @@
                       (loop [curr current
                              chars []]
                         (if (or (>= curr len)
-                                (let [c (nth data curr)]
-                                  (or (= c \=) (= c \;) (= c \newline) (= c \]) (= c \[))))
+                              (let [c (nth data curr)]
+                                (or (= c \=) (= c \;) (= c \newline) (= c \]) (= c \[))))
                           [(string/join chars) curr]
                           (recur (inc curr) (conj chars (nth data curr)))))]
                   [[:ident (string/trim ident-str) start] new-current]))]
@@ -91,11 +91,11 @@
       (parser-error "Unexpected end of file" pos)
 
       (and (not (coll? token-type))
-           (not= toktype token-type))
+        (not= toktype token-type))
       (parser-error (format "Expected token %s but found %s instead" token-type toktype) pos)
 
       (and (coll? token-type)
-           (not (some #(= toktype %) token-type)))
+        (not (some #(= toktype %) token-type)))
       (parser-error (format "Expected token %s but found %s instead" token-type toktype) pos)
 
       :else
