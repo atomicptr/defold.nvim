@@ -23,11 +23,16 @@ local root_markers = { "game.project" }
 ---@class BabashkaSettings Settings for the integrated Babashka interpreter
 ---@field custom_executable string|nil Use a custom executable for babashka
 
+---@class Keymap
+---@field mode string|string[]
+---@field mapping string
+
 ---@class DefoldNvimConfig Settings for defold.nvim
 ---@field defold DefoldEditorSettings Settings for the Defold Game Engine
 ---@field launcher LauncherSettings Settings for the Neovim launcher run by Defold
 ---@field debugger DebuggerSettings Settings for the integrated debugger
 ---@field babashka BabashkaSettings Settings for the integrated Babashka interpreter
+---@field keymaps table<string, Keymap>|nil Settings for key -> action mappings
 ---@field force_plugin_enabled boolean Force the plugin to be always enabled (even if we can't find the game.project file)
 
 ---@type DefoldNvimConfig
@@ -54,6 +59,13 @@ local default_config = {
 
     babashka = {
         custom_executable = nil,
+    },
+
+    keymaps = {
+        build = {
+            mode = { "n", "i" },
+            mapping = "<C-b>",
+        },
     },
 
     force_plugin_enabled = false,
@@ -271,6 +283,15 @@ function M.load_plugin()
 
     -- add icons
     require("defold.service.icons").install()
+
+    -- setup keymaps
+    for action, keymap in pairs(M.config.keymaps) do
+        log.debug(string.format("Setup action '%s' for keymap '%s'", action, vim.json.encode(keymap)))
+
+        vim.keymap.set(keymap.mode, keymap.mapping, function()
+            editor.send_command(action)
+        end)
+    end
 
     -- fetch dependencies
     if M.config.defold.auto_fetch_dependencies then

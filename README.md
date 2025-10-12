@@ -153,6 +153,19 @@ local config = {
         custom_executable = nil,
     },
 
+    -- setup keymaps for Defold actions
+    keymaps = {
+
+        -- build (& run) action
+        build = {
+            -- make this available in normal and insert mode
+            mode = { "n", "i" },
+
+            -- run via Ctrl+b
+            mapping = "<C-b>",
+        },
+    },
+
     -- Force the plugin to be always enabled (even if we can't find the game.project file) (default: false)
     force_plugin_enabled = false,
 }
