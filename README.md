@@ -1,3 +1,5 @@
+![logo](./.github/logo_hero.png)
+
 # defold.nvim
 
 Batteries-included development environment for the [Defold game engine](https://defold.com), powered by [Neovim](https://neovim.io/)
