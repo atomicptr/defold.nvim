@@ -21,9 +21,9 @@
   (let [os (determine-os)
         [run-file content]
         (case os
-          :linux   ["run.sh"  (format "#!/usr/bin/env bash\n%s --config \"%s\" run launch-neovim \"%s\" \"$1\" $2" (escape-spaces bb-path) (bb-edn) config-path)]
-          :mac     ["run.sh"  (format "#!/usr/bin/env bash\nexport PATH=\"/usr/bin:/usr/local/bin:$PATH\"\n%s --config \"%s\" run launch-neovim \"%s\" \"$1\" $2" (escape-spaces bb-path) (bb-edn) config-path)]
-          :windows ["run.bat" (format "@echo off\r\n\"%s\" --config \"%s\" run launch-neovim \"%s\" \"%%~1\" %%2" bb-path (bb-edn) config-path)]
+          :linux   ["run.sh"  (format "#!/usr/bin/env bash\n%s --config \"%s\" run launch-neovim \"%s\" \"$(realpath .)\" \"$1\" $2" (escape-spaces bb-path) (bb-edn) config-path)]
+          :mac     ["run.sh"  (format "#!/usr/bin/env bash\nexport PATH=\"/usr/bin:/usr/local/bin:$PATH\"\n%s --config \"%s\" run launch-neovim \"%s\" \"$(realpath .)\" \"$1\" $2" (escape-spaces bb-path) (bb-edn) config-path)]
+          :windows ["run.bat" (format "@echo off\r\n\"%s\" --config \"%s\" run launch-neovim \"%s\" \"%CD%\" \"%%~1\" %%2" bb-path (bb-edn) config-path)]
           :unknown (let [ex (ex-info "Can't create runner script for unknown operating system" {})]
                      (log/error (ex-message ex) ex)
                      (throw ex)))

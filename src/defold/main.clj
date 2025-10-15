@@ -64,12 +64,12 @@
   (print-json (editor/send-command cmd)))
 
 (defmethod run :launch-neovim
-  ([_ config-file filename]
+  ([_ config-file root-dir filename]
    (let [conf (parse-config config-file)]
-     (launcher/run (get-in conf ["plugin_config" "launcher"]) filename nil)))
-  ([_ config-file filename line]
+     (launcher/run (get-in conf ["plugin_config" "launcher"]) root-dir filename nil)))
+  ([_ config-file root-dir filename line]
    (let [conf (parse-config config-file)]
-     (launcher/run (get-in conf ["plugin_config" "launcher"]) filename line))))
+     (launcher/run (get-in conf ["plugin_config" "launcher"]) root-dir filename line))))
 
 (defmethod run :focus-neovim [_ _ root-dir]
   (print-json (focus/focus-neovim root-dir)))
