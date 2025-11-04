@@ -1,6 +1,6 @@
 --[[
   Generated with github.com/astrochili/defold-annotations
-  Defold 1.11.1
+  Defold 1.11.2
 
   GUI API documentation
 
@@ -86,9 +86,9 @@ gui = {}
 ---
 function gui.animate(node, property, to, easing, duration, delay, complete_function, playback) end
 
----If an animation of the specified node is currently running (started by `gui.animate`), it will immediately be canceled.
+---If one or more animations of the specified node is currently running (started by `gui.animate`), they will immediately be canceled.
 ---@param node node node that should have its animation canceled
----@param property string|constant property for which the animation should be canceled
+---@param property? nil|string|constant optional property for which the animation should be canceled
 ---
 ---- `"position"`
 ---- `"rotation"`
@@ -104,7 +104,7 @@ function gui.animate(node, property, to, easing, duration, delay, complete_funct
 ---- `"tracking"` (text)
 ---- `"slice9"` (slice9)
 ---
-function gui.cancel_animation(node, property) end
+function gui.cancel_animations(node, property) end
 
 ---Cancels any running flipbook animation on the specified node.
 ---@param node node node cancel flipbook animation for

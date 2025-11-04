@@ -1,6 +1,6 @@
 --[[
   Generated with github.com/astrochili/defold-annotations
-  Defold 1.11.1
+  Defold 1.11.2
 
   Bitwise operations API documentation
 
