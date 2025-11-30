@@ -3,7 +3,6 @@
    [babashka.fs :as fs]
    [cheshire.core :as json]
    [defold.debugger :as debugger]
-   [defold.editor :as editor]
    [defold.editor-config :as editor-config]
    [defold.focus :as focus]
    [defold.launcher :as launcher]
@@ -37,7 +36,7 @@
       (when-not (get-in conf ["plugin_config" "debugger" "custom_executable"])
         (debugger/setup))
       (when (and (= "neovide" (get-in conf ["plugin_config" "launcher" "type"]))
-              (not (get-in conf ["plugin_config" "launcher" "executable"])))
+                 (not (get-in conf ["plugin_config" "launcher" "executable"])))
         (neovide/setup))
       (print-json {:status 200}))
     (catch Throwable t
@@ -54,14 +53,8 @@
   ([_ _ game-project force-redownload]
    (print-json (project/install-dependencies game-project force-redownload))))
 
-(defmethod run :list-commands [_ _]
-  (print-json (editor/list-commands)))
-
 (defmethod run :list-dependency-dirs [_ _ game-project]
   (print-json (project/list-dependency-dirs game-project)))
-
-(defmethod run :send-command [_ _ cmd]
-  (print-json (editor/send-command cmd)))
 
 (defmethod run :launch-neovim
   ([_ config-file root-dir filename]

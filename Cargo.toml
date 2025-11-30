@@ -1,0 +1,18 @@
+[package]
+name = "defold-nvim"
+version = "0.1.0"
+edition = "2024"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+anyhow = "1.0.100"
+netstat2 = "0.11.2"
+nvim-oxi = { version = "0.6.0", features = ["neovim-0-11"] }
+reqwest = { version = "0.12.24", features = ["blocking", "json"] }
+rust-ini = "0.21.3"
+serde = { version = "1.0.228", features = ["derive"] }
+serde_json = "1.0.145"
+sha3 = "0.10.8"
+sysinfo = "0.37.2"

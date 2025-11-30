@@ -88,6 +88,8 @@ You're in luck, powershell is surprisingly capable so there is nothing else need
         "mfussenegger/nvim-dap",
     },
 
+    version = "*",
+
     opts = {
         -- config options, see below
     },
@@ -148,11 +150,6 @@ local config = {
 
         -- Add custom arguments to the debugger (default: nil)
         custom_arguments = nil,
-    },
-
-    babashka = {
-        -- Use a custom executable for babashka (default: nil)
-        custom_executable = nil,
     },
 
     -- setup keymaps for Defold actions
