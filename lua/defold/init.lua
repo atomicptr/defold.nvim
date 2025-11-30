@@ -79,6 +79,9 @@ M.loaded = false
 ---@type DefoldNvimConfig
 M.config = default_config
 
+---@type integer|nil
+M.prev_editor_port = nil
+
 ---Returns true if we are in a defold project
 ---@return boolean
 function M.is_defold_project()
@@ -103,6 +106,8 @@ function M.setup(opts)
     local log = require "defold.service.logger"
 
     M.config = vim.tbl_deep_extend("force", default_config, opts or {})
+
+    -- TODO: check if sidecar is available, if not download it (which shouldnt be necessary with some pkg managers)
 
     -- persist config for babashka
     local config_path = babashka.config_path()
@@ -196,6 +201,18 @@ function M.setup(opts)
     end, 0)
 end
 
+---@return integer
+function M.editor_port()
+    if M.prev_editor_port then
+        -- TODO: validate port
+        return M.prev_editor_port
+    end
+
+    local sidecar = require "defold.sidecar"
+    M.prev_editor_port = sidecar.find_editor_port()
+    return M.prev_editor_port
+end
+
 function M.load_plugin()
     if M.loaded then
         return
@@ -206,6 +223,7 @@ function M.load_plugin()
     -- register all filetypes
     vim.filetype.add(require("defold.config.filetype").full)
 
+    local sidecar = require "defold.sidecar"
     local babashka = require "defold.service.babashka"
     local debugger = require "defold.service.debugger"
     local editor = require "defold.editor"
@@ -213,6 +231,7 @@ function M.load_plugin()
     local project = require "defold.project"
 
     log.debug "============= defold.nvim: Loaded plugin"
+    log.debug("Sidecar Version:" .. sidecar.version)
     log.debug("Babashka Path: " .. babashka.bb_path())
     log.debug("Mobdap Path: " .. debugger.mobdap_path())
     log.debug("Config: " .. vim.inspect(M.config))
@@ -222,7 +241,7 @@ function M.load_plugin()
         vim.api.nvim_create_autocmd("BufWritePost", {
             pattern = { "*.lua", "*.script", "*.gui_script" },
             callback = function()
-                editor.send_command("hot-reload", true)
+                editor.send_command(M.editor_port(), "hot-reload", true)
             end,
         })
     end
@@ -256,26 +275,26 @@ function M.load_plugin()
                 return
             end
 
-            editor.send_command(cmds[idx])
+            editor.send_command(M.editor_port(), cmds[idx])
         end)
     end, { nargs = 0, desc = "Select a command to run" })
 
     -- add the ":DefoldSend cmd" command to send commands to the editor
     vim.api.nvim_create_user_command("DefoldSend", function(opt)
-        editor.send_command(opt.args)
+        editor.send_command(M.editor_port(), opt.args)
     end, { nargs = 1, desc = "Send a command to the Defold editor" })
 
     -- add the ":DefoldFetch" command to fetch dependencies & annoatations
     vim.api.nvim_create_user_command("DefoldFetch", function(opt)
         -- when a user runs DefoldFetch I recon they also expect us to update the dependencies
-        editor.send_command("fetch-libraries", true)
+        editor.send_command(M.editor_port(), "fetch-libraries", true)
 
         project.install_dependencies(opt.bang)
     end, { bang = true, nargs = 0, desc = "Fetch & create Defold project dependency annotations" })
 
     -- integrate the debugger into dap
     if M.config.debugger.enable then
-        debugger.register_nvim_dap()
+        debugger.register_nvim_dap(M.editor_port)
     end
 
     -- add snippets
@@ -289,7 +308,7 @@ function M.load_plugin()
         log.debug(string.format("Setup action '%s' for keymap '%s'", action, vim.json.encode(keymap)))
 
         vim.keymap.set(keymap.mode, keymap.mapping, function()
-            editor.send_command(action)
+            editor.send_command(M.editor_port(), action)
         end)
     end
 

@@ -1,17 +1,13 @@
 local M = {}
 
 ---List all available Defold commands
+---@param port integer|nil
 ---@return table|nil
-function M.list_commands()
-    local babashka = require "defold.service.babashka"
+function M.list_commands(port)
     local log = require "defold.service.logger"
+    local sidecar = require "defold.sidecar"
 
-    local res = babashka.run_task_json "list-commands"
-
-    if not res then
-        log.error "Could not fetch commands from Defold, maybe the editor isn't running?"
-        return nil
-    end
+    local res = sidecar.list_commands(port)
 
     if res.error then
         log.error(string.format("Could not fetch commands from Defold, because: %s", res.error))
@@ -22,19 +18,20 @@ function M.list_commands()
 end
 
 ---Sends a command to the Defold editor
+---@param port integer|nil
 ---@param command string
 ---@param dont_report_error boolean|nil
-function M.send_command(command, dont_report_error)
-    local babashka = require "defold.service.babashka"
+function M.send_command(port, command, dont_report_error)
     local log = require "defold.service.logger"
+    local sidecar = require "defold.sidecar"
 
-    local res = babashka.run_task_json("send-command", { command })
+    local res = sidecar.send_command(port, command)
 
-    if res.status == 202 then
+    if not res.error then
         return
     end
 
-    if dont_report_error or false then
+    if dont_report_error then
         return
     end
 
