@@ -209,7 +209,17 @@ function M.editor_port()
     end
 
     local sidecar = require "defold.sidecar"
-    M.prev_editor_port = sidecar.find_editor_port()
+
+    local ok, res = pcall(sidecar.find_editor_port)
+
+    if ok then
+        ---@cast res integer
+        M.prev_editor_port = res
+    else
+        local log = require "defold.service.logger"
+        log.error(string.format("Could not find editor port, because: %s", res))
+    end
+
     return M.prev_editor_port
 end
 

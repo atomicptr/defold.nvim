@@ -2,7 +2,7 @@ use std::{fs, path::PathBuf};
 
 use anyhow::{Context, Result, bail};
 use ini::Ini;
-use nvim_oxi::{conversion::ToObject, serde::Serializer};
+use mlua::UserData;
 use serde::Serialize;
 
 #[derive(Debug, Serialize)]
@@ -20,6 +20,8 @@ impl GameProject {
         GameProject::try_from(fs::read_to_string(path)?)
     }
 }
+
+impl UserData for GameProject {}
 
 impl TryFrom<String> for GameProject {
     type Error = anyhow::Error;
@@ -46,11 +48,5 @@ impl TryFrom<String> for GameProject {
             title,
             dependencies,
         })
-    }
-}
-
-impl ToObject for GameProject {
-    fn to_object(self) -> std::result::Result<nvim_oxi::Object, nvim_oxi::conversion::Error> {
-        self.serialize(Serializer::new()).map_err(Into::into)
     }
 }

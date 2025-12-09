@@ -7,13 +7,14 @@ function M.list_commands(port)
     local log = require "defold.service.logger"
     local sidecar = require "defold.sidecar"
 
-    local res = sidecar.list_commands(port)
+    local ok, res = pcall(sidecar.list_commands, port)
 
-    if res.error then
-        log.error(string.format("Could not fetch commands from Defold, because: %s", res.error))
+    if not ok then
+        log.error(string.format("Could not fetch commands from Defold, because: %s", res))
         return nil
     end
 
+    ---@cast res table<string, string>
     return res
 end
 
@@ -25,9 +26,9 @@ function M.send_command(port, command, dont_report_error)
     local log = require "defold.service.logger"
     local sidecar = require "defold.sidecar"
 
-    local res = sidecar.send_command(port, command)
+    local _, err = pcall(sidecar.send_command, port, command)
 
-    if not res.error then
+    if not err then
         return
     end
 
@@ -35,7 +36,7 @@ function M.send_command(port, command, dont_report_error)
         return
     end
 
-    log.error(string.format("Could execute comannd '%s', because: %s", command, res.error or "Something went wrong!"))
+    log.error(string.format("Could not execute comannd '%s', because: %s", command, err or "Something went wrong!"))
 end
 
 return M

@@ -34,6 +34,10 @@ function M.is_windows()
     return M.name() == "windows"
 end
 
+function M.is_macos()
+    return M.name() == "macos"
+end
+
 function M.architecture()
     local machine = vim.loop.os_uname().machine
 

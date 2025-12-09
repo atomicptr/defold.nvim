@@ -4,12 +4,18 @@ version = "0.1.0"
 edition = "2024"
 
 [lib]
+path = "src/lib.rs"
 crate-type = ["cdylib"]
 
 [dependencies]
 anyhow = "1.0.100"
+mlua = { version = "0.11.5", features = [
+    "module",
+    "luajit",
+    "serde",
+    "anyhow",
+] }
 netstat2 = "0.11.2"
-nvim-oxi = { version = "0.6.0", features = ["neovim-0-11"] }
 reqwest = { version = "0.12.24", features = ["blocking", "json"] }
 rust-ini = "0.21.3"
 serde = { version = "1.0.228", features = ["derive"] }
