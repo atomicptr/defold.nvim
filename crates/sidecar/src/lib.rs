@@ -1,3 +1,5 @@
+use std::path::PathBuf;
+
 use anyhow::Context;
 use mlua::prelude::*;
 use sha3::{Digest, Sha3_256};
@@ -5,10 +7,11 @@ use sha3::{Digest, Sha3_256};
 use crate::game_project::GameProject;
 
 mod editor;
+mod editor_config;
 mod game_project;
 
 #[mlua::lua_module]
-fn defold_nvim(lua: &Lua) -> LuaResult<LuaTable> {
+fn defold_nvim_sidecar(lua: &Lua) -> LuaResult<LuaTable> {
     let exports = lua.create_table()?;
 
     exports.set("version", lua.create_string(env!("CARGO_PKG_VERSION"))?)?;
@@ -17,6 +20,10 @@ fn defold_nvim(lua: &Lua) -> LuaResult<LuaTable> {
     exports.set("find_editor_port", lua.create_function(find_editor_port)?)?;
     exports.set("list_commands", lua.create_function(list_commands)?)?;
     exports.set("send_command", lua.create_function(send_command)?)?;
+    exports.set(
+        "set_default_editor",
+        lua.create_function(set_default_editor)?,
+    )?;
 
     Ok(exports)
 }
@@ -47,6 +54,12 @@ fn list_commands(lua: &Lua, port: Option<u16>) -> LuaResult<LuaTable> {
 
 fn send_command(_lua: &Lua, (port, cmd): (Option<u16>, String)) -> LuaResult<()> {
     editor::send_command(port, cmd)?;
+
+    Ok(())
+}
+
+fn set_default_editor(_lua: &Lua, (plugin_root, launch_config): (String, String)) -> LuaResult<()> {
+    editor_config::set_default_editor(PathBuf::from(plugin_root), PathBuf::from(launch_config))?;
 
     Ok(())
 }

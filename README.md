@@ -131,6 +131,9 @@ local config = {
         -- extra arguments passed to the `executable` (or neovide)
         extra_arguments = nil,
 
+        -- choose file based sockets (fsock, unix only) or network based sockets (netsock) or use nil for the default
+        socket_type = nil,
+
         -- configure how the terminal is run (optional)
         terminal = {
             -- argument to define how to set the class name of the terminal, usually something like "--class="

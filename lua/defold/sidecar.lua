@@ -14,8 +14,8 @@ local function find_rust_lib_rootdir()
     local os = require "defold.service.os"
     local plugin_root = os.plugin_root()
 
-    local file_name = string.format("defold_nvim%s", lib_extension())
-    local file_name_alt = string.format("libdefold_nvim%s", lib_extension())
+    local file_name = string.format("defold_nvim_sidecar%s", lib_extension())
+    local file_name_alt = string.format("libdefold_nvim_sidecar%s", lib_extension())
 
     if
         os.file_exists(vim.fs.joinpath(plugin_root, file_name))
@@ -57,8 +57,9 @@ package.cpath = package.cpath
 ---@field find_editor_port function(): integer
 ---@field list_commands function(port: integer|nil): table<string, string>
 ---@field send_command function(port: integer|nil, cmd: string)
+---@field set_default_editor function(plugin_root: string, launch_config: string)
 
 ---@type Sidecar
-local rust_plugin = require "defold_nvim"
+local rust_plugin = require "defold_nvim_sidecar"
 
 return rust_plugin

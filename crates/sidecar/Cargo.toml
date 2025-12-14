@@ -1,0 +1,26 @@
+[package]
+name = "defold-nvim-sidecar"
+version = "0.1.0"
+edition = "2024"
+
+[lib]
+path = "src/lib.rs"
+crate-type = ["cdylib"]
+
+[dependencies]
+anyhow = "1.0.100"
+dirs = "6.0.0"
+edn-rs = "0.18.0"
+mlua = { version = "0.11.5", features = [
+    "module",
+    "luajit",
+    "serde",
+    "anyhow",
+] }
+netstat2 = "0.11.2"
+reqwest = { version = "0.12.24", features = ["blocking", "json"] }
+rust-ini = "0.21.3"
+serde = { version = "1.0.228", features = ["derive"] }
+serde_json = "1.0.145"
+sha3 = "0.10.8"
+sysinfo = "0.37.2"

@@ -1,3 +1,5 @@
+/defold-nvim*
+/libdefold-nvim*
 .clj-kondo
 .lsp
 .nrepl*

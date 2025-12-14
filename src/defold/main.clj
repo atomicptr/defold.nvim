@@ -3,9 +3,7 @@
    [babashka.fs :as fs]
    [cheshire.core :as json]
    [defold.debugger :as debugger]
-   [defold.editor-config :as editor-config]
    [defold.focus :as focus]
-   [defold.launcher :as launcher]
    [defold.logging :as logging]
    [defold.neovide :as neovide]
    [defold.project :as project]
@@ -43,10 +41,6 @@
       (log/error "Error:" (ex-message t) t)
       (print-json {:status 500 :error (ex-message t)}))))
 
-(defmethod run :set-default-editor [_ config-file]
-  (let [conf (parse-config config-file)]
-    (print-json (editor-config/set-default-editor config-file (conf "bb_path")))))
-
 (defmethod run :install-dependencies
   ([_ _ game-project]
    (print-json (project/install-dependencies game-project false)))
@@ -55,14 +49,6 @@
 
 (defmethod run :list-dependency-dirs [_ _ game-project]
   (print-json (project/list-dependency-dirs game-project)))
-
-(defmethod run :launch-neovim
-  ([_ config-file root-dir filename]
-   (let [conf (parse-config config-file)]
-     (launcher/run (get-in conf ["plugin_config" "launcher"]) root-dir filename nil)))
-  ([_ config-file root-dir filename line]
-   (let [conf (parse-config config-file)]
-     (launcher/run (get-in conf ["plugin_config" "launcher"]) root-dir filename line))))
 
 (defmethod run :focus-neovim [_ _ root-dir]
   (print-json (focus/focus-neovim root-dir)))

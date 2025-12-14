@@ -8,6 +8,8 @@ local root_markers = { "game.project" }
 ---@class LauncherSettings Settings for the Neovim launcher run by Defold
 ---@field type "neovide"|"terminal" Neovim launcher run by Defold
 ---@field executable string|nil Executable to be used by the launcher, nil means we're trying to figure this out ourselves
+---@field socket_type "fsock"|"netsock"|nil Run Neovims RPC protocol over file socket or network. Nil means it will be picked automatic (fsock on Unix, network on Windows)
+
 ---@field extra_arguments table<string>|nil Extra arguments passed to the `executable` (or neovide)
 ---@field terminal TerminalLauncherSettings|nil Settings for running via terminal
 
@@ -41,7 +43,6 @@ local default_config = {
         set_default_editor = true,
         auto_fetch_dependencies = true,
         hot_reload_enabled = true,
-        launcher = "neovide",
     },
 
     launcher = {
@@ -100,6 +101,11 @@ function M.plugin_root()
     return os.plugin_root()
 end
 
+---@return string
+function M.launch_config()
+    return vim.fs.joinpath(vim.fn.stdpath "data", "defold.nvim", "config.json")
+end
+
 ---@param opts DefoldNvimConfig|nil
 function M.setup(opts)
     local babashka = require "defold.service.babashka"
@@ -119,19 +125,25 @@ function M.setup(opts)
         },
     }, config_path)
 
+    -- persist config for launcher
+    vim.fn.writefile({
+        vim.fn.json_encode {
+            data_dir = vim.fn.stdpath "data",
+            plugin_config = M.config,
+        },
+    }, M.launch_config())
+
     -- add setup defold command
     vim.api.nvim_create_user_command("SetupDefold", function()
-        local debugger = require "defold.service.debugger"
+        local sidecar = require "defold.sidecar"
 
-        local ok = babashka.setup(M.config.babashka.custom_executable)
-
+        local ok, err = pcall(sidecar.set_default_editor, M.plugin_root(), M.launch_config())
         if not ok then
-            return
+            log.error(string.format("Could not set default editor because: %s", err))
         end
 
-        babashka.run_task "set-default-editor"
-
         if M.config.debugger.enable then
+            local debugger = require "defold.service.debugger"
             debugger.setup(M.config.debugger.custom_executable, M.config.debugger.custom_arguments)
         end
 
@@ -174,20 +186,19 @@ function M.setup(opts)
     })
 
     vim.defer_fn(function()
-        local debugger = require "defold.service.debugger"
-
-        -- prepare plugin components before loading
-        local ok = babashka.setup(M.config.babashka.custom_executable)
-
-        if not ok then
-            return
-        end
+        babashka.setup(M.config.babashka.custom_executable)
 
         if M.config.defold.set_default_editor then
-            babashka.run_task_json "set-default-editor"
+            local sidecar = require "defold.sidecar"
+            local ok, err = pcall(sidecar.set_default_editor, M.plugin_root(), M.launch_config())
+
+            if not ok then
+                log.error(string.format("Could not set default editor because: %s", err))
+            end
         end
 
         if M.config.debugger.enable then
+            local debugger = require "defold.service.debugger"
             debugger.setup(M.config.debugger.custom_executable, M.config.debugger.custom_arguments)
         end
 
