@@ -1,17 +1,46 @@
-use std::path::PathBuf;
+use std::{
+    fs,
+    path::{PathBuf, absolute},
+    sync::OnceLock,
+};
 
 use anyhow::Context;
+use defold_nvim_core::{
+    focus,
+    game_project::GameProject,
+    utils::{self},
+};
+use mlua::Value;
 use mlua::prelude::*;
-use sha3::{Digest, Sha3_256};
-
-use crate::game_project::GameProject;
+use tracing::Level;
+use tracing_appender::rolling::daily;
 
 mod editor;
 mod editor_config;
-mod game_project;
+
+static LOG_INIT: OnceLock<()> = OnceLock::new();
 
 #[mlua::lua_module]
 fn defold_nvim_sidecar(lua: &Lua) -> LuaResult<LuaTable> {
+    LOG_INIT.get_or_init(|| {
+        let logs = dirs::cache_dir()
+            .expect("could not get cache dir")
+            .join("defold.nvim")
+            .join("logs");
+
+        fs::create_dir_all(&logs).expect("could not create logs dir");
+
+        let rolling = daily(logs, "sidecar");
+
+        tracing_subscriber::fmt()
+            .with_ansi(false)
+            .with_file(true)
+            .with_line_number(true)
+            .with_max_level(Level::DEBUG)
+            .with_writer(rolling)
+            .init();
+    });
+
     let exports = lua.create_table()?;
 
     exports.set("version", lua.create_string(env!("CARGO_PKG_VERSION"))?)?;
@@ -24,21 +53,20 @@ fn defold_nvim_sidecar(lua: &Lua) -> LuaResult<LuaTable> {
         "set_default_editor",
         lua.create_function(set_default_editor)?,
     )?;
+    exports.set("focus_neovim", lua.create_function(focus_neovim)?)?;
+    exports.set("focus_game", lua.create_function(focus_game)?)?;
 
     Ok(exports)
 }
 
 fn sha3(_lua: &Lua, str: String) -> LuaResult<String> {
-    let mut hasher = Sha3_256::new();
-    hasher.update(str.as_bytes());
-    let result = hasher.finalize();
-
-    Ok(format!("{:x}", result))
+    Ok(utils::sha3(&str))
 }
 
-fn read_game_project(lua: &Lua, path: String) -> LuaResult<LuaAnyUserData> {
+fn read_game_project(lua: &Lua, path: String) -> LuaResult<Value> {
     let game_project = GameProject::load_from_path(path.into())?;
-    lua.create_ser_userdata(game_project)
+    let val = lua.to_value(&game_project)?;
+    Ok(val)
 }
 
 fn find_editor_port(_lua: &Lua, _: ()) -> LuaResult<u16> {
@@ -60,6 +88,18 @@ fn send_command(_lua: &Lua, (port, cmd): (Option<u16>, String)) -> LuaResult<()>
 
 fn set_default_editor(_lua: &Lua, (plugin_root, launch_config): (String, String)) -> LuaResult<()> {
     editor_config::set_default_editor(PathBuf::from(plugin_root), PathBuf::from(launch_config))?;
+
+    Ok(())
+}
+
+fn focus_neovim(_lua: &Lua, game_root: String) -> LuaResult<()> {
+    focus::focus_neovim(absolute(game_root)?)?;
+
+    Ok(())
+}
+
+fn focus_game(_lua: &Lua, game_root: String) -> LuaResult<()> {
+    focus::focus_game(absolute(game_root)?)?;
 
     Ok(())
 }

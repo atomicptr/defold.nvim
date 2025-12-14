@@ -46,14 +46,12 @@ end
 function M.register_nvim_dap(editor_port_fn)
     local log = require "defold.service.logger"
 
-    local ok, dap = pcall(require, "dap")
-
-    if not ok then
+    local dap_installed, dap = pcall(require, "dap")
+    if not dap_installed then
         log.error "Debugger enabled but could not find plugin: mfussenegger/nvim-dap"
         return
     end
 
-    local babashka = require "defold.service.babashka"
     local editor = require "defold.editor"
     local project = require "defold.project"
 
@@ -98,15 +96,27 @@ function M.register_nvim_dap(editor_port_fn)
     dap.listeners.after.event_stopped.defold_nvim_switch_focus_on_stop = function(_, _)
         log.debug "debugger: event stopped"
 
+        local sidecar = require "defold.sidecar"
+
         local rootdir = vim.fs.root(0, { "game.project", ".git" })
-        babashka.run_task_json("focus-neovim", { rootdir })
+
+        local ok, err = pcall(sidecar.focus_neovim, rootdir)
+        if not ok then
+            log.error(string.format("Could not focus neovim: %s", err))
+        end
     end
 
     dap.listeners.after.continue.defold_nvim_switch_focus_on_continue = function(_, _)
         log.debug "debugger: continued"
 
+        local sidecar = require "defold.sidecar"
+
         local rootdir = vim.fs.root(0, { "game.project", ".git" })
-        babashka.run_task_json("focus-game", { rootdir })
+
+        local ok, err = pcall(sidecar.focus_game, rootdir)
+        if not ok then
+            log.error(string.format("Could not focus neovim: %s", err))
+        end
     end
 end
 

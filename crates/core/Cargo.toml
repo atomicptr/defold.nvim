@@ -1,0 +1,13 @@
+[package]
+name = "defold-nvim-core"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+anyhow = "1.0.100"
+rust-ini = "0.21.3"
+serde = { version = "1.0.228", features = ["derive"] }
+sha3 = "0.10.8"
+strum = { version = "0.27.2", features = ["derive"] }
+tracing = "0.1.43"
+which = "8.0.0"

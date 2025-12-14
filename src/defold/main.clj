@@ -3,7 +3,6 @@
    [babashka.fs :as fs]
    [cheshire.core :as json]
    [defold.debugger :as debugger]
-   [defold.focus :as focus]
    [defold.logging :as logging]
    [defold.neovide :as neovide]
    [defold.project :as project]
@@ -49,12 +48,6 @@
 
 (defmethod run :list-dependency-dirs [_ _ game-project]
   (print-json (project/list-dependency-dirs game-project)))
-
-(defmethod run :focus-neovim [_ _ root-dir]
-  (print-json (focus/focus-neovim root-dir)))
-
-(defmethod run :focus-game [_ _ root-dir]
-  (print-json (focus/focus-game root-dir)))
 
 (defmethod run :mobdap-path [_ _]
   (let [path (debugger/executable-path)]

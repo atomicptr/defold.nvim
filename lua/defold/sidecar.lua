@@ -58,6 +58,8 @@ package.cpath = package.cpath
 ---@field list_commands function(port: integer|nil): table<string, string>
 ---@field send_command function(port: integer|nil, cmd: string)
 ---@field set_default_editor function(plugin_root: string, launch_config: string)
+---@field focus_neovim function(game_root: string)
+---@field focus_game function(game_root: string)
 
 ---@type Sidecar
 local rust_plugin = require "defold_nvim_sidecar"

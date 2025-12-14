@@ -6,12 +6,13 @@ use std::{
 };
 
 use anyhow::{Context, Result, bail};
+use defold_nvim_core::{focus::focus_neovim, utils::classname};
 use serde::Deserialize;
 use which::which;
 
 use crate::{
     plugin_config::{LauncherConfig, LauncherType, PluginConfig, SocketType},
-    utils::{self, classname, is_port_in_use},
+    utils::{self, is_port_in_use},
 };
 
 const ERR_NEOVIDE_NOT_FOUND: &'static str = "Could not find Neovide, have you installed it?";
@@ -430,18 +431,20 @@ pub fn run(
     let launcher = launcher.apply_var(VAR_REMOTE_CMD, remote_cmd.clone());
 
     match config.plugin_config.launcher.and_then(|l| l.socket_type) {
-        Some(SocketType::Fsock) => run_fsock(launcher, &nvim, root_dir, &remote_cmd)?,
-        Some(SocketType::Netsock) => run_netsock(launcher, &nvim, root_dir, &remote_cmd)?,
+        Some(SocketType::Fsock) => run_fsock(launcher, &nvim, root_dir.clone(), &remote_cmd)?,
+        Some(SocketType::Netsock) => run_netsock(launcher, &nvim, root_dir.clone(), &remote_cmd)?,
         None => {
             if cfg!(target_os = "linux") || cfg!(target_os = "macos") {
-                run_fsock(launcher, &nvim, root_dir, &remote_cmd)?
+                run_fsock(launcher, &nvim, root_dir.clone(), &remote_cmd)?
             } else {
-                run_netsock(launcher, &nvim, root_dir, &remote_cmd)?
+                run_netsock(launcher, &nvim, root_dir.clone(), &remote_cmd)?
             }
         }
     }
 
-    // TODO: switch focus
+    if let Err(err) = focus_neovim(root_dir) {
+        tracing::error!("Could not switch focus to neovim {err:?}");
+    }
 
     Ok(())
 }
