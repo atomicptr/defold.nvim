@@ -1,6 +1,6 @@
 use anyhow::{Context, Result, bail};
 use edn_rs::Edn;
-use std::{fs, os::unix::fs::PermissionsExt, path::PathBuf, str::FromStr};
+use std::{fs, path::PathBuf, str::FromStr};
 
 #[cfg(target_os = "linux")]
 const RUN_SCRIPT: &'static str = include_str!("../assets/run_linux.sh");
@@ -70,7 +70,10 @@ fn create_runner_script(plugin_root: PathBuf, launch_config: PathBuf) -> Result<
     )?;
 
     #[cfg(not(target_os = "windows"))]
-    fs::set_permissions(&script_path, fs::Permissions::from_mode(0o700))?;
+    fs::set_permissions(
+        &script_path,
+        <fs::Permissions as std::os::unix::fs::PermissionsExt>::from_mode(0o700),
+    )?;
 
     Ok(script_path)
 }
