@@ -13,10 +13,10 @@ defold-nvim-core = { path = "../core" }
 dirs = "6.0.0"
 edn-rs = "0.18.0"
 mlua = { version = "0.11.5", features = [
-  "module",
-  "luajit",
-  "serde",
-  "anyhow",
+    "module",
+    "luajit",
+    "serde",
+    "anyhow",
 ] }
 netstat2 = "0.11.2"
 reqwest = { version = "0.12.24", features = ["blocking", "json"] }

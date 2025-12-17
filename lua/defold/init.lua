@@ -9,7 +9,6 @@ local root_markers = { "game.project" }
 ---@field type "neovide"|"terminal" Neovim launcher run by Defold
 ---@field executable string|nil Executable to be used by the launcher, nil means we're trying to figure this out ourselves
 ---@field socket_type "fsock"|"netsock"|nil Run Neovims RPC protocol over file socket or network. Nil means it will be picked automatic (fsock on Unix, network on Windows)
-
 ---@field extra_arguments table<string>|nil Extra arguments passed to the `executable` (or neovide)
 ---@field terminal TerminalLauncherSettings|nil Settings for running via terminal
 
@@ -115,20 +114,11 @@ function M.setup(opts)
 
     -- TODO: check if sidecar is available, if not download it (which shouldnt be necessary with some pkg managers)
 
-    -- persist config for babashka
-    local config_path = babashka.config_path()
-    vim.fn.writefile({
-        vim.fn.json_encode {
-            data_dir = vim.fn.stdpath "data",
-            bb_path = babashka.bb_path(),
-            plugin_config = M.config,
-        },
-    }, config_path)
-
     -- persist config for launcher
     vim.fn.writefile({
         vim.fn.json_encode {
             data_dir = vim.fn.stdpath "data",
+            bb_path = babashka.bb_path(),
             plugin_config = M.config,
         },
     }, M.launch_config())

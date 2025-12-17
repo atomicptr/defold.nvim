@@ -8,6 +8,7 @@ use tracing_appender::rolling::daily;
 use tracing_subscriber::fmt::writer::MakeWriterExt;
 
 mod launcher;
+mod neovide;
 mod plugin_config;
 mod utils;
 
@@ -44,6 +45,8 @@ enum Commands {
         #[clap(value_name = "GAME_ROOT_DIR", index = 1)]
         game_root_dir: String,
     },
+    /// Downloads Neovide
+    DownloadNeovide,
 }
 
 fn main() -> Result<()> {
@@ -87,6 +90,10 @@ fn main() -> Result<()> {
         )?,
         Commands::FocusNeovim { game_root_dir } => focus_neovim(absolute(game_root_dir)?)?,
         Commands::FocusGame { game_root_dir } => focus_game(absolute(game_root_dir)?)?,
+        Commands::DownloadNeovide => {
+            let path = neovide::update_or_install()?;
+            tracing::info!("Installed neovide at {path:?}");
+        }
     }
 
     Ok(())

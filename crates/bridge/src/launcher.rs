@@ -11,6 +11,7 @@ use serde::Deserialize;
 use which::which;
 
 use crate::{
+    neovide,
     plugin_config::{LauncherConfig, LauncherType, PluginConfig, SocketType},
     utils::{self, is_port_in_use},
 };
@@ -84,6 +85,13 @@ fn create_launcher(cfg: &PluginConfig, nvim: &String) -> Result<Launcher> {
                 .and_then(|exe| exe.executable.clone())
                 .map(|s| s.into())
                 .or_else(|| which("neovide").ok())
+                .or_else(|| match neovide::update_or_install() {
+                    Ok(path) => Some(path),
+                    Err(err) => {
+                        tracing::error!("Could not download neovide because: {err:?}");
+                        None
+                    }
+                })
                 .context(ERR_NEOVIDE_NOT_FOUND)?;
 
             if !executable.exists() {

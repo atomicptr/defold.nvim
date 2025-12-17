@@ -1,17 +1,18 @@
-use std::{
-    fs,
-    path::{PathBuf, absolute},
-    sync::OnceLock,
-};
-
 use anyhow::Context;
 use defold_nvim_core::{
     focus,
     game_project::GameProject,
+    github,
     utils::{self},
 };
 use mlua::Value;
 use mlua::prelude::*;
+use std::{
+    fs::{self, File},
+    io,
+    path::{PathBuf, absolute},
+    sync::OnceLock,
+};
 use tracing::Level;
 use tracing_appender::rolling::daily;
 
@@ -55,6 +56,11 @@ fn defold_nvim_sidecar(lua: &Lua) -> LuaResult<LuaTable> {
     )?;
     exports.set("focus_neovim", lua.create_function(focus_neovim)?)?;
     exports.set("focus_game", lua.create_function(focus_game)?)?;
+    exports.set("download", lua.create_function(download)?)?;
+    exports.set(
+        "fetch_github_release",
+        lua.create_function(fetch_github_release)?,
+    )?;
 
     Ok(exports)
 }
@@ -102,4 +108,28 @@ fn focus_game(_lua: &Lua, game_root: String) -> LuaResult<()> {
     focus::focus_game(absolute(game_root)?)?;
 
     Ok(())
+}
+
+fn download(_lua: &Lua, (url, location): (String, String)) -> LuaResult<()> {
+    let res = reqwest::blocking::get(url);
+    if let Err(err) = res {
+        return Err(anyhow::Error::from(err).into());
+    }
+
+    let mut res = res.unwrap();
+
+    if let Err(err) = res.error_for_status_ref() {
+        return Err(anyhow::Error::from(err).into());
+    }
+
+    let mut file = File::create(location)?;
+    io::copy(&mut res, &mut file)?;
+
+    Ok(())
+}
+
+fn fetch_github_release(lua: &Lua, (owner, repo): (String, String)) -> LuaResult<Value> {
+    let res = github::fetch_release(&owner, &repo)?;
+    let res = lua.to_value(&res)?;
+    Ok(res)
 }
