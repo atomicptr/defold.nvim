@@ -21,25 +21,24 @@ pub fn get(key: &str) -> Option<String> {
 
     let path = dir.join(sha3(key));
 
+    tracing::debug!("Cache Key {key} -> {path:?}");
+
     if path.exists() {
         let modified = path.metadata().ok()?.modified().ok()?;
 
-        if modified.elapsed().ok()? < Duration::from_secs(3600) {
+        if modified.elapsed().ok()? < Duration::from_hours(1) {
             return fs::read_to_string(&path).ok();
-        } else {
-            fs::remove_file(&path).ok();
         }
+
+        fs::remove_file(&path).ok();
     }
 
     None
 }
 
-pub fn set(key: &str, value: &str) {
-    let Ok(dir) = cache_dir() else {
-        tracing::error!("Could not get cache dir");
-        return;
-    };
+pub fn set(key: &str, value: &str) -> Result<()> {
+    let path = cache_dir()?.join(sha3(key));
+    fs::write(path, value)?;
 
-    let path = dir.join(sha3(key));
-    fs::write(path, value).ok();
+    Ok(())
 }

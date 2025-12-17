@@ -7,7 +7,7 @@ use defold_nvim_core::{
     mobdap, neovide,
 };
 use tracing::Level;
-use tracing_appender::rolling::daily;
+use tracing_appender::rolling::never;
 use tracing_subscriber::fmt::writer::MakeWriterExt;
 
 mod launcher;
@@ -62,7 +62,7 @@ fn main() -> Result<()> {
     fs::create_dir_all(&logs)?;
 
     let (stdout, _stdout_guard) = tracing_appender::non_blocking(io::stdout());
-    let (logfile, _logfile_guard) = tracing_appender::non_blocking(daily(logs, "bridge"));
+    let (logfile, _logfile_guard) = tracing_appender::non_blocking(never(logs, "bridge.log"));
 
     let writer = stdout.and(logfile);
 

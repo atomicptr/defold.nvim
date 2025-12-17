@@ -9,7 +9,6 @@ use std::{
     sync::OnceLock,
 };
 use tracing::Level;
-use tracing_appender::rolling::daily;
 
 mod editor;
 mod editor_config;
@@ -26,17 +25,25 @@ fn defold_nvim_sidecar(lua: &Lua) -> LuaResult<LuaTable> {
 
         fs::create_dir_all(&logs).expect("could not create logs dir");
 
-        let rolling = daily(logs, "sidecar");
-
         tracing_subscriber::fmt()
             .with_ansi(false)
             .with_file(true)
             .with_line_number(true)
             .with_max_level(Level::DEBUG)
-            .with_writer(rolling)
+            .with_writer(tracing_appender::rolling::never(logs, "sidecar.log"))
             .init();
     });
 
+    match register_exports(lua) {
+        Ok(exports) => Ok(exports),
+        Err(err) => {
+            tracing::error!("{lua:?}");
+            Err(err)
+        }
+    }
+}
+
+fn register_exports(lua: &Lua) -> LuaResult<LuaTable> {
     let exports = lua.create_table()?;
 
     exports.set("version", lua.create_string(env!("CARGO_PKG_VERSION"))?)?;
@@ -73,7 +80,7 @@ fn list_commands(lua: &Lua, port: Option<u16>) -> LuaResult<LuaTable> {
 }
 
 fn send_command(_lua: &Lua, (port, cmd): (Option<u16>, String)) -> LuaResult<()> {
-    editor::send_command(port, cmd)?;
+    editor::send_command(port, &cmd)?;
 
     Ok(())
 }

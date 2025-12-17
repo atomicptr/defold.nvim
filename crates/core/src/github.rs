@@ -28,17 +28,18 @@ pub fn fetch_release(owner: &str, repo: &str) -> Result<Release> {
     let url = format!("https://api.github.com/repos/{owner}/{repo}/releases/latest");
 
     if let Some(str) = cache::get(&url)
-        && let Ok(res) = serde_json::from_str(&str) {
-            tracing::debug!("Serving {url} from cache");
-            return Ok(res);
-        }
+        && let Ok(res) = serde_json::from_str(&str)
+    {
+        tracing::debug!("Serving {url} from cache");
+        return Ok(res);
+    }
 
     let client = reqwest::blocking::Client::new();
     let res = client.get(&url).header("User-Agent", USER_AGENT).send()?;
 
     let release: Release = res.json()?;
 
-    cache::set(&url, &serde_json::to_string(&release)?);
+    cache::set(&url, &serde_json::to_string(&release)?)?;
 
     Ok(release)
 }

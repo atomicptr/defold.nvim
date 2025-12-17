@@ -1,4 +1,4 @@
-mod cache;
+pub mod cache;
 pub mod focus;
 pub mod game_project;
 pub mod github;

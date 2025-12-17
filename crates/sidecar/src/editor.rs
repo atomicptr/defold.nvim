@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
 use anyhow::{Context, Result, bail};
+use defold_nvim_core::cache;
 use netstat2::{AddressFamilyFlags, ProtocolFlags, ProtocolSocketInfo, iterate_sockets_info};
 use sysinfo::System;
 
@@ -12,6 +13,16 @@ fn command_url(port: u16, command: Option<String>) -> String {
 }
 
 pub fn find_port() -> Option<u16> {
+    const CACHE: &str = "editor-port";
+
+    if let Some(port) = cache::get(CACHE)
+        && let Some(port) = port.parse::<u16>().ok()
+    {
+        return Some(port);
+    }
+
+    tracing::debug!("Looking for editor port...");
+
     let sys = System::new_all();
 
     for (pid, proc) in sys.processes() {
@@ -31,8 +42,21 @@ pub fn find_port() -> Option<u16> {
             continue;
         }
 
-        for port in ports.unwrap() {
-            if is_editor(port) {
+        let ports = ports.unwrap();
+        if ports.is_empty() {
+            continue;
+        }
+
+        tracing::debug!("Pid {} has ports: {:?}", pid.as_u32(), ports);
+
+        for port in ports {
+            if is_editor_port(port) {
+                tracing::debug!("Found editor at {port}");
+
+                if let Err(err) = cache::set(CACHE, &port.to_string()) {
+                    tracing::error!("Could not cache editor key because: {err:?}");
+                }
+
                 return Some(port);
             }
         }
@@ -65,7 +89,7 @@ fn ports_for_pid(pid: u32) -> Result<Vec<u16>> {
     Ok(ports)
 }
 
-fn is_editor(port: u16) -> bool {
+pub fn is_editor_port(port: u16) -> bool {
     reqwest::blocking::Client::new()
         .head(command_url(port, None))
         .send()
@@ -85,16 +109,16 @@ pub fn list_commands(port: Option<u16>) -> Result<HashMap<String, String>> {
         bail!("could not list commands, status: {:?}", res.status());
     }
 
-    let content = res.text()?.to_string();
+    let content = res.text()?.clone();
 
     serde_json::from_str(&content).map_err(anyhow::Error::from)
 }
 
-pub fn send_command(port: Option<u16>, cmd: String) -> Result<()> {
+pub fn send_command(port: Option<u16>, cmd: &str) -> Result<()> {
     let url = command_url(
         port.or_else(find_port)
             .context("could not determine editor port")?,
-        Some(cmd.clone()),
+        Some(cmd.to_string()),
     );
 
     let res = reqwest::blocking::Client::new().post(url).send()?;
