@@ -23,3 +23,6 @@ jobs:
 
       - name: Run tests
         run: cargo test --workspace --verbose
+
+      - name: Clippy
+        run: cargo clippy

@@ -3,7 +3,7 @@ use edn_rs::Edn;
 use std::{fs, path::PathBuf, str::FromStr};
 
 #[cfg(target_os = "linux")]
-const RUN_SCRIPT: &'static str = include_str!("../assets/run_linux.sh");
+const RUN_SCRIPT: &str = include_str!("../assets/run_linux.sh");
 
 #[cfg(target_os = "macos")]
 const RUN_SCRIPT: &'static str = include_str!("../assets/run_macos.sh");
@@ -15,13 +15,13 @@ const RUN_SCRIPT: &'static str = include_str!("../assets/run_windows.bat");
 const SCRIPT_EXT: &'static str = "bat";
 
 #[cfg(not(target_os = "windows"))]
-const SCRIPT_EXT: &'static str = "sh";
+const SCRIPT_EXT: &str = "sh";
 
 #[cfg(target_os = "windows")]
 const EXE_SUFFIX: &'static str = ".exe";
 
 #[cfg(not(target_os = "windows"))]
-const EXE_SUFFIX: &'static str = "";
+const EXE_SUFFIX: &str = "";
 
 fn find_bridge_path(plugin_root: PathBuf) -> Result<PathBuf> {
     let exe = format!("defold-nvim-bridge{}", EXE_SUFFIX);

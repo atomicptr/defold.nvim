@@ -74,7 +74,7 @@ fn is_editor(port: u16) -> bool {
 
 pub fn list_commands(port: Option<u16>) -> Result<HashMap<String, String>> {
     let url = command_url(
-        port.or_else(|| find_port())
+        port.or_else(find_port)
             .context("could not determine editor port")?,
         None,
     );
@@ -87,12 +87,12 @@ pub fn list_commands(port: Option<u16>) -> Result<HashMap<String, String>> {
 
     let content = res.text()?.to_string();
 
-    serde_json::from_str(&content).map_err(|err| anyhow::Error::from(err))
+    serde_json::from_str(&content).map_err(anyhow::Error::from)
 }
 
 pub fn send_command(port: Option<u16>, cmd: String) -> Result<()> {
     let url = command_url(
-        port.or_else(|| find_port())
+        port.or_else(find_port)
             .context("could not determine editor port")?,
         Some(cmd.clone()),
     );

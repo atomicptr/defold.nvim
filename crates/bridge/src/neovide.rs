@@ -13,11 +13,11 @@ use zip::ZipArchive;
 #[cfg(target_os = "linux")]
 use std::os::unix::fs::PermissionsExt;
 
-const OWNER: &'static str = "neovide";
-const REPOSITORY: &'static str = "neovide";
+const OWNER: &str = "neovide";
+const REPOSITORY: &str = "neovide";
 
 #[cfg(target_os = "linux")]
-const NAME: &'static str = "neovide-linux-x86_64.tar.gz";
+const NAME: &str = "neovide-linux-x86_64.tar.gz";
 
 #[cfg(target_os = "macos")]
 const NAME: &'static str = "not supported";
@@ -93,7 +93,7 @@ pub fn is_update_available() -> Result<bool> {
 
 pub fn update_or_install() -> Result<PathBuf> {
     if !is_update_available()? {
-        return Ok(path()?);
+        return path();
     }
 
     let (downloaded_file, release) = github::download_release(OWNER, REPOSITORY, NAME)?;

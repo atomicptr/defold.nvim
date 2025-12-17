@@ -94,8 +94,8 @@ fn switch(switcher_type: SwitcherType) -> Result<()> {
                 .arg(format!(
                     "[{}={}] focus",
                     match switcher_type {
-                        SwitcherType::Class(_) => format!("class"),
-                        SwitcherType::Title(_) => format!("title"),
+                        SwitcherType::Class(_) => "class".to_string(),
+                        SwitcherType::Title(_) => "title".to_string(),
                         _ => bail!("Unsupported switcher type {switcher_type:?} for {switcher:?}"),
                     },
                     switcher_type.value(),
@@ -120,8 +120,8 @@ fn switch(switcher_type: SwitcherType) -> Result<()> {
             Command::new(switcher.path().unwrap())
                 .arg("search")
                 .arg(match switcher_type {
-                    SwitcherType::Class(_) => format!("--class"),
-                    SwitcherType::Title(_) => format!("--title"),
+                    SwitcherType::Class(_) => "--class".to_string(),
+                    SwitcherType::Title(_) => "--title".to_string(),
                     _ => bail!("Unsupported switcher type {switcher_type:?} for {switcher:?}"),
                 })
                 .arg(switcher_type.value())

@@ -10,7 +10,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::cache;
 
-const USER_AGENT: &'static str = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36";
+const USER_AGENT: &str = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36";
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Asset {
@@ -27,12 +27,11 @@ pub struct Release {
 pub fn fetch_release(owner: &str, repo: &str) -> Result<Release> {
     let url = format!("https://api.github.com/repos/{owner}/{repo}/releases/latest");
 
-    if let Some(str) = cache::get(&url) {
-        if let Ok(res) = serde_json::from_str(&str) {
+    if let Some(str) = cache::get(&url)
+        && let Ok(res) = serde_json::from_str(&str) {
             tracing::debug!("Serving {url} from cache");
             return Ok(res);
         }
-    }
 
     let client = reqwest::blocking::Client::new();
     let res = client.get(&url).header("User-Agent", USER_AGENT).send()?;
@@ -52,7 +51,7 @@ pub fn download_release(owner: &str, repo: &str, name: &str) -> Result<(PathBuf,
         .join(repo);
     fs::create_dir_all(&temp)?;
 
-    let release = fetch_release(&owner, &repo)?;
+    let release = fetch_release(owner, repo)?;
 
     let Some(asset) = release.assets.iter().find(|asset| asset.name == name) else {
         bail!("Could not find asset {name} at {owner}/{repo}");

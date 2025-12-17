@@ -1,7 +1,7 @@
 use std::{
     fs::{self, File},
     io::BufReader,
-    path::PathBuf,
+    path::{Path, PathBuf},
     process::Command,
 };
 
@@ -16,12 +16,12 @@ use crate::{
     utils::{self, is_port_in_use},
 };
 
-const ERR_NEOVIDE_NOT_FOUND: &'static str = "Could not find Neovide, have you installed it?";
-const ERR_TERMINAL_NOT_FOUND: &'static str = "Could not find any suitable terminal";
+const ERR_NEOVIDE_NOT_FOUND: &str = "Could not find Neovide, have you installed it?";
+const ERR_TERMINAL_NOT_FOUND: &str = "Could not find any suitable terminal";
 
-const VAR_CLASSNAME: &'static str = "{CLASSNAME}";
-const VAR_ADDRESS: &'static str = "{ADDR}";
-const VAR_REMOTE_CMD: &'static str = "{REMOTE_CMD}";
+const VAR_CLASSNAME: &str = "{CLASSNAME}";
+const VAR_ADDRESS: &str = "{ADDR}";
+const VAR_REMOTE_CMD: &str = "{REMOTE_CMD}";
 
 #[derive(Debug, Deserialize)]
 pub struct LaunchConfig {
@@ -57,18 +57,18 @@ impl Launcher {
         Ok(())
     }
 
-    fn apply_var(self, var: &str, replace_with: String) -> Self {
+    fn apply_var(self, var: &str, replace_with: &str) -> Self {
         Self(
             self.0,
             self.1
                 .iter()
-                .map(|s| s.replace(var, &replace_with))
+                .map(|s| s.replace(var, replace_with))
                 .collect(),
         )
     }
 }
 
-const DEFAULT_TERMINALS: [(&'static str, &'static str, &'static str); 5] = [
+const DEFAULT_TERMINALS: [(&str, &str, &str); 5] = [
     ("alacratty", "--class=", "-e"),
     ("foot", "--app-id=", "-e"),
     ("ghostty", "--class=", "-e"),
@@ -83,7 +83,7 @@ fn create_launcher(cfg: &PluginConfig, nvim: &String) -> Result<Launcher> {
                 .launcher
                 .as_ref()
                 .and_then(|exe| exe.executable.clone())
-                .map(|s| s.into())
+                .map(Into::into)
                 .or_else(|| which("neovide").ok())
                 .or_else(|| match neovide::update_or_install() {
                     Ok(path) => Some(path),
@@ -103,7 +103,7 @@ fn create_launcher(cfg: &PluginConfig, nvim: &String) -> Result<Launcher> {
             if let Some(extra_args) = cfg
                 .launcher
                 .as_ref()
-                .and_then(|cfg| Some(cfg.extra_arguments.clone().unwrap_or_default()))
+                .map(|cfg| cfg.extra_arguments.clone().unwrap_or_default())
             {
                 for extra_arg in extra_args {
                     args.push(extra_arg);
@@ -136,7 +136,7 @@ fn create_launcher(cfg: &PluginConfig, nvim: &String) -> Result<Launcher> {
                 .launcher
                 .as_ref()
                 .and_then(|launcher| launcher.executable.clone())
-                .map(|exe| exe.into());
+                .map(Into::into);
 
             let executable = if let Some(exe) = executable
                 && exe.exists()
@@ -158,7 +158,7 @@ fn create_launcher(cfg: &PluginConfig, nvim: &String) -> Result<Launcher> {
                 if let Some(extra_args) = cfg
                     .launcher
                     .as_ref()
-                    .and_then(|cfg| Some(cfg.extra_arguments.clone().unwrap_or_default()))
+                    .map(|cfg| cfg.extra_arguments.clone().unwrap_or_default())
                 {
                     for extra_arg in extra_args {
                         args.push(extra_arg);
@@ -166,7 +166,7 @@ fn create_launcher(cfg: &PluginConfig, nvim: &String) -> Result<Launcher> {
                 }
 
                 if let Some(class_arg) = class_arg {
-                    if class_arg.ends_with("=") {
+                    if class_arg.ends_with('=') {
                         args.push(class_arg + VAR_CLASSNAME);
                     } else {
                         args.push(class_arg);
@@ -175,7 +175,7 @@ fn create_launcher(cfg: &PluginConfig, nvim: &String) -> Result<Launcher> {
                 }
 
                 if let Some(run_arg) = run_arg {
-                    if run_arg.ends_with("=") {
+                    if run_arg.ends_with('=') {
                         args.push(run_arg + nvim);
                     } else {
                         args.push(run_arg);
@@ -199,7 +199,7 @@ fn create_launcher(cfg: &PluginConfig, nvim: &String) -> Result<Launcher> {
                 if let Some(extra_args) = cfg
                     .launcher
                     .as_ref()
-                    .and_then(|cfg| Some(cfg.extra_arguments.clone().unwrap_or_default()))
+                    .map(|cfg| cfg.extra_arguments.clone().unwrap_or_default())
                 {
                     for extra_arg in extra_args {
                         args.push(extra_arg);
@@ -208,51 +208,49 @@ fn create_launcher(cfg: &PluginConfig, nvim: &String) -> Result<Launcher> {
 
                 // executable specifies only the name of which terminal we want to use
                 if let Some(exe_name) = cfg.launcher.as_ref().and_then(|cfg| cfg.executable.clone())
-                {
-                    if let Some((name, class_arg, run_arg)) = DEFAULT_TERMINALS
+                    && let Some((name, class_arg, run_arg)) = DEFAULT_TERMINALS
                         .iter()
                         .find(|(name, _, _)| *name == exe_name)
-                        && let Ok(path) = which(name)
-                    {
-                        if class_arg.ends_with("=") {
-                            args.push(class_arg.to_string() + VAR_CLASSNAME);
-                        } else {
-                            args.push(class_arg.to_string());
-                            args.push(VAR_CLASSNAME.to_string());
-                        }
-
-                        if run_arg.ends_with("=") {
-                            args.push(run_arg.to_string() + nvim);
-                        } else {
-                            args.push(run_arg.to_string());
-                            args.push(nvim.to_string());
-                        }
-
-                        args.push("--listen".to_string());
-                        args.push(VAR_ADDRESS.to_string());
-
-                        args.push("--remote".to_string());
-                        args.push(VAR_REMOTE_CMD.to_string());
-
-                        return Some(Launcher(path, args));
+                    && let Ok(path) = which(name)
+                {
+                    if class_arg.ends_with('=') {
+                        args.push((*class_arg).to_string() + VAR_CLASSNAME);
+                    } else {
+                        args.push((*class_arg).to_string());
+                        args.push(VAR_CLASSNAME.to_string());
                     }
+
+                    if run_arg.ends_with('=') {
+                        args.push((*run_arg).to_string() + nvim);
+                    } else {
+                        args.push((*run_arg).to_string());
+                        args.push((*nvim).clone());
+                    }
+
+                    args.push("--listen".to_string());
+                    args.push(VAR_ADDRESS.to_string());
+
+                    args.push("--remote".to_string());
+                    args.push(VAR_REMOTE_CMD.to_string());
+
+                    return Some(Launcher(path, args));
                 }
 
                 // try finding one of our supported default terminals
-                for (name, class_arg, run_arg) in DEFAULT_TERMINALS.iter() {
+                for (name, class_arg, run_arg) in &DEFAULT_TERMINALS {
                     if let Ok(path) = which(name) {
-                        if class_arg.ends_with("=") {
-                            args.push(class_arg.to_string() + VAR_CLASSNAME);
+                        if class_arg.ends_with('=') {
+                            args.push((*class_arg).to_string() + VAR_CLASSNAME);
                         } else {
-                            args.push(class_arg.to_string());
+                            args.push((*class_arg).to_string());
                             args.push(VAR_CLASSNAME.to_string());
                         }
 
-                        if run_arg.ends_with("=") {
-                            args.push(run_arg.to_string() + nvim);
+                        if run_arg.ends_with('=') {
+                            args.push((*run_arg).to_string() + nvim);
                         } else {
-                            args.push(run_arg.to_string());
-                            args.push(nvim.to_string());
+                            args.push((*run_arg).to_string());
+                            args.push((*nvim).clone());
                         }
 
                         args.push("--listen".to_string());
@@ -277,9 +275,8 @@ fn create_launcher(cfg: &PluginConfig, nvim: &String) -> Result<Launcher> {
                         launcher_type: Some(LauncherType::Neovide),
                         ..launcher.clone()
                     }),
-                    ..cfg.clone()
                 },
-                &nvim,
+                nvim,
             ) {
                 return Ok(launcher);
             }
@@ -290,9 +287,8 @@ fn create_launcher(cfg: &PluginConfig, nvim: &String) -> Result<Launcher> {
                         launcher_type: Some(LauncherType::Terminal),
                         ..launcher.clone()
                     }),
-                    ..cfg.clone()
                 },
-                &nvim,
+                nvim,
             ) {
                 return Ok(launcher);
             }
@@ -309,7 +305,7 @@ fn nvim_open_file_remote(nvim: &str, server: &str, remote_cmd: &str) -> Result<(
         .arg("--server")
         .arg(server)
         .arg("--remote-send")
-        .arg(format!("\"<C-\\\\><C-n>:edit {}<CR>\"", remote_cmd))
+        .arg(format!("\"<C-\\\\><C-n>:edit {remote_cmd}<CR>\""))
         .output()?;
 
     if !out.stderr.is_empty() {
@@ -319,7 +315,7 @@ fn nvim_open_file_remote(nvim: &str, server: &str, remote_cmd: &str) -> Result<(
     Ok(())
 }
 
-fn run_fsock(launcher: Launcher, nvim: &str, root_dir: PathBuf, remote_cmd: &str) -> Result<()> {
+fn run_fsock(launcher: Launcher, nvim: &str, root_dir: &Path, remote_cmd: &str) -> Result<()> {
     let socket_file = utils::runtime_dir(
         root_dir
             .to_str()
@@ -333,8 +329,7 @@ fn run_fsock(launcher: Launcher, nvim: &str, root_dir: PathBuf, remote_cmd: &str
         VAR_ADDRESS,
         socket_file
             .to_str()
-            .context("could not convert socket file to string")?
-            .to_string(),
+            .context("could not convert socket file to string")?,
     );
 
     if socket_file.exists() {
@@ -360,7 +355,7 @@ fn run_fsock(launcher: Launcher, nvim: &str, root_dir: PathBuf, remote_cmd: &str
     Ok(())
 }
 
-fn run_netsock(launcher: Launcher, nvim: &str, root_dir: PathBuf, remote_cmd: &str) -> Result<()> {
+fn run_netsock(launcher: Launcher, nvim: &str, root_dir: &Path, remote_cmd: &str) -> Result<()> {
     let port_file = utils::runtime_dir(
         root_dir
             .to_str()
@@ -388,21 +383,21 @@ fn run_netsock(launcher: Launcher, nvim: &str, root_dir: PathBuf, remote_cmd: &s
             let socket = format!("127.0.0.1:{new_port}");
             tracing::debug!("Trying to use netsock with port {socket}");
             fs::write(port_file, new_port.to_string())?;
-            launcher.apply_var(VAR_ADDRESS, socket).run()?;
+            launcher.apply_var(VAR_ADDRESS, &socket).run()?;
         }
 
         return Ok(());
     }
 
     fs::write(port_file, port.to_string())?;
-    launcher.apply_var(VAR_ADDRESS, socket).run()?;
+    launcher.apply_var(VAR_ADDRESS, &socket).run()?;
     Ok(())
 }
 
 pub fn run(
     config: LaunchConfig,
     root_dir: PathBuf,
-    file: PathBuf,
+    file: &Path,
     line: Option<usize>,
 ) -> Result<()> {
     let nvim = which("nvim")?
@@ -415,15 +410,17 @@ pub fn run(
     let launcher = if cfg!(target_os = "linux") {
         launcher.apply_var(
             VAR_CLASSNAME,
-            classname(
+            &classname(
                 root_dir
                     .to_str()
                     .context("could not convert path to string")?,
             )?,
         )
     } else if cfg!(target_os = "macos") {
+        // TODO: macos
         launcher
     } else if cfg!(target_os = "windows") {
+        // TODO: windows
         launcher
     } else {
         launcher
@@ -432,20 +429,20 @@ pub fn run(
     let file_str = file.to_str().context("could not convert path to string")?;
 
     let remote_cmd = match line {
-        Some(line) => format!("+{} {}", line, file_str),
+        Some(line) => format!("+{line} {file_str}"),
         None => file_str.to_string(),
     };
 
-    let launcher = launcher.apply_var(VAR_REMOTE_CMD, remote_cmd.clone());
+    let launcher = launcher.apply_var(VAR_REMOTE_CMD, &remote_cmd.clone());
 
     match config.plugin_config.launcher.and_then(|l| l.socket_type) {
-        Some(SocketType::Fsock) => run_fsock(launcher, &nvim, root_dir.clone(), &remote_cmd)?,
-        Some(SocketType::Netsock) => run_netsock(launcher, &nvim, root_dir.clone(), &remote_cmd)?,
+        Some(SocketType::Fsock) => run_fsock(launcher, &nvim, &root_dir, &remote_cmd)?,
+        Some(SocketType::Netsock) => run_netsock(launcher, &nvim, &root_dir, &remote_cmd)?,
         None => {
             if cfg!(target_os = "linux") || cfg!(target_os = "macos") {
-                run_fsock(launcher, &nvim, root_dir.clone(), &remote_cmd)?
+                run_fsock(launcher, &nvim, &root_dir, &remote_cmd)?;
             } else {
-                run_netsock(launcher, &nvim, root_dir.clone(), &remote_cmd)?
+                run_netsock(launcher, &nvim, &root_dir, &remote_cmd)?;
             }
         }
     }

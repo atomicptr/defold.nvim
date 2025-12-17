@@ -85,7 +85,7 @@ fn main() -> Result<()> {
         } => launcher::run(
             launcher::LaunchConfig::from_file(absolute(launch_config)?)?,
             absolute(game_root_dir)?,
-            absolute(file)?,
+            &absolute(file)?,
             line,
         )?,
         Commands::FocusNeovim { game_root_dir } => focus_neovim(absolute(game_root_dir)?)?,
