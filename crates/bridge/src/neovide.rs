@@ -1,6 +1,7 @@
 use std::{
     fs::{self, File, Permissions},
     path::PathBuf,
+    time::Duration,
 };
 
 use anyhow::{Context, Result, bail};
@@ -64,9 +65,18 @@ pub fn is_update_available() -> Result<bool> {
         return Ok(false);
     }
 
+    // if the version file is younger than a week dont bother
+    let last_modified = version_path()?.metadata()?.modified()?;
+    if last_modified.elapsed()? < Duration::from_hours(24 * 7) {
+        return Ok(false);
+    }
+
     let Ok(v) = version() else {
         return Ok(true);
     };
+
+    // re-write the file again so that we only check once a week
+    fs::write(version_path()?, &v)?;
 
     tracing::debug!("Neovide Version {v} installed");
 

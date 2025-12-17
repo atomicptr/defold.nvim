@@ -22,6 +22,7 @@ function M.mobdap_path()
         return M.path
     end
 
+    -- TODO: check if is available, if not download
     local res = babashka.run_task_json "mobdap-path"
 
     if res.status ~= 200 then
