@@ -244,7 +244,9 @@ function M.load_plugin()
     log.debug "============= defold.nvim: Loaded plugin"
     log.debug("Sidecar Version:" .. sidecar.version)
     log.debug("Babashka Path: " .. babashka.bb_path())
-    log.debug("Mobdap Path: " .. debugger.mobdap_path())
+    if debugger.mobdap_path() then
+        log.debug("Mobdap Path: " .. debugger.mobdap_path())
+    end
     log.debug("Config: " .. vim.inspect(M.config))
 
     -- register hot reload when saving lua files

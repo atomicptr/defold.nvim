@@ -1,15 +1,10 @@
 use anyhow::Context;
-use defold_nvim_core::{
-    focus,
-    game_project::GameProject,
-    github,
-    utils::{self},
-};
+use defold_nvim_core::mobdap;
+use defold_nvim_core::{focus, game_project::GameProject};
 use mlua::Value;
 use mlua::prelude::*;
 use std::{
-    fs::{self, File},
-    io,
+    fs::{self},
     path::{PathBuf, absolute},
     sync::OnceLock,
 };
@@ -45,7 +40,6 @@ fn defold_nvim_sidecar(lua: &Lua) -> LuaResult<LuaTable> {
     let exports = lua.create_table()?;
 
     exports.set("version", lua.create_string(env!("CARGO_PKG_VERSION"))?)?;
-    exports.set("sha3", lua.create_function(sha3)?)?;
     exports.set("read_game_project", lua.create_function(read_game_project)?)?;
     exports.set("find_editor_port", lua.create_function(find_editor_port)?)?;
     exports.set("list_commands", lua.create_function(list_commands)?)?;
@@ -56,17 +50,9 @@ fn defold_nvim_sidecar(lua: &Lua) -> LuaResult<LuaTable> {
     )?;
     exports.set("focus_neovim", lua.create_function(focus_neovim)?)?;
     exports.set("focus_game", lua.create_function(focus_game)?)?;
-    exports.set("download", lua.create_function(download)?)?;
-    exports.set(
-        "fetch_github_release",
-        lua.create_function(fetch_github_release)?,
-    )?;
+    exports.set("mobdap_install", lua.create_function(mobdap_install)?)?;
 
     Ok(exports)
-}
-
-fn sha3(_lua: &Lua, str: String) -> LuaResult<String> {
-    Ok(utils::sha3(&str))
 }
 
 fn read_game_project(lua: &Lua, path: String) -> LuaResult<Value> {
@@ -110,26 +96,10 @@ fn focus_game(_lua: &Lua, game_root: String) -> LuaResult<()> {
     Ok(())
 }
 
-fn download(_lua: &Lua, (url, location): (String, String)) -> LuaResult<()> {
-    let res = reqwest::blocking::get(url);
-    if let Err(err) = res {
-        return Err(anyhow::Error::from(err).into());
-    }
-
-    let mut res = res.unwrap();
-
-    if let Err(err) = res.error_for_status_ref() {
-        return Err(anyhow::Error::from(err).into());
-    }
-
-    let mut file = File::create(location)?;
-    io::copy(&mut res, &mut file)?;
-
-    Ok(())
-}
-
-fn fetch_github_release(lua: &Lua, (owner, repo): (String, String)) -> LuaResult<Value> {
-    let res = github::fetch_release(&owner, &repo)?;
-    let res = lua.to_value(&res)?;
-    Ok(res)
+fn mobdap_install(_lua: &Lua, _: ()) -> LuaResult<String> {
+    let path = mobdap::update_or_install()?;
+    Ok(path
+        .to_str()
+        .context("could not convert path to string")?
+        .to_string())
 }

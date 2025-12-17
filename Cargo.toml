@@ -1,3 +1,12 @@
 [workspace]
 members = ["crates/sidecar", "crates/bridge", "crates/core"]
 resolver = "2"
+
+[workspace.lints.clippy]
+correctness = "deny"
+complexity = "deny"
+perf = "warn"
+pedantic = "warn"
+
+[workspace.lints.rust]
+too-many-lines = "allow"

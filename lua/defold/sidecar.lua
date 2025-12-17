@@ -60,8 +60,7 @@ package.cpath = package.cpath
 ---@field set_default_editor function(plugin_root: string, launch_config: string)
 ---@field focus_neovim function(game_root: string)
 ---@field focus_game function(game_root: string)
----@field download function(url: string, location: string)
----@field fetch_github_release function(owner: string, repo: string)
+---@field mobdap_install function(): string
 
 ---@type Sidecar
 local rust_plugin = require "defold_nvim_sidecar"

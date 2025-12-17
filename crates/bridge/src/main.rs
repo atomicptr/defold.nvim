@@ -2,13 +2,15 @@ use std::{env, fs, io, path::absolute};
 
 use anyhow::{Context, Result};
 use clap::{Parser, Subcommand, command};
-use defold_nvim_core::focus::{focus_game, focus_neovim};
+use defold_nvim_core::{
+    focus::{focus_game, focus_neovim},
+    mobdap, neovide,
+};
 use tracing::Level;
 use tracing_appender::rolling::daily;
 use tracing_subscriber::fmt::writer::MakeWriterExt;
 
 mod launcher;
-mod neovide;
 mod plugin_config;
 mod utils;
 
@@ -47,6 +49,8 @@ enum Commands {
     },
     /// Downloads Neovide
     DownloadNeovide,
+    /// Downloads Mobdap Debugger
+    DownloadMobdap,
 }
 
 fn main() -> Result<()> {
@@ -93,6 +97,10 @@ fn main() -> Result<()> {
         Commands::DownloadNeovide => {
             let path = neovide::update_or_install()?;
             tracing::info!("Installed neovide at {path:?}");
+        }
+        Commands::DownloadMobdap => {
+            let path = mobdap::update_or_install()?;
+            tracing::info!("Installed mobdap at {path:?}");
         }
     }
 

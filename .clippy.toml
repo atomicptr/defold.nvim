@@ -1,8 +1,0 @@
-no_deps = true
-
-[lints.clippy]
-correctness = "deny"
-complexity = "deny"
-perf = "warn"
-pedantic = "warn"
-too_many_lines = "allow"

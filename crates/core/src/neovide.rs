@@ -5,8 +5,9 @@ use std::{
 };
 
 use anyhow::{Context, Result, bail};
-use defold_nvim_core::github;
 use version_compare::Version;
+
+use crate::github;
 
 const OWNER: &str = "neovide";
 const REPOSITORY: &str = "neovide";
@@ -65,10 +66,12 @@ pub fn is_update_available() -> Result<bool> {
         return Ok(false);
     }
 
-    // if the version file is younger than a week dont bother
-    let last_modified = version_path()?.metadata()?.modified()?;
-    if last_modified.elapsed()? < Duration::from_hours(24 * 7) {
-        return Ok(false);
+    if version_path()?.exists() {
+        // if the version file is younger than a week dont bother
+        let last_modified = version_path()?.metadata()?.modified()?;
+        if last_modified.elapsed()? < Duration::from_hours(24 * 7) {
+            return Ok(false);
+        }
     }
 
     let Ok(v) = version() else {

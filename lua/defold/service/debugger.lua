@@ -7,8 +7,8 @@ M.path = nil
 ---@return string|nil
 function M.mobdap_path()
     local os = require "defold.service.os"
-    local babashka = require "defold.service.babashka"
     local log = require "defold.service.logger"
+    local sidecar = require "defold.sidecar"
 
     if M.custom_executable then
         return M.custom_executable
@@ -22,16 +22,14 @@ function M.mobdap_path()
         return M.path
     end
 
-    -- TODO: check if is available, if not download
-    local res = babashka.run_task_json "mobdap-path"
-
-    if res.status ~= 200 then
-        log.error("Unable to locate debugger: " .. vim.inspect(res))
-        return nil
+    local ok, res = pcall(sidecar.mobdap_install)
+    if not ok then
+        log.error(string.format("Could not install mobdap: %s", res))
+        return
     end
 
-    M.path = res.mobdap_path
-    return res.mobdap_path
+    M.path = res
+    return res
 end
 
 ---@param custom_executable string|nil

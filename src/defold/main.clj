@@ -2,9 +2,7 @@
   (:require
    [babashka.fs :as fs]
    [cheshire.core :as json]
-   [defold.debugger :as debugger]
    [defold.logging :as logging]
-   [defold.neovide :as neovide]
    [defold.project :as project]
    [taoensso.timbre :as log]))
 
@@ -28,17 +26,7 @@
     type))
 
 (defmethod run :setup [_ config-file]
-  (try
-    (let [conf (parse-config config-file)]
-      (when-not (get-in conf ["plugin_config" "debugger" "custom_executable"])
-        (debugger/setup))
-      (when (and (= "neovide" (get-in conf ["plugin_config" "launcher" "type"]))
-                 (not (get-in conf ["plugin_config" "launcher" "executable"])))
-        (neovide/setup))
-      (print-json {:status 200}))
-    (catch Throwable t
-      (log/error "Error:" (ex-message t) t)
-      (print-json {:status 500 :error (ex-message t)}))))
+  (print-json {:status 200}))
 
 (defmethod run :install-dependencies
   ([_ _ game-project]
@@ -48,12 +36,6 @@
 
 (defmethod run :list-dependency-dirs [_ _ game-project]
   (print-json (project/list-dependency-dirs game-project)))
-
-(defmethod run :mobdap-path [_ _]
-  (let [path (debugger/executable-path)]
-    (if (fs/exists? path)
-      (print-json {:status 200 :mobdap_path path})
-      (print-json {:status 500 :error (str "Could not find file: " path)}))))
 
 (defn run-wrapped [& args]
   (try
