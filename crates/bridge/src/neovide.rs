@@ -5,13 +5,7 @@ use std::{
 
 use anyhow::{Context, Result, bail};
 use defold_nvim_core::github;
-use flate2::read::GzDecoder;
-use tar::Archive;
 use version_compare::Version;
-use zip::ZipArchive;
-
-#[cfg(target_os = "linux")]
-use std::os::unix::fs::PermissionsExt;
 
 const OWNER: &str = "neovide";
 const REPOSITORY: &str = "neovide";
@@ -107,7 +101,12 @@ pub fn update_or_install() -> Result<PathBuf> {
 
     let file = File::open(downloaded_file)?;
 
-    if cfg!(target_os = "linux") {
+    #[cfg(target_os = "linux")]
+    {
+        use flate2::read::GzDecoder;
+        use std::os::unix::fs::PermissionsExt;
+        use tar::Archive;
+
         let tar = GzDecoder::new(file);
         let mut archive = Archive::new(tar);
         archive.unpack(&parent_dir)?;
@@ -121,7 +120,12 @@ pub fn update_or_install() -> Result<PathBuf> {
         fs::set_permissions(&neovide_path, Permissions::from_mode(0o700))?;
 
         fs::rename(neovide_path, path()?)?;
-    } else if cfg!(target_os = "windows") {
+    }
+
+    #[cfg(target_os = "windows")]
+    {
+        use zip::ZipArchive;
+
         let mut archive = ZipArchive::new(file)?;
         archive.extract(&parent_dir)?;
 
@@ -132,8 +136,11 @@ pub fn update_or_install() -> Result<PathBuf> {
         }
 
         fs::rename(neovide_path, path()?)?;
-    } else {
-        bail!("Unsupported OS");
+    }
+
+    #[cfg(not(any(target_os = "linux", target_os = "windows")))]
+    {
+        bail!("Unsupported operating system");
     }
 
     fs::write(version_path()?, release.tag_name)?;
