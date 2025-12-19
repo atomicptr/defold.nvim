@@ -1,6 +1,6 @@
 use anyhow::Context;
+use defold_nvim_core::{editor, editor_config, mobdap, project};
 use defold_nvim_core::{focus, game_project::GameProject};
-use defold_nvim_core::{mobdap, project};
 use mlua::Value;
 use mlua::prelude::*;
 use std::path::PathBuf;
@@ -13,9 +13,6 @@ use tracing::level_filters::LevelFilter;
 use tracing_subscriber::layer::SubscriberExt;
 use tracing_subscriber::reload;
 use tracing_subscriber::util::SubscriberInitExt;
-
-mod editor;
-mod editor_config;
 
 static LOG_INIT: OnceLock<()> = OnceLock::new();
 static LOG_RELOAD_HANDLE: OnceLock<reload::Handle<LevelFilter, tracing_subscriber::Registry>> =

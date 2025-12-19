@@ -43,6 +43,7 @@ pub struct LauncherSettings {
 }
 
 impl LauncherSettings {
+    #[must_use]
     pub fn bridge_cli_args(&self) -> Vec<String> {
         let mut args = Vec::new();
 

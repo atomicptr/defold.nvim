@@ -3,6 +3,7 @@ use std::{env, fs, io, path::absolute};
 use anyhow::{Context, Result};
 use clap::{Parser, Subcommand, command};
 use defold_nvim_core::{
+    editor,
     focus::{focus_game, focus_neovim},
     mobdap, neovide, project,
 };
@@ -83,6 +84,16 @@ enum Commands {
     ListDependencies {
         #[clap(value_name = "GAME_ROOT_DIR", index = 1)]
         game_root_dir: String,
+    },
+    /// Finds the open editor port
+    FindEditorPort,
+    /// Sends a command to the editor
+    SendCommand {
+        #[clap(long = "port")]
+        port: Option<u16>,
+
+        #[clap(value_name = "COMMAND", index = 1)]
+        command: String,
     },
 }
 
@@ -165,6 +176,16 @@ fn main() -> Result<()> {
             for dir in project::list_dependency_dirs(&root_dir)? {
                 tracing::info!("{}", dir.display());
             }
+        }
+        Commands::FindEditorPort => {
+            if let Some(port) = editor::find_port() {
+                tracing::info!("Editor is running at port {port}");
+            } else {
+                tracing::info!("Could not find editor port, is the editor open?");
+            }
+        }
+        Commands::SendCommand { port, command } => {
+            editor::send_command(port, &command)?;
         }
     }
 

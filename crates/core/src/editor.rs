@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
+use crate::cache;
 use anyhow::{Context, Result, bail};
-use defold_nvim_core::cache;
 use netstat2::{AddressFamilyFlags, ProtocolFlags, ProtocolSocketInfo, iterate_sockets_info};
 use sysinfo::System;
 
