@@ -158,5 +158,7 @@ pub fn update_or_install() -> Result<PathBuf> {
 
     fs::write(version_path()?, release.tag_name)?;
 
+    github::clear_downloads(OWNER, REPOSITORY)?;
+
     path()
 }
