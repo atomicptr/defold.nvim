@@ -10,6 +10,8 @@ use tracing::Level;
 use tracing_appender::rolling::never;
 use tracing_subscriber::fmt::writer::MakeWriterExt;
 
+use crate::plugin_config::{LauncherType, PluginConfig, SocketType};
+
 mod launcher;
 mod plugin_config;
 mod utils;
@@ -25,16 +27,31 @@ struct Args {
 enum Commands {
     /// Open a file in Neovim or launch a new instance
     LaunchNeovim {
-        #[clap(value_name = "LAUNCH_CONFIG", index = 1)]
-        launch_config: String,
+        #[arg(long = "launcher-type")]
+        launcher_type: Option<LauncherType>,
 
-        #[clap(value_name = "GAME_ROOT_DIR", index = 2)]
+        #[arg(long = "socket-type")]
+        socket_type: Option<SocketType>,
+
+        #[arg(long = "executable")]
+        executable: Option<String>,
+
+        #[arg(long = "extra-arguments", value_delimiter = ' ', num_args = 0..)]
+        extra_arguments: Option<Vec<String>>,
+
+        #[arg(long = "terminal-class-argument")]
+        terminal_class_argument: Option<String>,
+
+        #[arg(long = "terminal-run-argument")]
+        terminal_run_argument: Option<String>,
+
+        #[clap(value_name = "GAME_ROOT_DIR", index = 1)]
         game_root_dir: String,
 
-        #[clap(value_name = "FILE", index = 3)]
+        #[clap(value_name = "FILE", index = 2)]
         file: String,
 
-        #[clap(value_name = "LINE", index = 4)]
+        #[clap(value_name = "LINE", index = 3)]
         line: Option<usize>,
     },
     /// Focus the currently open instance of Neovim
@@ -82,12 +99,24 @@ fn main() -> Result<()> {
 
     match args.cmd {
         Commands::LaunchNeovim {
-            launch_config,
+            launcher_type,
+            socket_type,
+            executable,
+            extra_arguments,
+            terminal_class_argument,
+            terminal_run_argument,
             game_root_dir,
             file,
             line,
         } => launcher::run(
-            launcher::LaunchConfig::from_file(absolute(launch_config)?)?,
+            PluginConfig {
+                launcher_type,
+                socket_type,
+                executable,
+                extra_arguments,
+                terminal_class_argument,
+                terminal_run_argument,
+            },
             absolute(game_root_dir)?,
             &absolute(file)?,
             line,

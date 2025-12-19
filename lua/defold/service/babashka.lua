@@ -109,10 +109,6 @@ function M.bb_edn_path()
     return vim.fs.joinpath(plugin_root, "bb.edn")
 end
 
-function M.config_path()
-    return vim.fs.joinpath(vim.fn.stdpath "data", "defold.nvim", "config.json")
-end
-
 ---@param custom_executable string|nil
 ---@return boolean
 function M.setup(custom_executable)
@@ -139,8 +135,6 @@ function M.run_task(task, args)
     log.debug(string.format("Run Babashka task: %s %s", task, vim.inspect(args)))
 
     local args_to_send = {}
-
-    table.insert(args_to_send, M.config_path())
 
     for _, arg in ipairs(args or {}) do
         table.insert(args_to_send, arg)

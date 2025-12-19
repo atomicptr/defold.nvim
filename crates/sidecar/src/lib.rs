@@ -3,9 +3,10 @@ use defold_nvim_core::mobdap;
 use defold_nvim_core::{focus, game_project::GameProject};
 use mlua::Value;
 use mlua::prelude::*;
+use std::path::PathBuf;
 use std::{
     fs::{self},
-    path::{PathBuf, absolute},
+    path::absolute,
     sync::OnceLock,
 };
 use tracing::Level;
@@ -85,8 +86,12 @@ fn send_command(_lua: &Lua, (port, cmd): (Option<u16>, String)) -> LuaResult<()>
     Ok(())
 }
 
-fn set_default_editor(_lua: &Lua, (plugin_root, launch_config): (String, String)) -> LuaResult<()> {
-    editor_config::set_default_editor(PathBuf::from(plugin_root), PathBuf::from(launch_config))?;
+fn set_default_editor(
+    lua: &Lua,
+    (plugin_root, launcher_settings): (String, LuaValue),
+) -> LuaResult<()> {
+    let launcher_settings = lua.from_value(launcher_settings)?;
+    editor_config::set_default_editor(&PathBuf::from(plugin_root), &launcher_settings)?;
 
     Ok(())
 }

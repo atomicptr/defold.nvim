@@ -100,11 +100,6 @@ function M.plugin_root()
     return os.plugin_root()
 end
 
----@return string
-function M.launch_config()
-    return vim.fs.joinpath(vim.fn.stdpath "data", "defold.nvim", "config.json")
-end
-
 ---@param opts DefoldNvimConfig|nil
 function M.setup(opts)
     local babashka = require "defold.service.babashka"
@@ -114,20 +109,11 @@ function M.setup(opts)
 
     -- TODO: check if sidecar is available, if not download it (which shouldnt be necessary with some pkg managers)
 
-    -- persist config for launcher
-    vim.fn.writefile({
-        vim.fn.json_encode {
-            data_dir = vim.fn.stdpath "data",
-            bb_path = babashka.bb_path(),
-            plugin_config = M.config,
-        },
-    }, M.launch_config())
-
     -- add setup defold command
     vim.api.nvim_create_user_command("SetupDefold", function()
         local sidecar = require "defold.sidecar"
 
-        local ok, err = pcall(sidecar.set_default_editor, M.plugin_root(), M.launch_config())
+        local ok, err = pcall(sidecar.set_default_editor, M.plugin_root(), M.config.launcher)
         if not ok then
             log.error(string.format("Could not set default editor because: %s", err))
         end
@@ -180,7 +166,7 @@ function M.setup(opts)
 
         if M.config.defold.set_default_editor then
             local sidecar = require "defold.sidecar"
-            local ok, err = pcall(sidecar.set_default_editor, M.plugin_root(), M.launch_config())
+            local ok, err = pcall(sidecar.set_default_editor, M.plugin_root(), M.config.launcher)
 
             if not ok then
                 log.error(string.format("Could not set default editor because: %s", err))

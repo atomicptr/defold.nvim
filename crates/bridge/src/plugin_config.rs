@@ -1,41 +1,27 @@
-use serde::Deserialize;
-
-#[derive(Debug, Deserialize, Clone, Copy)]
+#[derive(Debug, clap::ValueEnum, Clone, Copy)]
 pub enum LauncherType {
-    #[serde(rename = "neovide")]
+    #[clap(name = "neovide")]
     Neovide,
 
-    #[serde(rename = "terminal")]
+    #[clap(name = "terminal")]
     Terminal,
 }
 
-#[derive(Debug, Deserialize, Clone, Copy)]
+#[derive(Debug, clap::ValueEnum, Clone, Copy)]
 pub enum SocketType {
-    #[serde(rename = "fsock")]
+    #[clap(name = "fsock")]
     Fsock,
 
-    #[serde(rename = "netsock")]
+    #[clap(name = "netsock")]
     Netsock,
 }
 
-#[derive(Debug, Deserialize, Clone)]
-pub struct LauncherConfig {
-    #[serde(rename = "type")]
+#[derive(Debug, Clone)]
+pub struct PluginConfig {
     pub launcher_type: Option<LauncherType>,
-
+    pub socket_type: Option<SocketType>,
     pub executable: Option<String>,
     pub extra_arguments: Option<Vec<String>>,
-    pub terminal: Option<TerminalConfig>,
-    pub socket_type: Option<SocketType>,
-}
-
-#[derive(Debug, Deserialize, Clone)]
-pub struct TerminalConfig {
-    pub class_argument: Option<String>,
-    pub run_argument: Option<String>,
-}
-
-#[derive(Debug, Deserialize, Clone)]
-pub struct PluginConfig {
-    pub launcher: Option<LauncherConfig>,
+    pub terminal_class_argument: Option<String>,
+    pub terminal_run_argument: Option<String>,
 }

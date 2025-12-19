@@ -1,18 +1,16 @@
 use std::{
-    fs::{self, File},
-    io::BufReader,
+    fs::{self},
     path::{Path, PathBuf},
     process::Command,
 };
 
 use anyhow::{Context, Result, bail};
 use defold_nvim_core::{focus::focus_neovim, utils::classname};
-use serde::Deserialize;
 use which::which;
 
 use crate::{
     neovide,
-    plugin_config::{LauncherConfig, LauncherType, PluginConfig, SocketType},
+    plugin_config::{LauncherType, PluginConfig, SocketType},
     utils::{self, is_port_in_use},
 };
 
@@ -22,21 +20,6 @@ const ERR_TERMINAL_NOT_FOUND: &str = "Could not find any suitable terminal";
 const VAR_CLASSNAME: &str = "{CLASSNAME}";
 const VAR_ADDRESS: &str = "{ADDR}";
 const VAR_REMOTE_CMD: &str = "{REMOTE_CMD}";
-
-#[derive(Debug, Deserialize)]
-pub struct LaunchConfig {
-    // pub data_dir: PathBuf,
-    pub plugin_config: PluginConfig,
-}
-
-impl LaunchConfig {
-    pub fn from_file(path: PathBuf) -> Result<Self> {
-        let file = File::open(path)?;
-        let reader = BufReader::new(file);
-        let res = serde_json::from_reader(reader)?;
-        Ok(res)
-    }
-}
 
 #[derive(Debug)]
 struct Launcher(PathBuf, Vec<String>);
@@ -77,12 +60,11 @@ const DEFAULT_TERMINALS: [(&str, &str, &str); 5] = [
 ];
 
 fn create_launcher(cfg: &PluginConfig, nvim: &String) -> Result<Launcher> {
-    match cfg.launcher.as_ref().and_then(|cfg| cfg.launcher_type) {
+    match cfg.launcher_type {
         Some(LauncherType::Neovide) => {
             let executable = &cfg
-                .launcher
+                .executable
                 .as_ref()
-                .and_then(|exe| exe.executable.clone())
                 .map(Into::into)
                 .or_else(|| which("neovide").ok())
                 .or_else(|| match neovide::update_or_install() {
@@ -100,13 +82,9 @@ fn create_launcher(cfg: &PluginConfig, nvim: &String) -> Result<Launcher> {
 
             let mut args = Vec::new();
 
-            if let Some(extra_args) = cfg
-                .launcher
-                .as_ref()
-                .map(|cfg| cfg.extra_arguments.clone().unwrap_or_default())
-            {
+            if let Some(extra_args) = &cfg.extra_arguments {
                 for extra_arg in extra_args {
-                    args.push(extra_arg);
+                    args.push(extra_arg.clone());
                 }
             }
 
@@ -132,53 +110,35 @@ fn create_launcher(cfg: &PluginConfig, nvim: &String) -> Result<Launcher> {
             Ok(Launcher(executable.clone(), args))
         }
         Some(LauncherType::Terminal) => {
-            let executable: Option<PathBuf> = cfg
-                .launcher
-                .as_ref()
-                .and_then(|launcher| launcher.executable.clone())
-                .map(Into::into);
+            let executable: Option<PathBuf> = cfg.executable.clone().map(Into::into);
 
             let executable = if let Some(exe) = executable
                 && exe.exists()
             {
-                let class_arg = cfg
-                    .launcher
-                    .as_ref()
-                    .and_then(|l| l.terminal.clone())
-                    .and_then(|term| term.class_argument.clone());
-
-                let run_arg = cfg
-                    .launcher
-                    .as_ref()
-                    .and_then(|l| l.terminal.clone())
-                    .and_then(|term| term.run_argument.clone());
-
+                let class_arg = &cfg.terminal_class_argument;
+                let run_arg = &cfg.terminal_run_argument;
                 let mut args = Vec::new();
 
-                if let Some(extra_args) = cfg
-                    .launcher
-                    .as_ref()
-                    .map(|cfg| cfg.extra_arguments.clone().unwrap_or_default())
-                {
+                if let Some(extra_args) = &cfg.extra_arguments {
                     for extra_arg in extra_args {
-                        args.push(extra_arg);
+                        args.push(extra_arg.clone());
                     }
                 }
 
                 if let Some(class_arg) = class_arg {
                     if class_arg.ends_with('=') {
-                        args.push(class_arg + VAR_CLASSNAME);
+                        args.push(class_arg.clone() + VAR_CLASSNAME);
                     } else {
-                        args.push(class_arg);
+                        args.push(class_arg.clone());
                         args.push(VAR_CLASSNAME.to_string());
                     }
                 }
 
                 if let Some(run_arg) = run_arg {
                     if run_arg.ends_with('=') {
-                        args.push(run_arg + nvim);
+                        args.push(run_arg.clone() + nvim);
                     } else {
-                        args.push(run_arg);
+                        args.push(run_arg.clone());
                         args.push(nvim.clone());
                     }
                 }
@@ -196,18 +156,14 @@ fn create_launcher(cfg: &PluginConfig, nvim: &String) -> Result<Launcher> {
             .or_else(|| {
                 let mut args = Vec::new();
 
-                if let Some(extra_args) = cfg
-                    .launcher
-                    .as_ref()
-                    .map(|cfg| cfg.extra_arguments.clone().unwrap_or_default())
-                {
+                if let Some(extra_args) = &cfg.extra_arguments {
                     for extra_arg in extra_args {
-                        args.push(extra_arg);
+                        args.push(extra_arg.clone());
                     }
                 }
 
                 // executable specifies only the name of which terminal we want to use
-                if let Some(exe_name) = cfg.launcher.as_ref().and_then(|cfg| cfg.executable.clone())
+                if let Some(exe_name) = &cfg.executable
                     && let Some((name, class_arg, run_arg)) = DEFAULT_TERMINALS
                         .iter()
                         .find(|(name, _, _)| *name == exe_name)
@@ -271,10 +227,8 @@ fn create_launcher(cfg: &PluginConfig, nvim: &String) -> Result<Launcher> {
         None => {
             if let Ok(launcher) = create_launcher(
                 &PluginConfig {
-                    launcher: cfg.launcher.as_ref().map(|launcher| LauncherConfig {
-                        launcher_type: Some(LauncherType::Neovide),
-                        ..launcher.clone()
-                    }),
+                    launcher_type: Some(LauncherType::Neovide),
+                    ..cfg.clone()
                 },
                 nvim,
             ) {
@@ -283,10 +237,8 @@ fn create_launcher(cfg: &PluginConfig, nvim: &String) -> Result<Launcher> {
 
             if let Ok(launcher) = create_launcher(
                 &PluginConfig {
-                    launcher: cfg.launcher.as_ref().map(|launcher| LauncherConfig {
-                        launcher_type: Some(LauncherType::Terminal),
-                        ..launcher.clone()
-                    }),
+                    launcher_type: Some(LauncherType::Terminal),
+                    ..cfg.clone()
                 },
                 nvim,
             ) {
@@ -395,7 +347,7 @@ fn run_netsock(launcher: Launcher, nvim: &str, root_dir: &Path, remote_cmd: &str
 }
 
 pub fn run(
-    config: LaunchConfig,
+    plugin_config: PluginConfig,
     root_dir: PathBuf,
     file: &Path,
     line: Option<usize>,
@@ -405,7 +357,7 @@ pub fn run(
         .context("could not convert nvim path to string")?
         .to_string();
 
-    let launcher = create_launcher(&config.plugin_config, &nvim)?;
+    let launcher = create_launcher(&plugin_config, &nvim)?;
 
     let launcher = if cfg!(target_os = "linux") {
         launcher.apply_var(
@@ -435,7 +387,7 @@ pub fn run(
 
     let launcher = launcher.apply_var(VAR_REMOTE_CMD, &remote_cmd.clone());
 
-    match config.plugin_config.launcher.and_then(|l| l.socket_type) {
+    match plugin_config.socket_type {
         Some(SocketType::Fsock) => run_fsock(launcher, &nvim, &root_dir, &remote_cmd)?,
         Some(SocketType::Netsock) => run_netsock(launcher, &nvim, &root_dir, &remote_cmd)?,
         None => {
