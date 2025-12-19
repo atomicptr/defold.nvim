@@ -11,6 +11,7 @@ local root_markers = { "game.project" }
 ---@field socket_type "fsock"|"netsock"|nil Run Neovims RPC protocol over file socket or network. Nil means it will be picked automatic (fsock on Unix, network on Windows)
 ---@field extra_arguments table<string>|nil Extra arguments passed to the `executable` (or neovide)
 ---@field terminal TerminalLauncherSettings|nil Settings for running via terminal
+---@field debug boolean|nil Enable debug settings for the bridge cli
 
 ---@class TerminalLauncherSettings
 ---@field class_argument string|nil Argument to define the class name, usually something like "--class="
@@ -35,6 +36,7 @@ local root_markers = { "game.project" }
 ---@field babashka BabashkaSettings Settings for the integrated Babashka interpreter
 ---@field keymaps table<string, Keymap>|nil Settings for key -> action mappings
 ---@field force_plugin_enabled boolean Force the plugin to be always enabled (even if we can't find the game.project file)
+---@field debug boolean Enable debug settings for the plugin
 
 ---@type DefoldNvimConfig
 local default_config = {
@@ -69,6 +71,7 @@ local default_config = {
     },
 
     force_plugin_enabled = false,
+    debug = false,
 }
 
 local M = {}
@@ -109,10 +112,16 @@ function M.setup(opts)
 
     -- TODO: check if sidecar is available, if not download it (which shouldnt be necessary with some pkg managers)
 
+    if M.config.debug then
+        M.config.launcher.debug = true
+
+        local sidecar = require "defold.sidecar"
+        sidecar.set_log_level "debug"
+    end
+
     -- add setup defold command
     vim.api.nvim_create_user_command("SetupDefold", function()
         local sidecar = require "defold.sidecar"
-
         local ok, err = pcall(sidecar.set_default_editor, M.plugin_root(), M.config.launcher)
         if not ok then
             log.error(string.format("Could not set default editor because: %s", err))

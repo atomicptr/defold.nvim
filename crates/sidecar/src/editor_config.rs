@@ -39,11 +39,18 @@ pub struct LauncherSettings {
     pub socket_type: Option<SocketType>,
     pub extra_arguments: Option<Vec<String>>,
     pub terminal: Option<TerminalLauncherSettings>,
+    pub debug: Option<bool>,
 }
 
 impl LauncherSettings {
     pub fn bridge_cli_args(&self) -> Vec<String> {
         let mut args = Vec::new();
+
+        if let Some(debug) = self.debug
+            && debug
+        {
+            args.push("--debug".to_string());
+        }
 
         args.push("--launcher-type".to_string());
         args.push(match self.launcher_type {

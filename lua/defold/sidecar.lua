@@ -52,7 +52,7 @@ package.cpath = package.cpath
 
 ---@class Sidecar
 ---@field version string
----@field sha3 function(input: string): string
+---@field set_log_level function(level: "debug"|"info"|"error")
 ---@field read_game_project function(path: string): GameProject
 ---@field find_editor_port function(): integer
 ---@field is_editor_port function(port: integer): boolean

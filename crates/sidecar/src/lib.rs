@@ -9,29 +9,42 @@ use std::{
     path::absolute,
     sync::OnceLock,
 };
-use tracing::Level;
+use tracing::level_filters::LevelFilter;
+use tracing_subscriber::layer::SubscriberExt;
+use tracing_subscriber::reload;
+use tracing_subscriber::util::SubscriberInitExt;
 
 mod editor;
 mod editor_config;
 
 static LOG_INIT: OnceLock<()> = OnceLock::new();
+static LOG_RELOAD_HANDLE: OnceLock<reload::Handle<LevelFilter, tracing_subscriber::Registry>> =
+    OnceLock::new();
 
 #[mlua::lua_module]
 fn defold_nvim_sidecar(lua: &Lua) -> LuaResult<LuaTable> {
     LOG_INIT.get_or_init(|| {
-        let logs = dirs::cache_dir()
+        let log_dir = dirs::cache_dir()
             .expect("could not get cache dir")
             .join("defold.nvim")
             .join("logs");
 
-        fs::create_dir_all(&logs).expect("could not create logs dir");
+        fs::create_dir_all(&log_dir).expect("could not create logs dir");
 
-        tracing_subscriber::fmt()
+        let (filter, handle) = reload::Layer::new(LevelFilter::INFO);
+        LOG_RELOAD_HANDLE
+            .set(handle)
+            .expect("Logger handle already initialized");
+
+        let file_layer = tracing_subscriber::fmt::layer()
             .with_ansi(false)
             .with_file(true)
             .with_line_number(true)
-            .with_max_level(Level::DEBUG)
-            .with_writer(tracing_appender::rolling::never(logs, "sidecar.log"))
+            .with_writer(tracing_appender::rolling::never(log_dir, "sidecar.log"));
+
+        tracing_subscriber::registry()
+            .with(filter)
+            .with(file_layer)
             .init();
     });
 
@@ -48,6 +61,7 @@ fn register_exports(lua: &Lua) -> LuaResult<LuaTable> {
     let exports = lua.create_table()?;
 
     exports.set("version", lua.create_string(env!("CARGO_PKG_VERSION"))?)?;
+    exports.set("set_log_level", lua.create_function(set_log_level)?)?;
     exports.set("read_game_project", lua.create_function(read_game_project)?)?;
     exports.set("find_editor_port", lua.create_function(find_editor_port)?)?;
     exports.set("is_editor_port", lua.create_function(is_editor_port)?)?;
@@ -62,6 +76,25 @@ fn register_exports(lua: &Lua) -> LuaResult<LuaTable> {
     exports.set("mobdap_install", lua.create_function(mobdap_install)?)?;
 
     Ok(exports)
+}
+
+fn set_log_level(_lua: &Lua, level: String) -> LuaResult<()> {
+    let new_filter = match level.to_lowercase().as_str() {
+        "debug" => LevelFilter::DEBUG,
+        "info" => LevelFilter::INFO,
+        "error" => LevelFilter::ERROR,
+        _ => LevelFilter::INFO,
+    };
+
+    let handle = LOG_RELOAD_HANDLE
+        .get()
+        .context("could not get log handle")?;
+
+    handle
+        .modify(|f| *f = new_filter)
+        .map_err(anyhow::Error::from)?;
+
+    Ok(())
 }
 
 fn read_game_project(lua: &Lua, path: String) -> LuaResult<Value> {

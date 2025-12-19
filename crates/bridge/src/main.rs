@@ -19,6 +19,9 @@ mod utils;
 #[derive(Parser, Debug)]
 // #[command(version)]
 struct Args {
+    #[arg(long = "debug")]
+    debug: bool,
+
     #[command(subcommand)]
     cmd: Commands,
 }
@@ -71,6 +74,8 @@ enum Commands {
 }
 
 fn main() -> Result<()> {
+    let args = Args::parse();
+
     let logs = dirs::cache_dir()
         .context("could not get cache dir")?
         .join("defold.nvim")
@@ -86,15 +91,16 @@ fn main() -> Result<()> {
     tracing_subscriber::fmt()
         .with_file(true)
         .with_line_number(true)
-        .with_max_level(Level::DEBUG)
+        .with_max_level(if args.debug {
+            Level::DEBUG
+        } else {
+            Level::INFO
+        })
         .with_writer(writer)
         .init();
 
     tracing::info!("Starting defold.nvim bridge",);
     tracing::debug!("CLI: {}", env::args().collect::<Vec<String>>().join(" "));
-
-    let args = Args::parse();
-
     tracing::debug!("Clap: {args:?}");
 
     match args.cmd {
