@@ -1,6 +1,6 @@
 use anyhow::Context;
-use defold_nvim_core::mobdap;
 use defold_nvim_core::{focus, game_project::GameProject};
+use defold_nvim_core::{mobdap, project};
 use mlua::Value;
 use mlua::prelude::*;
 use std::path::PathBuf;
@@ -74,14 +74,18 @@ fn register_exports(lua: &Lua) -> LuaResult<LuaTable> {
     exports.set("focus_neovim", lua.create_function(focus_neovim)?)?;
     exports.set("focus_game", lua.create_function(focus_game)?)?;
     exports.set("mobdap_install", lua.create_function(mobdap_install)?)?;
+    exports.set(
+        "install_dependencies",
+        lua.create_function(install_dependencies)?,
+    )?;
 
     Ok(exports)
 }
 
+#[allow(clippy::needless_pass_by_value)]
 fn set_log_level(_lua: &Lua, level: String) -> LuaResult<()> {
     let new_filter = match level.to_lowercase().as_str() {
         "debug" => LevelFilter::DEBUG,
-        "info" => LevelFilter::INFO,
         "error" => LevelFilter::ERROR,
         _ => LevelFilter::INFO,
     };
@@ -153,4 +157,12 @@ fn mobdap_install(_lua: &Lua, _: ()) -> LuaResult<String> {
         .to_str()
         .context("could not convert path to string")?
         .to_string())
+}
+
+fn install_dependencies(
+    _lua: &Lua,
+    (game_root, force_redownload): (String, Option<bool>),
+) -> LuaResult<()> {
+    project::install_dependencies(&absolute(game_root)?, force_redownload.unwrap_or_default())?;
+    Ok(())
 }

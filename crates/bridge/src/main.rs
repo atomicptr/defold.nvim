@@ -4,7 +4,7 @@ use anyhow::{Context, Result};
 use clap::{Parser, Subcommand, command};
 use defold_nvim_core::{
     focus::{focus_game, focus_neovim},
-    mobdap, neovide,
+    mobdap, neovide, project,
 };
 use tracing::Level;
 use tracing_appender::rolling::never;
@@ -71,6 +71,14 @@ enum Commands {
     DownloadNeovide,
     /// Downloads Mobdap Debugger
     DownloadMobdap,
+    /// Install dependencies
+    InstallDependencies {
+        #[clap(long = "force-redownload")]
+        force_redownload: bool,
+
+        #[clap(value_name = "GAME_ROOT_DIR", index = 1)]
+        game_root_dir: String,
+    },
 }
 
 fn main() -> Result<()> {
@@ -136,6 +144,13 @@ fn main() -> Result<()> {
         Commands::DownloadMobdap => {
             let path = mobdap::update_or_install()?;
             tracing::info!("Installed mobdap at {path:?}");
+        }
+        Commands::InstallDependencies {
+            force_redownload,
+            game_root_dir,
+        } => {
+            project::install_dependencies(&absolute(game_root_dir)?, force_redownload)?;
+            tracing::info!("Installed dependencies");
         }
     }
 

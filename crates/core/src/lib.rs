@@ -1,7 +1,9 @@
 pub mod cache;
+pub mod defold_annotations;
 pub mod focus;
 pub mod game_project;
 pub mod github;
 pub mod mobdap;
 pub mod neovide;
+pub mod project;
 pub mod utils;
