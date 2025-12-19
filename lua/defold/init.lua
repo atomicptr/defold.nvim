@@ -74,9 +74,6 @@ M.loaded = false
 ---@type DefoldNvimConfig
 M.config = default_config
 
----@type integer|nil
-M.prev_editor_port = nil
-
 ---Returns true if we are in a defold project
 ---@return boolean
 function M.is_defold_project()
@@ -190,21 +187,16 @@ end
 function M.editor_port()
     local sidecar = require "defold.sidecar"
 
-    if M.prev_editor_port and sidecar.is_editor_port(M.prev_editor_port) then
-        return M.prev_editor_port
-    end
-
     local ok, res = pcall(sidecar.find_editor_port)
 
     if ok then
-        ---@cast res integer
-        M.prev_editor_port = res
-    else
-        local log = require "defold.service.logger"
-        log.error(string.format("Could not find editor port, because: %s", res))
+        return res
     end
 
-    return M.prev_editor_port
+    local log = require "defold.service.logger"
+    log.error(string.format("Could not find editor port, because: %s", res))
+
+    return -1
 end
 
 function M.load_plugin()

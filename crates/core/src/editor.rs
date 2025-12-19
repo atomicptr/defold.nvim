@@ -17,6 +17,7 @@ pub fn find_port() -> Option<u16> {
 
     if let Some(port) = cache::get(CACHE)
         && let Some(port) = port.parse::<u16>().ok()
+        && is_editor_port(port)
     {
         return Some(port);
     }
