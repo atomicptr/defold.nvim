@@ -47,12 +47,6 @@ impl LauncherSettings {
     pub fn bridge_cli_args(&self) -> Vec<String> {
         let mut args = Vec::new();
 
-        if let Some(debug) = self.debug
-            && debug
-        {
-            args.push("--debug".to_string());
-        }
-
         args.push("--launcher-type".to_string());
         args.push(match self.launcher_type {
             LauncherType::Neovide => "neovide".to_string(),
@@ -158,7 +152,17 @@ fn create_runner_script(
                     .to_str()
                     .context("could not convert bridge path")?,
             )
-            .replace("{LAUNCH_ARGS}", &launch_args),
+            .replace("{LAUNCH_ARGS}", &launch_args)
+            .replace(
+                "{DEBUG_FLAG}",
+                if let Some(debug) = launcher_settings.debug
+                    && debug
+                {
+                    "--debug"
+                } else {
+                    ""
+                },
+            ),
     )?;
 
     #[cfg(not(target_os = "windows"))]
