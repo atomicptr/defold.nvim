@@ -190,12 +190,11 @@ end
 
 ---@return integer
 function M.editor_port()
-    if M.prev_editor_port then
-        -- TODO: validate port
+    local sidecar = require "defold.sidecar"
+
+    if M.prev_editor_port and sidecar.is_editor_port(M.prev_editor_port) then
         return M.prev_editor_port
     end
-
-    local sidecar = require "defold.sidecar"
 
     local ok, res = pcall(sidecar.find_editor_port)
 

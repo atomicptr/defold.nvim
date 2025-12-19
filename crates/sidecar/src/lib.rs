@@ -50,6 +50,7 @@ fn register_exports(lua: &Lua) -> LuaResult<LuaTable> {
     exports.set("version", lua.create_string(env!("CARGO_PKG_VERSION"))?)?;
     exports.set("read_game_project", lua.create_function(read_game_project)?)?;
     exports.set("find_editor_port", lua.create_function(find_editor_port)?)?;
+    exports.set("is_editor_port", lua.create_function(is_editor_port)?)?;
     exports.set("list_commands", lua.create_function(list_commands)?)?;
     exports.set("send_command", lua.create_function(send_command)?)?;
     exports.set(
@@ -72,6 +73,11 @@ fn read_game_project(lua: &Lua, path: String) -> LuaResult<Value> {
 fn find_editor_port(_lua: &Lua, _: ()) -> LuaResult<u16> {
     let port = editor::find_port().context("could not find port")?;
     Ok(port)
+}
+
+#[allow(clippy::unnecessary_wraps)]
+fn is_editor_port(_lua: &Lua, port: u16) -> LuaResult<bool> {
+    Ok(editor::is_editor_port(port))
 }
 
 fn list_commands(lua: &Lua, port: Option<u16>) -> LuaResult<LuaTable> {

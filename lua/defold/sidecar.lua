@@ -55,6 +55,7 @@ package.cpath = package.cpath
 ---@field sha3 function(input: string): string
 ---@field read_game_project function(path: string): GameProject
 ---@field find_editor_port function(): integer
+---@field is_editor_port function(port: integer): boolean
 ---@field list_commands function(port: integer|nil): table<string, string>
 ---@field send_command function(port: integer|nil, cmd: string)
 ---@field set_default_editor function(plugin_root: string, launcher_config: LauncherSettings)
