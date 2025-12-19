@@ -44,7 +44,28 @@ pub fn fetch_release(owner: &str, repo: &str) -> Result<Release> {
     Ok(release)
 }
 
-pub fn download_release(owner: &str, repo: &str, name: &str) -> Result<(PathBuf, Release)> {
+pub fn clear_downloads(owner: &str, repo: &str) -> Result<()> {
+    let temp = temp_dir()
+        .join("defold.nvim")
+        .join("download")
+        .join(owner)
+        .join(repo);
+
+    tracing::debug!("Deleting {}...", &temp.display());
+
+    fs::remove_dir_all(temp)?;
+
+    Ok(())
+}
+
+pub fn download_release_matching<F>(
+    owner: &str,
+    repo: &str,
+    matching: F,
+) -> Result<(PathBuf, Release)>
+where
+    F: Fn(&Asset) -> bool,
+{
     let temp = temp_dir()
         .join("defold.nvim")
         .join("download")
@@ -54,11 +75,15 @@ pub fn download_release(owner: &str, repo: &str, name: &str) -> Result<(PathBuf,
 
     let release = fetch_release(owner, repo)?;
 
-    let Some(asset) = release.assets.iter().find(|asset| asset.name == name) else {
-        bail!("Could not find asset {name} at {owner}/{repo}");
+    let Some(asset) = release.assets.iter().find(|asset| matching(asset)) else {
+        bail!("Could not find asset for {owner}/{repo}");
     };
 
     let download_file = temp.join(&asset.name);
+
+    if download_file.exists() {
+        return Ok((download_file, release));
+    }
 
     let mut res = reqwest::blocking::get(&asset.browser_download_url)?;
     res.error_for_status_ref()?;
@@ -67,4 +92,9 @@ pub fn download_release(owner: &str, repo: &str, name: &str) -> Result<(PathBuf,
     io::copy(&mut res, &mut file)?;
 
     Ok((download_file, release))
+}
+
+pub fn download_release(owner: &str, repo: &str, name: &str) -> Result<(PathBuf, Release)> {
+    download_release_matching(owner, repo, |asset| asset.name == name)
+        .map_err(|_| anyhow::anyhow!("Could not find asset {name} for {owner}/{repo}"))
 }
