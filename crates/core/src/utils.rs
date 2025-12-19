@@ -1,5 +1,14 @@
+use std::{
+    env::temp_dir,
+    fs::{self, File},
+    io,
+    path::{Path, PathBuf},
+};
+
 use anyhow::{Context, Result};
 use sha3::{Digest, Sha3_256};
+use url::Url;
+use walkdir::WalkDir;
 
 pub fn sha3(str: &str) -> String {
     let mut hasher = Sha3_256::new();
@@ -18,4 +27,59 @@ pub fn project_id(root_dir: &str) -> Result<String> {
 
 pub fn classname(root_dir: &str) -> Result<String> {
     Ok(format!("com.defold.nvim.{}", project_id(root_dir)?))
+}
+
+pub fn download(url: &str) -> Result<PathBuf> {
+    let download_dir = temp_dir()
+        .join("defold.nvim")
+        .join("download")
+        .join(sha3(url).get(..8).context("could not make hash")?);
+    fs::create_dir_all(&download_dir)?;
+
+    let parsed_url = Url::parse(url)?;
+
+    let filename = parsed_url
+        .path_segments()
+        .and_then(std::iter::Iterator::last)
+        .unwrap_or("file");
+
+    let download_file = download_dir.join(filename);
+
+    download_to(url, &download_file)?;
+
+    Ok(download_file)
+}
+
+pub fn clear_download(url: &str) -> Result<()> {
+    let download_root_dir = temp_dir().join("defold.nvim").join("download");
+    let download_dir = download_root_dir.join(sha3(url).get(..8).context("could not make hash")?);
+    fs::remove_dir_all(download_dir)?;
+    delete_empty_dirs_from(&download_root_dir)?;
+    Ok(())
+}
+
+pub fn download_to(url: &str, path: &Path) -> Result<()> {
+    tracing::debug!("Downloading {url} to {}...", path.display());
+
+    let mut res = reqwest::blocking::get(url)?;
+    res.error_for_status_ref()?;
+
+    let mut file = File::create(path)?;
+    io::copy(&mut res, &mut file)?;
+    Ok(())
+}
+
+pub fn delete_empty_dirs_from(root_dir: &Path) -> Result<()> {
+    for entry in WalkDir::new(root_dir)
+        .contents_first(true)
+        .into_iter()
+        .filter_map(Result::ok)
+    {
+        let path = entry.path();
+
+        if path.is_dir() && fs::read_dir(path)?.next().is_none() {
+            fs::remove_dir(path)?;
+        }
+    }
+    Ok(())
 }

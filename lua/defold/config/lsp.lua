@@ -1,18 +1,12 @@
 local project = require "defold.project"
 
-local libs = { project.defold_api_path() }
-
-for _, lib in ipairs(project.dependency_api_paths()) do
-    table.insert(libs, lib)
-end
-
 return {
     Lua = {
         runtime = {
             version = "LuaJIT",
         },
         workspace = {
-            library = libs,
+            library = project.dependency_api_paths(),
         },
         diagnostics = {
             globals = {

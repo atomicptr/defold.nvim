@@ -22,9 +22,6 @@ local root_markers = { "game.project" }
 ---@field custom_executable string|nil Use a custom executable for the debugger
 ---@field custom_arguments table<string>|nil Custom arguments for the debugger
 
----@class BabashkaSettings Settings for the integrated Babashka interpreter
----@field custom_executable string|nil Use a custom executable for babashka
-
 ---@class Keymap
 ---@field mode string|string[]
 ---@field mapping string
@@ -33,7 +30,6 @@ local root_markers = { "game.project" }
 ---@field defold DefoldEditorSettings Settings for the Defold Game Engine
 ---@field launcher LauncherSettings Settings for the Neovim launcher run by Defold
 ---@field debugger DebuggerSettings Settings for the integrated debugger
----@field babashka BabashkaSettings Settings for the integrated Babashka interpreter
 ---@field keymaps table<string, Keymap>|nil Settings for key -> action mappings
 ---@field force_plugin_enabled boolean Force the plugin to be always enabled (even if we can't find the game.project file)
 ---@field debug boolean Enable debug settings for the plugin
@@ -57,10 +53,6 @@ local default_config = {
         enable = true,
         custom_executable = nil,
         custom_arguments = nil,
-    },
-
-    babashka = {
-        custom_executable = nil,
     },
 
     keymaps = {
@@ -105,7 +97,6 @@ end
 
 ---@param opts DefoldNvimConfig|nil
 function M.setup(opts)
-    local babashka = require "defold.service.babashka"
     local log = require "defold.service.logger"
 
     M.config = vim.tbl_deep_extend("force", default_config, opts or {})
@@ -171,8 +162,6 @@ function M.setup(opts)
     })
 
     vim.defer_fn(function()
-        babashka.setup(M.config.babashka.custom_executable)
-
         if M.config.defold.set_default_editor then
             local sidecar = require "defold.sidecar"
             local ok, err = pcall(sidecar.set_default_editor, M.plugin_root(), M.config.launcher)
@@ -229,7 +218,6 @@ function M.load_plugin()
     vim.filetype.add(require("defold.config.filetype").full)
 
     local sidecar = require "defold.sidecar"
-    local babashka = require "defold.service.babashka"
     local debugger = require "defold.service.debugger"
     local editor = require "defold.editor"
     local log = require "defold.service.logger"
@@ -237,7 +225,6 @@ function M.load_plugin()
 
     log.debug "============= defold.nvim: Loaded plugin"
     log.debug("Sidecar Version:" .. sidecar.version)
-    log.debug("Babashka Path: " .. babashka.bb_path())
     if debugger.mobdap_path() then
         log.debug("Mobdap Path: " .. debugger.mobdap_path())
     end

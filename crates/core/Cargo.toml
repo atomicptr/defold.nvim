@@ -18,3 +18,5 @@ sha3 = "0.10.8"
 strum = { version = "0.27.2", features = ["derive"] }
 tracing = "0.1.43"
 which = "8.0.0"
+url = "2.5.7"
+walkdir = "2.5.0"

@@ -71,11 +71,16 @@ enum Commands {
     DownloadNeovide,
     /// Downloads Mobdap Debugger
     DownloadMobdap,
-    /// Install dependencies
+    /// Install dependencies for game
     InstallDependencies {
         #[clap(long = "force-redownload")]
         force_redownload: bool,
 
+        #[clap(value_name = "GAME_ROOT_DIR", index = 1)]
+        game_root_dir: String,
+    },
+    /// List dependencies of game
+    ListDependencies {
         #[clap(value_name = "GAME_ROOT_DIR", index = 1)]
         game_root_dir: String,
     },
@@ -149,8 +154,17 @@ fn main() -> Result<()> {
             force_redownload,
             game_root_dir,
         } => {
-            project::install_dependencies(&absolute(game_root_dir)?, force_redownload)?;
-            tracing::info!("Installed dependencies");
+            let root_dir = absolute(&game_root_dir)?;
+
+            project::install_dependencies(&root_dir, force_redownload)?;
+            tracing::info!("Finished installing dependencies for {game_root_dir}",);
+        }
+        Commands::ListDependencies { game_root_dir } => {
+            let root_dir = absolute(&game_root_dir)?;
+
+            for dir in project::list_dependency_dirs(&root_dir)? {
+                tracing::info!("{}", dir.display());
+            }
         }
     }
 

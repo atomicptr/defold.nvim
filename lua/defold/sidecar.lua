@@ -63,6 +63,7 @@ package.cpath = package.cpath
 ---@field focus_game function(game_root: string)
 ---@field mobdap_install function(): string
 ---@field install_dependencies function(game_root: string, force_redownload: boolean|nil)
+---@field list_dependency_dirs function(game_root: string): string[]
 
 ---@type Sidecar
 local rust_plugin = require "defold_nvim_sidecar"

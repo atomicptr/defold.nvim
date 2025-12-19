@@ -1,6 +1,6 @@
 local M = {}
 
-local function game_project_file()
+local function game_project_root()
     local log = require "defold.service.logger"
 
     local root = vim.fs.root(0, { "game.project" })
@@ -10,39 +10,30 @@ local function game_project_file()
         return {}
     end
 
-    return '"' .. vim.fs.joinpath(root, "game.project") .. '"'
-end
-
----@return string
-function M.defold_api_path()
-    local os = require "defold.service.os"
-
-    local plugin_root = os.plugin_root()
-    return vim.fs.joinpath(plugin_root, "resources", "defold_api")
+    return root
 end
 
 function M.dependency_api_paths()
-    local babashka = require "defold.service.babashka"
+    local log = require "defold.service.logger"
+    local sidecar = require "defold.sidecar"
 
-    local res = babashka.run_task_json("list-dependency-dirs", { game_project_file() })
-    return res.dirs
+    local ok, res = pcall(sidecar.list_dependency_dirs, game_project_root())
+    if not ok then
+        log.error(string.format("Could not get dependency paths because: %s", res))
+        return {}
+    end
+
+    return res
 end
 
 ---@param force_redownload boolean
 function M.install_dependencies(force_redownload)
-    local babashka = require "defold.service.babashka"
     local log = require "defold.service.logger"
+    local sidecar = require "defold.sidecar"
 
-    local args = { game_project_file() }
-
-    if force_redownload then
-        table.insert(args, "force")
-    end
-
-    local res = babashka.run_task_json("install-dependencies", args)
-
-    if res.error then
-        log.error(string.format("Could not install dependencies, because: %s", res.error))
+    local ok, res = pcall(sidecar.install_dependencies, game_project_root(), force_redownload or false)
+    if not ok then
+        log.error(string.format("Could not install dependencies because: %s", res))
         return
     end
 end

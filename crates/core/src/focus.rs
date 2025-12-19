@@ -178,7 +178,7 @@ pub fn focus_game(root_dir: PathBuf) -> Result<()> {
         bail!("Could not find game.project file in {root_dir:?}: Not a valid Defold directory");
     }
 
-    let game_project = GameProject::load_from_path(root_dir.join("game.project"))?;
+    let game_project = GameProject::load_from_path(&root_dir.join("game.project"))?;
 
     if cfg!(target_os = "linux") {
         return switch(SwitcherType::Title(game_project.title));

@@ -1,14 +1,13 @@
 use std::{
     env::temp_dir,
-    fs::{self, File},
-    io,
+    fs::{self},
     path::PathBuf,
 };
 
 use anyhow::{Result, bail};
 use serde::{Deserialize, Serialize};
 
-use crate::cache;
+use crate::{cache, utils};
 
 const USER_AGENT: &str = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36";
 
@@ -85,11 +84,7 @@ where
         return Ok((download_file, release));
     }
 
-    let mut res = reqwest::blocking::get(&asset.browser_download_url)?;
-    res.error_for_status_ref()?;
-
-    let mut file = File::create(&download_file)?;
-    io::copy(&mut res, &mut file)?;
+    utils::download_to(&asset.browser_download_url, &download_file)?;
 
     Ok((download_file, release))
 }

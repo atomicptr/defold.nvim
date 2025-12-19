@@ -15,7 +15,6 @@ const REPOSITORY: &str = "defold-annotations";
 
 pub fn dir() -> Result<PathBuf> {
     let dir = project::deps_root()?.join("defold");
-    fs::create_dir_all(&dir)?;
     Ok(dir)
 }
 
@@ -87,7 +86,9 @@ pub fn install() -> Result<()> {
     tracing::info!("Updating Defold annotations...");
 
     let defold_dir = dir()?;
-    fs::remove_dir_all(&defold_dir)?;
+    if defold_dir.exists() {
+        fs::remove_dir_all(&defold_dir)?;
+    }
 
     let (download_path, release) = github::download_release_matching(OWNER, REPOSITORY, |asset| {
         asset.name.starts_with("defold_api_")

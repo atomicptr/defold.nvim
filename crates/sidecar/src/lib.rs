@@ -78,6 +78,10 @@ fn register_exports(lua: &Lua) -> LuaResult<LuaTable> {
         "install_dependencies",
         lua.create_function(install_dependencies)?,
     )?;
+    exports.set(
+        "list_dependency_dirs",
+        lua.create_function(list_dependency_dirs)?,
+    )?;
 
     Ok(exports)
 }
@@ -102,7 +106,7 @@ fn set_log_level(_lua: &Lua, level: String) -> LuaResult<()> {
 }
 
 fn read_game_project(lua: &Lua, path: String) -> LuaResult<Value> {
-    let game_project = GameProject::load_from_path(path.into())?;
+    let game_project = GameProject::load_from_path(&absolute(path)?)?;
     let val = lua.to_value(&game_project)?;
     Ok(val)
 }
@@ -165,4 +169,17 @@ fn install_dependencies(
 ) -> LuaResult<()> {
     project::install_dependencies(&absolute(game_root)?, force_redownload.unwrap_or_default())?;
     Ok(())
+}
+
+fn list_dependency_dirs(_lua: &Lua, game_root: String) -> LuaResult<Vec<String>> {
+    let deps = project::list_dependency_dirs(&absolute(game_root)?)?
+        .into_iter()
+        .map(|p| {
+            p.to_str()
+                .context("could not convert path to string")
+                .unwrap()
+                .to_string()
+        })
+        .collect();
+    Ok(deps)
 }

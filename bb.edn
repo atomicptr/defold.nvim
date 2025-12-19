@@ -1,7 +1,0 @@
-{:min-bb-version "1.12.0"
- :paths ["src"]
- :tasks {:requires ([defold.main :as defold])
-         setup                {:task (apply defold/run-wrapped :setup *command-line-args*)}
-         install-dependencies {:task (apply defold/run-wrapped :install-dependencies *command-line-args*)}
-         list-dependency-dirs {:task (apply defold/run-wrapped :list-dependency-dirs *command-line-args*)}
-         mobdap-path          {:task (apply defold/run-wrapped :mobdap-path *command-line-args*)}}}
