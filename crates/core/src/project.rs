@@ -1,11 +1,13 @@
 use std::{
     fs::{self, File},
+    io::Write,
     path::{Path, PathBuf},
 };
 
 use crate::{
     defold_annotations,
     game_project::GameProject,
+    script_api,
     utils::{self, sha3},
 };
 use anyhow::{Context, Result, bail};
@@ -170,8 +172,7 @@ fn install_dependency(url: &str, project_deps_dir: &Path) -> Result<()> {
             continue;
         }
 
-        // TODO: compile script api files
-
+        compile_script_api_files(&include_dir_path)?;
         copy_files(&include_dir_path, &include_dir_target, "lua")?;
     }
 
@@ -206,6 +207,32 @@ fn find_files_with_ext(root_dir: &Path, ext: &str) -> Vec<PathBuf> {
         .filter(|e| e.path().extension().and_then(|s| s.to_str()) == Some(ext))
         .map(|e| e.path().to_owned())
         .collect()
+}
+
+fn compile_script_api_files(from_dir: &Path) -> Result<()> {
+    let files = find_files_with_ext(from_dir, "script_api");
+
+    for file in &files {
+        let Some(stem) = file.file_stem() else {
+            continue;
+        };
+
+        let target_path = file.with_file_name(format!("{}.lua", stem.to_str().unwrap()));
+
+        tracing::debug!(
+            "Compiling {} to {}...",
+            file.display(),
+            target_path.display()
+        );
+
+        let input = fs::read_to_string(file)?;
+        let output = script_api::compile(&input)?;
+
+        let mut file = File::create(target_path)?;
+        file.write_all(output.as_bytes())?;
+    }
+
+    Ok(())
 }
 
 fn copy_files(from_dir: &Path, to_dir: &Path, ext: &str) -> Result<()> {

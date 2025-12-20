@@ -2,7 +2,7 @@ use anyhow::{Result, bail};
 use serde::Deserialize;
 use std::fmt::Write;
 
-const LINE_WRAP: usize = 100;
+const LINE_WRAP: usize = 120;
 
 #[derive(Debug, Deserialize, Clone)]
 #[serde(untagged)]
