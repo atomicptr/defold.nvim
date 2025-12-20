@@ -77,20 +77,19 @@ local function find_rust_lib_rootdir()
     local plugin_root = os.plugin_root()
     local lib_dir = vim.fs.joinpath(os.data_dir(), "lib")
 
-    -- if
-    --     -- check local debug build first
-    --     os.file_exists(vim.fs.joinpath(plugin_root, "target", "debug", file_name))
-    --     or os.file_exists(vim.fs.joinpath(plugin_root, "target", "debug", file_name_alt))
-    -- then
-    --     return vim.fs.joinpath(plugin_root, "target", "debug")
-    -- elseif
-    --     -- check local release build second
-    --     os.file_exists(vim.fs.joinpath(plugin_root, "release", "debug", file_name))
-    --     or os.file_exists(vim.fs.joinpath(plugin_root, "release", "debug", file_name_alt))
-    -- then
-    --     return vim.fs.joinpath(plugin_root, "target", "release")
-    -- elseif
     if
+        -- check local debug build first
+        os.file_exists(vim.fs.joinpath(plugin_root, "target", "debug", file_name))
+        or os.file_exists(vim.fs.joinpath(plugin_root, "target", "debug", file_name_alt))
+    then
+        return vim.fs.joinpath(plugin_root, "target", "debug")
+    elseif
+        -- check local release build second
+        os.file_exists(vim.fs.joinpath(plugin_root, "release", "debug", file_name))
+        or os.file_exists(vim.fs.joinpath(plugin_root, "release", "debug", file_name_alt))
+    then
+        return vim.fs.joinpath(plugin_root, "target", "release")
+    elseif
         -- and the actual properly installed path last
         os.file_exists(vim.fs.joinpath(lib_dir, file_name))
         or os.file_exists(vim.fs.joinpath(lib_dir, file_name_alt))
