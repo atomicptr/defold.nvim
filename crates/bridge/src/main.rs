@@ -4,7 +4,7 @@ use std::{
 };
 
 use anyhow::{Context, Result};
-use clap::{Parser, Subcommand, command};
+use clap::{Parser, Subcommand};
 use defold_nvim_core::{
     editor,
     focus::{focus_game, focus_neovim},
