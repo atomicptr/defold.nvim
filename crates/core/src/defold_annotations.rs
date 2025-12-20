@@ -19,7 +19,7 @@ pub fn dir() -> Result<PathBuf> {
 }
 
 fn version_path() -> Result<PathBuf> {
-    let dir = dirs::state_dir()
+    let dir = dirs::data_dir()
         .context("could not get state dir")?
         .join("defold.nvim")
         .join("meta");

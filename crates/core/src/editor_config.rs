@@ -133,7 +133,7 @@ fn create_runner_script(
     plugin_root: &Path,
     launcher_settings: &LauncherSettings,
 ) -> Result<PathBuf> {
-    let dir = dirs::state_dir()
+    let dir = dirs::data_dir()
         .context("could not get data dir")?
         .join("defold.nvim")
         .join("bin");

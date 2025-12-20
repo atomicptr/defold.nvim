@@ -21,7 +21,7 @@ fn ident(string: &str) -> Result<String> {
 }
 
 pub fn deps_root() -> Result<PathBuf> {
-    let dir = dirs::state_dir()
+    let dir = dirs::data_dir()
         .context("could not get state dir")?
         .join("defold.nvim")
         .join("deps");

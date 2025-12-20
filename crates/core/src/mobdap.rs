@@ -27,7 +27,7 @@ const NAME: &str = "mobdap-macos-arm64.tar.gz";
 const NAME: &str = "mobdap-windows-amd64.zip";
 
 fn path() -> Result<PathBuf> {
-    let dir = dirs::state_dir()
+    let dir = dirs::data_dir()
         .context("could not get state dir")?
         .join("defold.nvim")
         .join("bin");
@@ -44,7 +44,7 @@ fn path() -> Result<PathBuf> {
 }
 
 fn version_path() -> Result<PathBuf> {
-    let dir = dirs::state_dir()
+    let dir = dirs::data_dir()
         .context("could not get state dir")?
         .join("defold.nvim")
         .join("meta");

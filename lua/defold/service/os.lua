@@ -29,10 +29,20 @@ function M.name()
     return os_name
 end
 
+---Test if the OS is Linux
+---@return boolean
+function M.is_linux()
+    return M.name() == "linux"
+end
+
+---Test if the OS is Windows
+---@return boolean
 function M.is_windows()
     return M.name() == "windows"
 end
 
+---Test if the OS is MacOS
+---@return boolean
 function M.is_macos()
     return M.name() == "macos"
 end
@@ -121,6 +131,38 @@ function M.plugin_root()
     local res = vim.fs.dirname(vim.fs.dirname(vim.fs.dirname(vim.fs.dirname(string.sub(script_path, 2)))))
     log.debug("Plugin root: " .. res)
     return res
+end
+
+---Returns `Data` directory
+---@return string
+function M.data_dir()
+    if M.is_linux() then
+        if vim.env.XDG_DATA_HOME then
+            local dir = vim.fs.joinpath(vim.env.XDG_DATA_HOME, "defold.nvim")
+            vim.fn.mkdir(dir, "p")
+            return dir
+        end
+    end
+
+    local dir = vim.fs.joinpath(vim.fn.stdpath "data", "defold.nvim")
+    vim.fn.mkdir(dir, "p")
+    return dir
+end
+
+---Returns `Cache` directory
+---@return string
+function M.cache_dir()
+    if M.is_linux() then
+        if vim.env.XDG_CACHE_HOME then
+            local dir = vim.fs.joinpath(vim.env.XDG_CACHE_HOME, "defold.nvim")
+            vim.fn.mkdir(dir, "p")
+            return dir
+        end
+    end
+
+    local dir = vim.fs.joinpath(vim.fn.stdpath "cache", "defold.nvim")
+    vim.fn.mkdir(dir, "p")
+    return dir
 end
 
 return M
