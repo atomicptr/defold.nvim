@@ -1,5 +1,8 @@
 local M = {}
 
+local user_agent =
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36"
+
 ---@param command string
 ---@return string
 function M.exec(command)
@@ -68,21 +71,53 @@ function M.download(url, to_path)
     log.debug(string.format("Downloading '%s' to '%s'", url, to_path))
 
     if M.is_windows() then
-        M.exec(string.format('powershell -Command "Invoke-WebRequest -Uri %s -OutFile %s"', url, to_path))
+        M.exec(
+            string.format(
+                'powershell -Command "Invoke-WebRequest -Uri %s -UserAgent "%s" -OutFile %s"',
+                url,
+                user_agent,
+                to_path
+            )
+        )
         return
     end
 
     if M.command_exists "curl" then
-        M.exec(string.format("curl -L -s -o '%s' %s", to_path, url))
+        M.exec(string.format("curl -L -s --user-agent '%s' -o '%s' %s", user_agent, to_path, url))
         return
     end
 
     if M.command_exists "wget" then
-        M.exec(string.format("wget -q -O '%s' %s", to_path, url))
+        M.exec(string.format("wget -q --user-agent '%s' -O '%s' %s", user_agent, to_path, url))
         return
     end
 
     log.error "Could not find a command to download something like 'curl', 'wget' or 'powershell'"
+end
+
+---Fetch json via url and return it as a lua table. Returns nil on error
+---@param url string
+---@return table|nil
+function M.fetch_json(url)
+    local log = require "defold.service.logger"
+
+    log.debug(string.format("Fetching JSON from '%s'", url))
+
+    local tmp_path = os.tmpname()
+    M.download(url, tmp_path)
+
+    local file = io.open(tmp_path, "r")
+    if not file then
+        log.error "Failed to open downloaded json file"
+        os.remove(tmp_path)
+        return nil
+    end
+
+    local data = file:read "*a"
+    file:close()
+    os.remove(tmp_path)
+
+    return vim.json.decode(data)
 end
 
 ---Move file from location a to b
@@ -163,6 +198,22 @@ function M.cache_dir()
     local dir = vim.fs.joinpath(vim.fn.stdpath "cache", "defold.nvim")
     vim.fn.mkdir(dir, "p")
     return dir
+end
+
+---Writes (and overwrites if present) `content` to `path`
+---@param path string
+---@param content string
+function M.write(path, content)
+    local file = io.open(path, "w")
+
+    if not file then
+        local log = require "defold.service.logger"
+        log.error(string.format("Could not open file for writing: %s", path))
+        return
+    end
+
+    file:write(content)
+    file:close()
 end
 
 return M

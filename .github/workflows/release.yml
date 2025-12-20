@@ -29,7 +29,7 @@ jobs:
               sidecar: target/release/libdefold_nvim_sidecar.dylib
               bridge: target/release/defold-nvim-bridge
             dist:
-              sidecar: target/release/macos-x86-libdefold_nvim_sidecar.so
+              sidecar: target/release/macos-x86-libdefold_nvim_sidecar.dylib
               bridge: target/release/macos-x86-defold-nvim-bridge
           - name: MacOS ARM
             os: macos-latest
@@ -37,7 +37,7 @@ jobs:
               sidecar: target/release/libdefold_nvim_sidecar.dylib
               bridge: target/release/defold-nvim-bridge
             dist:
-              sidecar: target/release/macos-arm-libdefold_nvim_sidecar.so
+              sidecar: target/release/macos-arm-libdefold_nvim_sidecar.dylib
               bridge: target/release/macos-arm-defold-nvim-bridge
           - name: Windows x86
             os: windows-latest
@@ -45,7 +45,7 @@ jobs:
               sidecar: target/release/defold_nvim_sidecar.dll
               bridge: target/release/defold-nvim-bridge.exe
             dist:
-              sidecar: target/release/windows-x86-libdefold_nvim_sidecar.so
+              sidecar: target/release/windows-x86-defold_nvim_sidecar.dll
               bridge: target/release/windows-x86-defold-nvim-bridge
 
     steps:

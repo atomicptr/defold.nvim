@@ -10,7 +10,11 @@ version-compare = "0.2.1"
 flate2 = "1.1.5"
 zip = "7.0.0"
 dirs = "6.0.0"
-reqwest = { version = "0.12.26", features = ["blocking", "json"] }
+reqwest = { version = "0.12.26", default-features = false, features = [
+    "blocking",
+    "json",
+    "rustls-tls",
+] }
 rust-ini = "0.21.3"
 serde = { version = "1.0.228", features = ["derive"] }
 serde_json = "1.0.145"
