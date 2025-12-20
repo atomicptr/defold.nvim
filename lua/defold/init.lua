@@ -92,6 +92,20 @@ function M.plugin_root()
     return os.plugin_root()
 end
 
+local function update_lua_lsp_paths()
+    local clients = vim.lsp.get_clients { name = "lua_ls" }
+
+    local lsp_config = (require "defold.config.lsp")()
+
+    for _, client in ipairs(clients) do
+        client.settings = vim.tbl_deep_extend("force", client.settings or {}, lsp_config)
+
+        client:notify("workspace/didChangeConfiguration", {
+            settings = client.settings,
+        })
+    end
+end
+
 ---@param opts DefoldNvimConfig|nil
 function M.setup(opts)
     local log = require "defold.service.logger"
@@ -145,7 +159,7 @@ function M.setup(opts)
                     return
                 end
 
-                local lsp_config = require "defold.config.lsp"
+                local lsp_config = (require "defold.config.lsp")()
 
                 log.debug(string.format("For %s, loaded lsp config %s", root, vim.inspect(lsp_config)))
 
@@ -276,6 +290,8 @@ function M.load_plugin()
         editor.send_command(M.editor_port(), "fetch-libraries", true)
 
         project.install_dependencies(opt.bang)
+
+        update_lua_lsp_paths()
     end, { bang = true, nargs = 0, desc = "Fetch & create Defold project dependency annotations" })
 
     -- integrate the debugger into dap
