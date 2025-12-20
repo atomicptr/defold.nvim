@@ -12,11 +12,12 @@ jobs:
     name: Release ${{ matrix.config.name }}
     runs-on: ${{ matrix.config.os }}
     strategy:
+      fail-fast: false
       matrix:
         config:
           - name: Linux x86
             os: ubuntu-latest
-            src:
+            artifact:
               sidecar: target/release/libdefold_nvim_sidecar.so
               bridge: target/release/defold-nvim-bridge
             dist:
@@ -24,7 +25,7 @@ jobs:
               bridge: target/release/linux-x86-defold-nvim-bridge
           - name: MacOS x86
             os: macos-15-intel
-            src:
+            artifact:
               sidecar: target/release/libdefold_nvim_sidecar.dylib
               bridge: target/release/defold-nvim-bridge
             dist:
@@ -32,7 +33,7 @@ jobs:
               bridge: target/release/macos-x86-defold-nvim-bridge
           - name: MacOS ARM
             os: macos-latest
-            src:
+            artifact:
               sidecar: target/release/libdefold_nvim_sidecar.dylib
               bridge: target/release/defold-nvim-bridge
             dist:
@@ -40,7 +41,7 @@ jobs:
               bridge: target/release/macos-arm-defold-nvim-bridge
           - name: Windows x86
             os: windows-latest
-            src:
+            artifact:
               sidecar: target/release/defold_nvim_sidecar.dll
               bridge: target/release/defold-nvim-bridge.exe
             dist:
@@ -59,8 +60,9 @@ jobs:
       - name: prepare ${{ matrix.config.name }}
         run: |
           # rename builds to be unique
-          mv "${{ matrix.config.src.sidecar }}" "${{ matrix.config.dist.sidecar }}"
-          mv "${{ matrix.config.src.bridge }}" "${{ matrix.config.dist.bridge }}"
+          mv "${{ matrix.config.artifact.sidecar }}" "${{ matrix.config.dist.sidecar }}"
+          mv "${{ matrix.config.artifact.bridge }}" "${{ matrix.config.dist.bridge }}"
+
           # generate sha256 sum
           shasum -a 256 "${{ matrix.config.dist.sidecar }}" > "${{ matrix.config.dist.sidecar }}.sha256"
           shasum -a 256 "${{ matrix.config.dist.bridge }}" > "${{ matrix.config.dist.bridge }}.sha256"
