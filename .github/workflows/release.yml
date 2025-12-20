@@ -1,0 +1,75 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Release ${{ matrix.config.name }}
+    runs-on: ${{ matrix.config.os }}
+    strategy:
+      matrix:
+        config:
+          - name: Linux x86
+            os: ubuntu-latest
+            src:
+              sidecar: target/release/libdefold_nvim_sidecar.so
+              bridge: target/release/defold-nvim-bridge
+            dist:
+              sidecar: target/release/linux-x86-libdefold_nvim_sidecar.so
+              bridge: target/release/linux-x86-defold-nvim-bridge
+          - name: MacOS x86
+            os: macos-15-intel
+            src:
+              sidecar: target/release/libdefold_nvim_sidecar.dylib
+              bridge: target/release/defold-nvim-bridge
+            dist:
+              sidecar: target/release/macos-x86-libdefold_nvim_sidecar.so
+              bridge: target/release/macos-x86-defold-nvim-bridge
+          - name: MacOS ARM
+            os: macos-latest
+            src:
+              sidecar: target/release/libdefold_nvim_sidecar.dylib
+              bridge: target/release/defold-nvim-bridge
+            dist:
+              sidecar: target/release/macos-arm-libdefold_nvim_sidecar.so
+              bridge: target/release/macos-arm-defold-nvim-bridge
+          - name: Windows x86
+            os: windows-latest
+            src:
+              sidecar: target/release/defold_nvim_sidecar.dll
+              bridge: target/release/defold-nvim-bridge.exe
+            dist:
+              sidecar: target/release/windows-x86-libdefold_nvim_sidecar.so
+              bridge: target/release/windows-x86-defold-nvim-bridge
+
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          rustflags: ""
+
+      - name: build ${{ matrix.config.name }}
+        run: cargo build --release
+
+      - name: prepare ${{ matrix.config.name }}
+        run: |
+          # rename builds to be unique
+          mv "${{ matrix.config.src.sidecar }}" "${{ matrix.config.dist.sidecar }}"
+          mv "${{ matrix.config.src.bridge }}" "${{ matrix.config.dist.bridge }}"
+          # generate sha256 sum
+          shasum -a 256 "${{ matrix.config.dist.sidecar }}" > "${{ matrix.config.dist.sidecar }}.sha256"
+          shasum -a 256 "${{ matrix.config.dist.bridge }}" > "${{ matrix.config.dist.bridge }}.sha256"
+
+      - name: upload ${{ matrix.config.name }}
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            ${{ matrix.config.dist.sidecar }}
+            ${{ matrix.config.dist.bridge }}
+            ${{ matrix.config.dist.sidecar }}.sha256
+            ${{ matrix.config.dist.bridge }}.sha256
