@@ -55,7 +55,12 @@ jobs:
           rustflags: ""
 
       - name: build ${{ matrix.config.name }}
+        if: ${{ !contains(matrix.config.os, 'macos') }}
         run: cargo build --release
+
+      - name: build ${{ matrix.config.name }}
+        if: ${{ contains(matrix.config.os, 'macos') }}
+        run: MACOSX_DEPLOYMENT_TARGET="13" cargo build --release
 
       - name: prepare ${{ matrix.config.name }}
         run: |
