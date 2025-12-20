@@ -1,11 +1,14 @@
-use std::{env, fs, io, path::absolute};
+use std::{
+    env, fs, io,
+    path::{PathBuf, absolute},
+};
 
 use anyhow::{Context, Result};
 use clap::{Parser, Subcommand, command};
 use defold_nvim_core::{
     editor,
     focus::{focus_game, focus_neovim},
-    mobdap, neovide, project,
+    mobdap, neovide, project, script_api,
 };
 use tracing::Level;
 use tracing_appender::rolling::never;
@@ -94,6 +97,11 @@ enum Commands {
 
         #[clap(value_name = "COMMAND", index = 1)]
         command: String,
+    },
+    /// Compile `.script_api` file and return the resulting `.lua` in stdout
+    CompileScriptApi {
+        #[clap(value_name = "SCRIPT_API_FILE", index = 1)]
+        input: PathBuf,
     },
 }
 
@@ -186,6 +194,17 @@ fn main() -> Result<()> {
         }
         Commands::SendCommand { port, command } => {
             editor::send_command(port, &command)?;
+        }
+        Commands::CompileScriptApi { input } => {
+            if !input.exists() {
+                println!("File {} could not be found", input.display());
+                return Ok(());
+            }
+
+            let data = fs::read_to_string(input)?;
+            let res = script_api::compile(&data)?;
+
+            println!("{res}");
         }
     }
 

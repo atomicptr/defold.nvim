@@ -23,3 +23,8 @@ walkdir = "2.5.0"
 edn-rs = "0.18.0"
 netstat2 = "0.11.2"
 sysinfo = "0.37.2"
+serde_yaml = "0.9.34"
+textwrap = "0.16.2"
+
+[dev-dependencies]
+pretty_assertions = "1.4.1"

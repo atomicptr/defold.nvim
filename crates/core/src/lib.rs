@@ -8,4 +8,5 @@ pub mod github;
 pub mod mobdap;
 pub mod neovide;
 pub mod project;
+pub mod script_api;
 pub mod utils;

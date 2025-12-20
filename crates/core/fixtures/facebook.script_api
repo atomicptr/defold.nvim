@@ -1,0 +1,771 @@
+- name: facebook
+  type: table
+  desc: Functions and constants for interacting with Facebook APIs
+
+  members:
+
+#*****************************************************************************************************
+
+  - name: login_with_permissions
+    type: function
+    desc: Login to Facebook and request a set of publish permissions.
+
+          The user is prompted to authorize the application using the login dialog of the specific
+          platform. Even if the user is already logged in to Facebook this function can still be used to request additional publish permissions.
+
+          A comprehensive list of permissions can be found in the [Facebook permissions](https://developers.facebook.com/docs/facebook-login/permissions) documentation,
+          as well as in their [guide to best practices for login management](https://developers.facebook.com/docs/facebook-login/best-practices).
+
+    parameters:
+      - name: permissions
+        type: table
+        desc: table with the requested publish permission strings.
+      - name: audience
+        type: number
+        desc: The audience that should be able to see the publications.
+              Can be any of
+
+                - `facebook.AUDIENCE_NONE`
+
+                - `facebook.AUDIENCE_ONLYME`
+
+                - `facebook.AUDIENCE_FRIENDS`
+
+                - `facebook.AUDIENCE_EVERYONE`
+
+      - name: callback
+        type: function
+        desc: Callback function that is executed when the permission request dialog is closed.
+        parameters:
+          - name: self
+            type: object
+            desc: The context of the calling script
+
+          - name: data
+            type: table
+            desc: A table that contains the response
+
+    examples:
+      - desc: |-
+            Log in to Facebook with a set of publish permissions
+            ```lua
+            local permissions = {"publish_actions"}
+            facebook.login_with_permissions(permissions, facebook.AUDIENCE_FRIENDS, function(self, data)
+                if (data.status == facebook.STATE_OPEN and data.error == nil) then
+                    print("Successfully logged into Facebook")
+                    pprint(facebook.permissions())
+                else
+                    print("Failed to get permissions (" .. data.status .. ")")
+                    pprint(data)
+                end
+            end)
+            ```
+
+            Log in to Facebook with a set of read permissions
+            ```lua
+            local permissions = {"public_profile", "email", "user_friends"}
+            facebook.login_with_read_permissions(permissions, facebook.AUDIENCE_EVERYONE, function(self, data)
+                if (data.status == facebook.STATE_OPEN and data.error == nil) then
+                    print("Successfully logged into Facebook")
+                    pprint(facebook.permissions())
+                else
+                    print("Failed to get permissions (" .. data.status .. ")")
+                    pprint(data)
+                end
+            end)
+            ```
+
+#*****************************************************************************************************
+
+  - name: login_with_tracking_preference
+    type: function
+    desc: iOS ONLY. Login to Facebook and request a set of permissions. Allows developers to signal that a login is limited in terms of tracking users.
+
+          The user is prompted to authorize the application using the login dialog of the specific
+          platform. Even if the user is already logged in to Facebook this function can still be used to request additional publish permissions.
+
+          A comprehensive list of permissions can be found in the [Facebook permissions](https://developers.facebook.com/docs/facebook-login/permissions) documentation,
+          as well as in their [guide to best practices for login management](https://developers.facebook.com/docs/facebook-login/best-practices).
+          For Limited Login the list of permissions can be found in the [Permissions in Limited Login](https://developers.facebook.com/docs/facebook-login/limited-login/permissions) documentation.
+
+    parameters:
+      - name: login_tracking
+        type: number
+        desc: The tracking type for the login.
+              Can be any of
+
+                - `facebook.LOGIN_TRACKING_LIMITED`
+
+                - `facebook.LOGIN_TRACKING_ENABLED`
+      - name: permissions
+        type: table
+        desc: table with the requested publish permission strings.
+      - name: crypto_nonce
+        type: string
+        desc: Nonce that the configuration was created with. A unique nonce will be used if none is provided to the factory method.
+
+      - name: callback
+        type: function
+        desc: Callback function that is executed when the permission request dialog is closed.
+        parameters:
+          - name: self
+            type: object
+            desc: The context of the calling script
+
+          - name: data
+            type: table
+            desc: A table that contains the response
+
+    examples:
+      - desc: |-
+            Log in to Facebook with a set of publish permissions
+            ```lua
+            local permissions = {"publish_actions"}
+            facebook.login_with_permissions(permissions, facebook.AUDIENCE_FRIENDS, function(self, data)
+                if (data.status == facebook.STATE_OPEN and data.error == nil) then
+                    print("Successfully logged into Facebook")
+                    pprint(facebook.permissions())
+                else
+                    print("Failed to get permissions (" .. data.status .. ")")
+                    pprint(data)
+                end
+            end)
+            ```
+
+            Log in to Facebook with a set of read permissions
+            ```lua
+            local permissions = {"public_profile", "email", "user_friends"}
+            facebook.login_with_tracking_preference(facebook.LOGIN_TRACKING_LIMITED, permissions, "customcryptononce", function(self, data)
+                if (data.status == facebook.STATE_OPEN and data.error == nil) then
+                    print("Successfully logged into Facebook")
+                    pprint(facebook.permissions())
+                else
+                    print("Failed to get permissions (" .. data.status .. ")")
+                    pprint(data)
+                end
+            end)
+            ```
+
+#*****************************************************************************************************
+
+  - name: logout
+    type: function
+    desc: Logout from Facebook
+
+#*****************************************************************************************************
+
+  - name: set_default_audience
+    type: function
+    desc: iOS ONLY. The audience that should be able to see the publications. Should be called before `facebook.login_with_tracking_preference()`;
+              Can be any of
+
+                - `facebook.AUDIENCE_NONE`
+
+                - `facebook.AUDIENCE_ONLYME`
+
+                - `facebook.AUDIENCE_FRIENDS`
+
+                - `facebook.AUDIENCE_EVERYONE`
+#*****************************************************************************************************
+
+  - name: get_current_authentication_token
+    type: function
+    desc: iOS ONLY. Get the current AuthenticationToken.
+
+          This function returns the currently stored authentication token after a previous
+          successful login. If it returns nil no access token exists and you need
+          to perform a login to get the wanted permissions.
+
+    returns:
+      - name: authentication_token
+        type: string
+        desc: the authentication token or nil if the user is not logged in
+
+#*****************************************************************************************************
+
+  - name: get_current_profile
+    type: function
+    desc: iOS ONLY. Get the users [FBSDKProfile.currentProfile](https://developers.facebook.com/docs/facebook-login/limited-login/ios/).
+          [Reading From Profile Helper Class](https://developers.facebook.com/docs/facebook-login/limited-login/permissions/profile-helper)
+
+    returns:
+      - name: current_profile
+        type: table
+        desc: After your application receives the logged-in user’s authentication token, you can use
+              this function to read information that user has granted to your application.
+
+#****************************************************************************************************
+
+  - name: init
+    type: function
+    desc: Initialize Facebook SDK (if facebook.autoinit is 0 in game.project)
+
+#*****************************************************************************************************
+
+  - name: access_token
+    type: function
+    desc: Get the current Facebook access token.
+
+          This function returns the currently stored access token after a previous
+          successful login. If it returns nil no access token exists and you need
+          to perform a login to get the wanted permissions.
+
+    returns:
+      - name: token
+        type: string
+        desc: the access token or nil if the user is not logged in
+
+    examples:
+      - desc: |-
+            Get the current access token, then use it to perform a graph API request.
+
+            ```lua
+            local function get_name_callback(self, id, response)
+                -- do something with the response
+            end
+            function init(self)
+                -- assuming we are already logged in.
+                local token = facebook.access_token()
+                if token then
+                    local url = "https://graph.facebook.com/me/?access_token=".. token
+                    http.request(url, "GET", get_name_callback)
+                end
+            end
+            ```
+
+#*****************************************************************************************************
+
+  - name: permissions
+    type: function
+    desc: Get the currently granted permissions.
+
+          This function returns a table with all the currently granted permission strings.
+
+    returns:
+      - name: permissions
+        type: table
+        desc: The permissions
+
+    examples:
+      - desc: |-
+            Check the currently granted permissions for a particular permission
+
+            ```lua
+            for _,permission in ipairs(facebook.permissions()) do
+                if permission == "user_likes" then
+                    -- "user_likes" granted...
+                    break
+                end
+            end
+            ```
+
+#*****************************************************************************************************
+
+  - name: post_event
+    type: function
+    desc: Post an event to Facebook Analytics
+
+          This function will post an event to Facebook Analytics where it can be used in the Facebook Insights system.
+
+    parameters:
+    - name: event
+      type: [number, string]
+      desc: An event can either be one of the predefined constants below or a text string
+            which can be used to define a custom event that is registered with Facebook Analytics.
+
+            - `facebook.EVENT_ACHIEVED_LEVEL`
+            - `facebook.EVENT_ADDED_PAYMENT_INFO`
+            - `facebook.EVENT_ADDED_TO_CART`
+            - `facebook.EVENT_ADDED_TO_WISHLIST`
+            - `facebook.EVENT_COMPLETED_REGISTRATION`
+            - `facebook.EVENT_COMPLETED_TUTORIAL`
+            - `facebook.EVENT_INITIATED_CHECKOUT`
+            - `facebook.EVENT_PURCHASED`
+            - `facebook.EVENT_RATED`
+            - `facebook.EVENT_SEARCHED`
+            - `facebook.EVENT_SPENT_CREDITS`
+            - `facebook.EVENT_TIME_BETWEEN_SESSIONS`
+            - `facebook.EVENT_UNLOCKED_ACHIEVEMENT`
+            - `facebook.EVENT_VIEWED_CONTENT`
+
+    - name: value
+      type: number
+      desc: A numeric value for the event. This should represent the value of the event, such as the level achieved,
+            price for an item or number of orcs killed.
+
+    - name: params
+      type: table
+      optional: true
+      desc: Optional table with parameters and their values. A key in the table can
+            either be one of the predefined constants below or a text which can be used to define a custom parameter.
+
+            - `facebook.PARAM_CONTENT_ID`
+            - `facebook.PARAM_CONTENT_TYPE`
+            - `facebook.PARAM_CURRENCY`
+            - `facebook.PARAM_DESCRIPTION`
+            - `facebook.PARAM_LEVEL`
+            - `facebook.PARAM_MAX_RATING_VALUE`
+            - `facebook.PARAM_NUM_ITEMS`
+            - `facebook.PARAM_PAYMENT_INFO_AVAILABLE`
+            - `facebook.PARAM_REGISTRATION_METHOD`
+            - `facebook.PARAM_SEARCH_STRING`
+            - `facebook.PARAM_SOURCE_APPLICATION`
+            - `facebook.PARAM_SUCCESS`
+
+    examples:
+      - desc: |-
+            Post a spent credits event to Facebook Analytics
+
+            ```lua
+            params = {[facebook.PARAM_LEVEL] = 30, [facebook.PARAM_NUM_ITEMS] = 2}
+            facebook.post_event(facebook.EVENT_SPENT_CREDITS, 25, params)
+            ```
+
+#*****************************************************************************************************
+
+  - name: enable_event_usage
+    type: function
+    desc: Enable event usage with Facebook Analytics
+          This function will enable event usage for Facebook Analytics which means
+          that Facebook will be able to use event data for ad-tracking.
+
+          [icon:attention] Event usage cannot be controlled and is always enabled for the
+          Facebook Canvas platform, therefore this function has no effect on Facebook
+          Canvas.
+
+#*****************************************************************************************************
+
+  - name: disable_event_usage
+    type: function
+    desc: Disable event usage with Facebook Analytics
+          This function will disable event usage for Facebook Analytics which means
+          that Facebook won't be able to use event data for ad-tracking. Events will
+          still be sent to Facebook for insights.
+
+          [icon:attention] Event usage cannot be controlled and is always enabled for the
+          Facebook Canvas platform, therefore this function has no effect on Facebook
+          Canvas.
+
+#*****************************************************************************************************
+
+  - name: enable_advertiser_tracking
+    type: function
+    desc: Enable advertiser tracking
+          This function will set AdvertiserTrackingEnabled (the 'ATE' flag) to true on iOS, to inform
+          Audience Network to use the data to deliver personalized ads for users on iOS 14 and above.
+
+#*****************************************************************************************************
+
+  - name: disable_advertiser_tracking
+    type: function
+    desc: Disable advertiser tracking
+          This function will set AdvertiserTrackingEnabled (the 'ATE' flag) to false on iOS, to inform
+          Audience Network not to use the data to deliver personalized ads for users on iOS 14 and above.
+
+#*****************************************************************************************************
+
+  - name: show_dialog
+    type: function
+    desc: Show facebook web dialog
+
+          Display a Facebook web dialog of the type specified in the `dialog` parameter.
+
+
+          The `param` table should be set up according to the requirements of each dialog
+          type. Note that some parameters are mandatory. Below is the list of available dialogs and
+          where to find Facebook's developer documentation on parameters and response data.
+
+
+          `"apprequests"`
+
+          Shows a Game Request dialog. Game Requests allows players to invite their friends to play a
+          game. Available parameters
+
+                - [type:string] `title`
+
+                - [type:string] `message`
+
+                - [type:number] `action_type`
+
+                - [type:number] `filters`
+
+                - [type:string] `data`
+
+                - [type:string] `object_id`
+
+                - [type:table] `suggestions`
+
+                - [type:table] `recipients`
+
+                - [type:string] `to`
+
+
+
+          On success, the "result" table parameter passed to the callback function will include the following fields
+
+                - [type:string] `request_id`
+
+                - [type:table] `to`
+
+
+          [Details for each parameter](https://developers.facebook.com/docs/games/services/gamerequests/v2.6#dialogparameters)
+
+
+          `"feed"`
+
+          The Feed Dialog allows people to publish individual stories to their timeline.
+
+
+                - [type:string] `caption`
+
+                - [type:string] `description`
+
+                - [type:string] `picture`
+
+                - [type:string] `link`
+
+                - [type:table] `people_ids`
+
+                - [type:string] `place_id`
+
+                - [type:string] `ref`
+
+
+
+          On success, the "result" table parameter passed to the callback function will include the following fields
+
+                - [type:string] `post_id`
+
+
+          [Details for each parameter](https://developers.facebook.com/docs/sharing/reference/feed-dialog/v2.6#params)
+
+
+          `"appinvite"`
+
+          The App Invite dialog is available only on iOS and Android.
+          Note that the `url` parameter
+          corresponds to the appLinkURL (iOS) and setAppLinkUrl (Android) properties.
+
+                - [type:string] `url`
+
+                - [type:string] `preview_image`
+
+          [Details for each parameter](https://developers.facebook.com/docs/reference/ios/current/class/FBSDKAppInviteContent)
+
+    parameters:
+      - name: dialog
+        type: string
+        desc: Dialog to show
+
+              - `"apprequests"`
+
+              - `"feed"`
+
+              - `"appinvite"`
+
+      - name: param
+        type: table
+        desc: table with dialog parameters
+
+      - name: callback
+        type: function
+        desc: Callback function that is called when the dialog is closed.
+        parameters:
+          - name: self
+            type: object
+            desc: The context of the calling script
+
+          - name: result
+            type: table
+            desc: table with dialog specific results. See above.
+
+          - name: error
+            type: table
+            desc: Error message. If there is no error, `error` is `nil`.
+
+    examples:
+      - desc: |-
+            Show a dialog allowing the user to share a post to their timeline
+
+            ```lua
+            local function fb_share(self, result, error)
+                if error then
+                    -- something did not go right...
+                else
+                    -- do something sensible
+                end
+            end
+            function init(self)
+                -- assuming we have logged in with publish permissions
+                local param = { link = "http://www.mygame.com",picture="http://www.mygame.com/image.jpg" }
+                facebook.show_dialog("feed", param, fb_share)
+            end
+            ```
+
+#*****************************************************************************************************
+
+  - name: get_version
+    type: function
+    desc: Get the version of the Facebook SDK used by the extension.
+
+    returns:
+    - name: version
+      type: string
+      desc: The Facebook SDK version
+
+#*****************************************************************************************************
+
+  - name: deferred_deep_link
+    type: function
+    desc: Allows receiving deferred deep link URL and parameters.
+
+          [More info about Referred Deep Links](https://developers.facebook.com/docs/app-ads/deep-linking/)
+
+    parameters:
+      - name: callback
+        type: function
+        desc: Callback function that is called when information is ready.
+        parameters:
+          - name: self
+            type: object
+            desc: The context of the calling script
+
+          - name: result
+            type: table
+            desc: table with a deferred deep link information
+            members:
+              - name: ref
+                type: string
+                desc: ref for this App Link.
+
+              - name: extras
+                type: table
+                desc: the full set of arguments for this app link. Properties like target uri & ref are typically picked out of this set of arguments.
+
+              - name: target_url
+                type: string
+                desc: target uri for this App Link.
+
+          - name: error
+            type: table
+            desc: Error message. If there is no error, `error` is `nil`.
+
+    examples:
+      - desc: |-
+            Show a dialog allowing the user to share a post to their timeline
+
+            ```lua
+            local function deferred_deep_link_callback(self, result, error)
+              if error then
+                print(error.error)
+              else
+                pprint(result)
+              end
+            end
+
+            function init(self)
+              facebook.deferred_deep_link(deferred_deep_link_callback)
+            end
+            ```
+
+#*****************************************************************************************************
+
+  - name: STATE_OPEN
+    type: number
+    desc: The Facebook login session is open
+
+  - name: STATE_CLOSED_LOGIN_FAILED
+    type: number
+    desc: The Facebook login session has closed because login failed
+
+  - name: GAMEREQUEST_ACTIONTYPE_NONE
+    type: number
+    desc: Game request action type "none" for "apprequests" dialog
+
+  - name: GAMEREQUEST_ACTIONTYPE_SEND
+    type: number
+    desc: Game request action type "send" for "apprequests" dialog
+
+  - name: GAMEREQUEST_ACTIONTYPE_ASKFOR
+    type: number
+    desc: Game request action type "askfor" for "apprequests" dialog
+
+  - name: GAMEREQUEST_ACTIONTYPE_TURN
+    type: number
+    desc: Game request action type "turn" for "apprequests" dialog
+
+  - name: GAMEREQUEST_FILTER_NONE
+    type: number
+    desc: Game request filter type "none" for "apprequests" dialog
+
+  - name: GAMEREQUEST_FILTER_APPUSERS
+    type: number
+    desc: Game request filter type "app_users" for "apprequests" dialog
+
+  - name: GAMEREQUEST_FILTER_APPNONUSERS
+    type: number
+    desc: Game request filter type "app_non_users" for "apprequests" dialog
+
+  - name: EVENT_ACHIEVED_LEVEL
+    type: number
+    desc: Log this event when the user has achieved a level
+
+  - name: EVENT_ADDED_PAYMENT_INFO
+    type: number
+    desc: Log this event when the user has entered their payment info
+
+  - name: EVENT_ADDED_TO_CART
+    type: number
+    desc: Log this event when the user has added an item to their cart
+          The value_to_sum passed to facebook.post_event should be the item's price.
+
+  - name: EVENT_ADDED_TO_WISHLIST
+    type: number
+    desc: Log this event when the user has added an item to their wish list
+          The value_to_sum passed to facebook.post_event should be the item's price.
+
+  - name: EVENT_COMPLETED_REGISTRATION
+    type: number
+    desc: Log this event when a user has completed registration with the app
+
+  - name: EVENT_COMPLETED_TUTORIAL
+    type: number
+    desc: Log this event when the user has completed a tutorial in the app
+
+  - name: EVENT_INITIATED_CHECKOUT
+    type: number
+    desc: Log this event when the user has entered the checkout process
+          The value_to_sum passed to facebook.post_event should be the total price in
+          the cart.
+
+  - name: EVENT_PURCHASED
+    type: number
+    desc: Log this event when the user has completed a purchase.
+          The value_to_sum passed to facebook.post_event should be the numeric rating.
+
+  - name: EVENT_RATED
+    type: number
+    desc: Log this event when the user has rated an item in the app
+
+  - name: EVENT_SEARCHED
+    type: number
+    desc: Log this event when a user has performed a search within the app
+
+  - name: EVENT_SPENT_CREDITS
+    type: number
+    desc: Log this event when the user has spent app credits
+          The value_to_sum passed to facebook.post_event should be the number of credits spent.
+
+  - name: EVENT_TIME_BETWEEN_SESSIONS
+    type: number
+    desc: Log this event when measuring the time between user sessions
+
+  - name: EVENT_UNLOCKED_ACHIEVEMENT
+    type: number
+    desc: Log this event when the user has unlocked an achievement in the app
+
+  - name: EVENT_VIEWED_CONTENT
+    type: number
+    desc: Log this event when a user has viewed a form of content in the app
+
+  - name: PARAM_CONTENT_ID
+    type: number
+    desc: Parameter key used to specify an ID for the content being logged about
+
+          The parameter key could be an EAN, article identifier, etc., depending
+          on the nature of the app.
+
+  - name: PARAM_CONTENT_TYPE
+    type: number
+    desc: Parameter key used to specify a generic content type/family for the logged event
+
+          The key is an arbitrary type/family (e.g. "music", "photo", "video") depending
+          on the nature of the app.
+
+  - name: PARAM_CURRENCY
+    type: number
+    desc: Parameter key used to specify currency used with logged event
+
+          Use a currency value key, e.g. "USD", "EUR", "GBP" etc.
+          See See ISO-4217 for specific values.
+
+  - name: PARAM_DESCRIPTION
+    type: number
+    desc: Parameter key used to specify a description appropriate to the event being logged
+
+          Use this for app specific event description, for instance the name of the achievement
+          unlocked in the facebook.EVENT_UNLOCKED_ACHIEVEMENT event.
+
+  - name: PARAM_LEVEL
+    type: number
+    desc: Parameter key used to specify the level achieved
+
+  - name: PARAM_MAX_RATING_VALUE
+    type: number
+    desc: Parameter key used to specify the maximum rating available
+
+          Set to specify the max rating available for the facebook.EVENT_RATED event.
+          E.g., "5" or "10".
+
+  - name: PARAM_NUM_ITEMS
+    type: number
+    desc: Parameter key used to specify how many items are being processed
+
+          Set to specify the number of items being processed for an
+          facebook.EVENT_INITIATED_CHECKOUT or facebook.EVENT_PURCHASED event.
+
+  - name: PARAM_PAYMENT_INFO_AVAILABLE
+    type: number
+    desc: Parameter key used to specify whether payment info is available
+
+          Set to specify if payment info is available for the
+          facebook.EVENT_INITIATED_CHECKOUT event.
+
+  - name: PARAM_REGISTRATION_METHOD
+    type: number
+    desc: Parameter key used to specify method user has used to register for the app
+
+          Set to specify what registation method a user used for the app, e.g.
+          "Facebook", "email", "Twitter", etc.
+
+  - name: PARAM_SEARCH_STRING
+    type: number
+    desc: Parameter key used to specify user search string
+
+          Set this to the the string that the user provided for a search
+          operation.
+
+  - name: PARAM_SOURCE_APPLICATION
+    type: number
+    desc: Parameter key used to specify source application package
+
+  - name: PARAM_SUCCESS
+    type: number
+    desc: Parameter key used to specify activity success
+
+          Set this key to indicate whether the activity being logged about was
+          successful or not.
+
+  - name: AUDIENCE_NONE
+    type: number
+    desc: Publish permission to reach no audience
+
+  - name: AUDIENCE_ONLYME
+    type: number
+    desc: Publish permission to reach only me (private to current user)
+
+  - name: AUDIENCE_FRIENDS
+    type: number
+    desc: Publish permission to reach user friends
+
+  - name: AUDIENCE_EVERYONE
+    type: number
+    desc: Publish permission to reach everyone
+
+  - name: LOGIN_TRACKING_LIMITED
+    type: number
+    desc: Login tracking Limited
+
+  - name: LOGIN_TRACKING_ENABLED
+    type: number
+    desc: Login tracking enabled
