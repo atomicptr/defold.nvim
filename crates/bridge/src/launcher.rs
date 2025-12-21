@@ -409,12 +409,6 @@ pub fn run(
                     .context("could not convert path to string")?,
             )?,
         )
-    } else if cfg!(target_os = "macos") {
-        // TODO: macos
-        launcher
-    } else if cfg!(target_os = "windows") {
-        // TODO: windows
-        launcher
     } else {
         launcher
     };
