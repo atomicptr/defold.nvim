@@ -219,7 +219,13 @@ end
 
 ---Makes sure the native library `sidecar` gets loaded
 function M.download()
-    require "defold.sidecar"
+    local log = require "defold.service.logger"
+    local sidecar = require "defold.sidecar"
+
+    local ok, err = pcall(sidecar.find_bridge_path, M.plugin_root())
+    if not ok then
+        log.error(string.format("Could not setup bridge: %s", err))
+    end
 end
 
 function M.load_plugin()
@@ -239,7 +245,13 @@ function M.load_plugin()
     local project = require "defold.project"
 
     log.debug "============= defold.nvim: Loaded plugin"
-    log.debug("Sidecar Version:" .. sidecar.version)
+    log.debug("Sidecar Version: " .. sidecar.version)
+
+    local bridge_ok, bridge_path = pcall(sidecar.find_bridge_path, M.plugin_root())
+    if bridge_ok then
+        log.debug("Bridge Path: " .. bridge_path)
+    end
+
     if debugger.mobdap_path() then
         log.debug("Mobdap Path: " .. debugger.mobdap_path())
     end

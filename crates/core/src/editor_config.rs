@@ -7,6 +7,8 @@ use std::{
     str::FromStr,
 };
 
+use crate::bridge;
+
 #[derive(Debug, Deserialize)]
 pub enum LauncherType {
     #[serde(rename = "neovide")]
@@ -104,31 +106,6 @@ const SCRIPT_EXT: &'static str = "bat";
 #[cfg(not(target_os = "windows"))]
 const SCRIPT_EXT: &str = "sh";
 
-#[cfg(target_os = "windows")]
-const EXE_SUFFIX: &'static str = ".exe";
-
-#[cfg(not(target_os = "windows"))]
-const EXE_SUFFIX: &str = "";
-
-fn find_bridge_path(plugin_root: &Path) -> Result<PathBuf> {
-    let exe = format!("defold-nvim-bridge{EXE_SUFFIX}");
-
-    if plugin_root.exists() {
-        let candidates = [
-            plugin_root.join(&exe),
-            plugin_root.join("target").join("debug").join(&exe),
-            plugin_root.join("target").join("release").join(&exe),
-        ];
-
-        if let Some(bridge_path) = candidates.into_iter().find(|p| p.exists()) {
-            return Ok(bridge_path);
-        }
-    }
-
-    // TODO: if not lets download it
-    bail!("not yet implemented")
-}
-
 fn create_runner_script(
     plugin_root: &Path,
     launcher_settings: &LauncherSettings,
@@ -140,7 +117,7 @@ fn create_runner_script(
     fs::create_dir_all(&dir)?;
 
     let script_path = dir.join(format!("run.{SCRIPT_EXT}"));
-    let bridge_path = find_bridge_path(plugin_root)?;
+    let bridge_path = bridge::path(plugin_root)?;
     let launch_args = launcher_settings.bridge_cli_args().join(" ");
 
     fs::write(

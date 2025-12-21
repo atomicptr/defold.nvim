@@ -1,5 +1,5 @@
 use anyhow::Context;
-use defold_nvim_core::{editor, editor_config, mobdap, project};
+use defold_nvim_core::{bridge, editor, editor_config, mobdap, project};
 use defold_nvim_core::{focus, game_project::GameProject};
 use mlua::Value;
 use mlua::prelude::*;
@@ -68,6 +68,7 @@ fn register_exports(lua: &Lua) -> LuaResult<LuaTable> {
         "set_default_editor",
         lua.create_function(set_default_editor)?,
     )?;
+    exports.set("find_bridge_path", lua.create_function(find_bridge_path)?)?;
     exports.set("focus_neovim", lua.create_function(focus_neovim)?)?;
     exports.set("focus_game", lua.create_function(focus_game)?)?;
     exports.set("mobdap_install", lua.create_function(mobdap_install)?)?;
@@ -138,6 +139,15 @@ fn set_default_editor(
     editor_config::set_default_editor(&PathBuf::from(plugin_root), &launcher_settings)?;
 
     Ok(())
+}
+
+fn find_bridge_path(_lua: &Lua, plugin_root: String) -> LuaResult<String> {
+    let path = bridge::path(&absolute(plugin_root)?)?;
+
+    Ok(path
+        .to_str()
+        .context("could not convert path to string")?
+        .to_string())
 }
 
 fn focus_neovim(_lua: &Lua, game_root: String) -> LuaResult<()> {

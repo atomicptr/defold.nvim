@@ -1,3 +1,4 @@
+pub mod bridge;
 pub mod cache;
 pub mod defold_annotations;
 pub mod editor;
