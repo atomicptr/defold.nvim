@@ -151,16 +151,21 @@ pub fn update_or_install() -> Result<PathBuf> {
 
     #[cfg(target_os = "macos")]
     {
-        use dmg::Attach;
+        use dmgwiz::{DmgWiz, Verbosity};
         use std::os::unix::fs::PermissionsExt;
 
-        let info = Attach::new(&downloaded_file).with()?;
+        let mut wiz = DmgWiz::from_reader(file, Verbosity::None)?;
+        wiz.extract_all(&parent_dir)?;
 
-        let neovide_path = info.mount_point.join("Neovide.app/Contents/MacOS/neovide");
+        let neovide_path = parent_dir
+            .join("Neovide.app")
+            .join("Contents")
+            .join("MacOS")
+            .join("neovide");
 
-        fs::copy(neovide_path, target_path)?;
+        fs::copy(&neovide_path, &path()?)?;
 
-        fs::set_permissions(&target_path, Permissions::from_mode(0o700))?;
+        fs::set_permissions(&path()?, Permissions::from_mode(0o700))?;
     }
 
     fs::write(version_path()?, release.tag_name)?;
