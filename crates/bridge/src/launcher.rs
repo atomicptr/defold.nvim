@@ -67,7 +67,7 @@ fn create_launcher(cfg: &PluginConfig, nvim: &String) -> Result<Launcher> {
                 .as_ref()
                 .map(Into::into)
                 .or_else(|| which("neovide").ok())
-                .or_else(|| match neovide::update_or_install() {
+                .or_else(|| match neovide::install() {
                     Ok(path) => Some(path),
                     Err(err) => {
                         tracing::error!("Could not download neovide because: {err:?}");

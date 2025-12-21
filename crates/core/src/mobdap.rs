@@ -29,7 +29,7 @@ const NAME: &str = "mobdap-windows-amd64.zip";
 
 fn path() -> Result<PathBuf> {
     let dir = dirs::data_dir()
-        .context("could not get state dir")?
+        .context("could not get data dir")?
         .join("defold.nvim")
         .join("bin");
 
@@ -46,7 +46,7 @@ fn path() -> Result<PathBuf> {
 
 fn version_path() -> Result<PathBuf> {
     let dir = dirs::data_dir()
-        .context("could not get state dir")?
+        .context("could not get data dir")?
         .join("defold.nvim")
         .join("meta");
 
@@ -104,7 +104,7 @@ pub fn is_update_available() -> Result<bool> {
     Ok(current > installed)
 }
 
-pub fn update_or_install() -> Result<PathBuf> {
+pub fn install() -> Result<PathBuf> {
     if !is_update_available()? {
         return path();
     }

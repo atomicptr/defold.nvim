@@ -173,11 +173,11 @@ fn main() -> Result<()> {
         Commands::FocusNeovim { game_root_dir } => focus_neovim(absolute(game_root_dir)?)?,
         Commands::FocusGame { game_root_dir } => focus_game(absolute(game_root_dir)?)?,
         Commands::DownloadNeovide => {
-            let path = neovide::update_or_install()?;
+            let path = neovide::install()?;
             println!("Installed neovide at {}", path.display());
         }
         Commands::DownloadMobdap => {
-            let path = mobdap::update_or_install()?;
+            let path = mobdap::install()?;
             println!("Installed mobdap at {}", path.display());
         }
         Commands::InstallDependencies {

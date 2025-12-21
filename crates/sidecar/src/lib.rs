@@ -197,7 +197,7 @@ fn focus_game(_lua: &Lua, game_root: String) -> LuaResult<()> {
 
 #[instrument(level = "debug", err(Debug), skip_all)]
 fn mobdap_install(_lua: &Lua, _: ()) -> LuaResult<String> {
-    let path = mobdap::update_or_install()?;
+    let path = mobdap::install()?;
     Ok(path
         .to_str()
         .context("could not convert path to string")?

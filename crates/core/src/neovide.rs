@@ -1,4 +1,5 @@
 use std::{
+    env,
     fs::{self, File, Permissions},
     path::PathBuf,
     time::Duration,
@@ -25,26 +26,35 @@ const NAME: &str = "Neovide-aarch64-apple-darwin.dmg";
 #[cfg(target_os = "windows")]
 const NAME: &'static str = "neovide.exe.zip";
 
-fn path() -> Result<PathBuf> {
+fn bin_dir() -> Result<PathBuf> {
     let dir = dirs::data_dir()
-        .context("could not get state dir")?
+        .context("could not get data dir")?
         .join("defold.nvim")
         .join("bin");
 
+    Ok(dir)
+}
+
+fn path() -> Result<PathBuf> {
+    let dir = bin_dir()?;
+
     fs::create_dir_all(&dir)?;
 
-    let suffix = if cfg!(target_os = "windows") {
-        ".exe"
-    } else {
-        ""
-    };
-
-    Ok(dir.join(format!("neovide{suffix}")))
+    Ok(match env::consts::OS {
+        "linux" => dir.join("neovide"),
+        "windows" => dir.join("neovide.exe"),
+        "macos" => dir
+            .join("Neovide.app")
+            .join("Contents")
+            .join("MacOS")
+            .join("neovide"),
+        _ => bail!("Unknown OS {}", env::consts::OS),
+    })
 }
 
 fn version_path() -> Result<PathBuf> {
     let dir = dirs::data_dir()
-        .context("could not get state dir")?
+        .context("could not get data dir")?
         .join("defold.nvim")
         .join("meta");
 
@@ -102,7 +112,7 @@ pub fn is_update_available() -> Result<bool> {
     Ok(current > installed)
 }
 
-pub fn update_or_install() -> Result<PathBuf> {
+pub fn install() -> Result<PathBuf> {
     if !is_update_available()? {
         return path();
     }
@@ -158,21 +168,25 @@ pub fn update_or_install() -> Result<PathBuf> {
     #[cfg(target_os = "macos")]
     {
         use dmg::Attach;
-        use std::os::unix::fs::PermissionsExt;
+        use fs_extra::dir;
 
         let handle = Attach::new(downloaded_file).with()?;
 
         tracing::debug!("Mounted .dmg at {:?}", handle.mount_point);
 
-        let neovide_path = handle
-            .mount_point
-            .join("Neovide.app")
-            .join("Contents")
-            .join("MacOS")
-            .join("neovide");
+        let neovide_path = handle.mount_point.join("Neovide.app");
 
-        fs::copy(&neovide_path, &path()?)?;
-        fs::set_permissions(&path()?, Permissions::from_mode(0o700))?;
+        let target_path = bin_dir()?.join("Neovide.app");
+
+        if target_path.exists() {
+            fs::remove_dir_all(&target_path)?;
+        }
+
+        dir::copy(
+            &neovide_path,
+            &target_path,
+            &dir::CopyOptions::new().overwrite(true).copy_inside(true),
+        )?;
     }
 
     fs::write(version_path()?, release.tag_name)?;
