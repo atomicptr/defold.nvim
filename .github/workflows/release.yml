@@ -50,7 +50,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@v5
-      - uses: mlugg/setup-zig@v2
       - uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
           rustflags: ""
@@ -58,8 +57,8 @@ jobs:
       - name: build ${{ matrix.config.name }}
         if: contains(matrix.config.os, 'ubuntu')
         run: |
-          cargo install cargo-zigbuild
-          cargo zigbuild --release --target x86_64-unknown-linux-gnu.2.31
+          cargo install cargo-cross
+          cargo cross build --release --target x86_64-unknown-linux-gnu
 
       - name: build ${{ matrix.config.name }}
         if: contains(matrix.config.os, 'macos')
