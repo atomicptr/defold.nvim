@@ -12,6 +12,6 @@ pedantic = "warn"
 too-many-lines = "allow"
 
 [profile.release]
-strip = true
+strip = false
 opt-level = 3
 lto = true

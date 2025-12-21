@@ -1,5 +1,5 @@
 use std::{
-    env, fs, io,
+    env, fs,
     path::{PathBuf, absolute},
 };
 
@@ -12,7 +12,6 @@ use defold_nvim_core::{
 };
 use tracing::Level;
 use tracing_appender::rolling::never;
-use tracing_subscriber::fmt::writer::MakeWriterExt;
 
 use crate::plugin_config::{LauncherType, PluginConfig, SocketType};
 
@@ -106,7 +105,15 @@ enum Commands {
 }
 
 fn main() -> Result<()> {
-    let args = Args::parse();
+    let mut err = None;
+
+    let args = match Args::try_parse() {
+        Ok(args) => Some(args),
+        Err(e) => {
+            err = Some(e);
+            None
+        }
+    };
 
     let logs = dirs::cache_dir()
         .context("could not get cache dir")?
@@ -115,25 +122,30 @@ fn main() -> Result<()> {
 
     fs::create_dir_all(&logs)?;
 
-    let (stdout, _stdout_guard) = tracing_appender::non_blocking(io::stdout());
     let (logfile, _logfile_guard) = tracing_appender::non_blocking(never(logs, "bridge.log"));
-
-    let writer = stdout.and(logfile);
 
     tracing_subscriber::fmt()
         .with_file(true)
         .with_line_number(true)
-        .with_max_level(if args.debug {
+        .with_max_level(if args.as_ref().is_some_and(|args| args.debug) {
             Level::DEBUG
         } else {
             Level::INFO
         })
-        .with_writer(writer)
+        .with_writer(logfile)
+        .with_ansi(false)
         .init();
 
     tracing::info!("Starting defold.nvim bridge",);
     tracing::debug!("CLI: {}", env::args().collect::<Vec<String>>().join(" "));
     tracing::debug!("Clap: {args:?}");
+
+    if let Some(err) = err {
+        tracing::error!("Clap Error {}", err.to_string());
+        err.exit();
+    }
+
+    let args = args.unwrap();
 
     match args.cmd {
         Commands::LaunchNeovim {
@@ -163,11 +175,11 @@ fn main() -> Result<()> {
         Commands::FocusGame { game_root_dir } => focus_game(absolute(game_root_dir)?)?,
         Commands::DownloadNeovide => {
             let path = neovide::update_or_install()?;
-            tracing::info!("Installed neovide at {path:?}");
+            println!("Installed neovide at {}", path.display());
         }
         Commands::DownloadMobdap => {
             let path = mobdap::update_or_install()?;
-            tracing::info!("Installed mobdap at {path:?}");
+            println!("Installed mobdap at {}", path.display());
         }
         Commands::InstallDependencies {
             force_redownload,
@@ -176,7 +188,7 @@ fn main() -> Result<()> {
             let root_dir = absolute(&game_root_dir)?;
 
             project::install_dependencies(&root_dir, force_redownload)?;
-            tracing::info!("Finished installing dependencies for {game_root_dir}",);
+            println!("Finished installing dependencies for {game_root_dir}",);
         }
         Commands::ListDependencies { game_root_dir } => {
             let root_dir = absolute(&game_root_dir)?;
@@ -187,9 +199,9 @@ fn main() -> Result<()> {
         }
         Commands::FindEditorPort => {
             if let Some(port) = editor::find_port() {
-                tracing::info!("Editor is running at port {port}");
+                println!("Editor is running at port {port}");
             } else {
-                tracing::info!("Could not find editor port, is the editor open?");
+                println!("Could not find editor port, is the editor open?");
             }
         }
         Commands::SendCommand { port, command } => {
