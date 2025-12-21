@@ -65,3 +65,41 @@ impl TryFrom<String> for GameProject {
         })
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::game_project::GameProject;
+    use pretty_assertions::assert_eq;
+
+    #[test]
+    fn test_parse_game_project() {
+        let input = r"[project]
+title = My Fancy Game
+dependencies#1 = https://example.com/dependency1.zip
+dependencies#2 = https://example.com/dependency2.zip
+
+[library]
+include_dirs = my_fancy_game";
+
+        let g: GameProject = input
+            .to_string()
+            .try_into()
+            .expect("could not parse game.project file");
+
+        assert_eq!("My Fancy Game", g.title);
+        assert_eq!(2, g.dependencies.len());
+        assert_eq!(
+            vec![
+                "https://example.com/dependency1.zip",
+                "https://example.com/dependency2.zip"
+            ],
+            g.dependencies
+        );
+        assert!(g.library.is_some());
+        assert_eq!(1, g.library.as_ref().unwrap().include_dirs.len());
+        assert_eq!(
+            vec!["my_fancy_game"],
+            g.library.as_ref().unwrap().include_dirs
+        );
+    }
+}
