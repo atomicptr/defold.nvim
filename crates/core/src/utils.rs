@@ -90,6 +90,10 @@ pub fn delete_empty_dirs_from(root_dir: &Path) -> Result<()> {
 
 // Apparently fs::rename doesnt work on tmpfs
 pub fn move_file(from: &Path, to: &Path) -> Result<()> {
+    if let Some(parent) = to.parent() {
+        fs::create_dir_all(parent)?;
+    }
+
     if from.is_dir() {
         dir::move_dir(from, to, &dir::CopyOptions::new().overwrite(true))?;
     } else {
