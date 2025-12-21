@@ -17,16 +17,14 @@ jobs:
         config:
           - name: Linux x86
             os: ubuntu-latest
-            target: x86_64-unknown-linux-gnu.2.31
             artifact:
-              sidecar: target/release/libdefold_nvim_sidecar.so
-              bridge: target/release/defold-nvim-bridge
+              sidecar: target/x86_64-unknown-linux-gnu/release/libdefold_nvim_sidecar.so
+              bridge: target/x86_64-unknown-linux-gnu/release/defold-nvim-bridge
             dist:
               sidecar: target/release/linux-x86-libdefold_nvim_sidecar.so
               bridge: target/release/linux-x86-defold-nvim-bridge
           - name: MacOS x86
             os: macos-15-intel
-            target: x86_64-apple-darwin
             artifact:
               sidecar: target/release/libdefold_nvim_sidecar.dylib
               bridge: target/release/defold-nvim-bridge
@@ -35,7 +33,6 @@ jobs:
               bridge: target/release/macos-x86-defold-nvim-bridge
           - name: MacOS ARM
             os: macos-latest
-            target: aarch64-apple-darwin
             artifact:
               sidecar: target/release/libdefold_nvim_sidecar.dylib
               bridge: target/release/defold-nvim-bridge
@@ -44,7 +41,6 @@ jobs:
               bridge: target/release/macos-arm-defold-nvim-bridge
           - name: Windows x86
             os: windows-latest
-            target: x86_64-pc-windows-gnu
             artifact:
               sidecar: target/release/defold_nvim_sidecar.dll
               bridge: target/release/defold-nvim-bridge.exe
@@ -60,9 +56,18 @@ jobs:
           rustflags: ""
 
       - name: build ${{ matrix.config.name }}
+        if: contains(matrix.config.os, 'ubuntu')
         run: |
           cargo install cargo-zigbuild
-          cargo zigbuild --release --target ${{ matrix.config.target }}
+          cargo zigbuild --release --target x86_64-unknown-linux-gnu.2.31
+
+      - name: build ${{ matrix.config.name }}
+        if: contains(matrix.config.os, 'macos')
+        run: MACOSX_DEPLOYMENT_TARGET="13" cargo build --release
+
+      - name: build ${{ matrix.config.name }}
+        if: contains(matrix.config.os, 'windows')
+        run: cargo build --release
 
       - name: prepare ${{ matrix.config.name }}
         run: |
