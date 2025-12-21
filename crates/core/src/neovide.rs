@@ -64,22 +64,28 @@ fn version() -> Result<String> {
 }
 
 pub fn is_update_available() -> Result<bool> {
-    if version_path()?.exists() {
-        // if the version file is younger than a week dont bother
-        let last_modified = version_path()?.metadata()?.modified()?;
-        if last_modified.elapsed()? < Duration::from_hours(24 * 7) {
-            return Ok(false);
-        }
+    if !path()?.exists() {
+        return Ok(true);
+    }
+
+    if !version_path()?.exists() {
+        return Ok(true);
     }
 
     let Ok(v) = version() else {
         return Ok(true);
     };
 
+    tracing::debug!("Neovide Version {v} installed");
+
+    // if the version file is younger than a week dont bother
+    let last_modified = version_path()?.metadata()?.modified()?;
+    if last_modified.elapsed()? < Duration::from_hours(24 * 7) {
+        return Ok(false);
+    }
+
     // re-write the file again so that we only check once a week
     fs::write(version_path()?, &v)?;
-
-    tracing::debug!("Neovide Version {v} installed");
 
     let Some(installed) = Version::from(&v) else {
         return Ok(true);

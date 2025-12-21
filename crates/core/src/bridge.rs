@@ -86,6 +86,10 @@ fn version() -> Result<String> {
 }
 
 fn is_update_available() -> Result<bool> {
+    if !local_path()?.exists() {
+        return Ok(true);
+    }
+
     if !version_path()?.exists() {
         return Ok(true);
     }
