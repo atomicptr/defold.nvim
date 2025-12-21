@@ -120,6 +120,8 @@ pub fn update_or_install() -> Result<PathBuf> {
         use std::os::unix::fs::PermissionsExt;
         use tar::Archive;
 
+        use crate::utils;
+
         let tar = GzDecoder::new(file);
         let mut archive = Archive::new(tar);
         archive.unpack(&parent_dir)?;
@@ -132,7 +134,7 @@ pub fn update_or_install() -> Result<PathBuf> {
 
         fs::set_permissions(&neovide_path, Permissions::from_mode(0o700))?;
 
-        fs::rename(neovide_path, path()?)?;
+        utils::move_file(&neovide_path, &path()?)?;
     }
 
     #[cfg(target_os = "windows")]
@@ -148,7 +150,7 @@ pub fn update_or_install() -> Result<PathBuf> {
             bail!("Neovide doesnt exist after unpacking?");
         }
 
-        fs::rename(neovide_path, path()?)?;
+        utils::move_file(&neovide_path, &path()?)?;
     }
 
     #[cfg(not(any(target_os = "linux", target_os = "windows")))]

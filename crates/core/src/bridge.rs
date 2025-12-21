@@ -6,7 +6,7 @@ use std::{
 };
 use version_compare::Version;
 
-use crate::github;
+use crate::{github, utils};
 
 #[cfg(target_os = "windows")]
 const EXE_SUFFIX: &'static str = ".exe";
@@ -127,7 +127,7 @@ fn install() -> Result<PathBuf> {
 
     tracing::debug!("New Bridge version found {}", release.tag_name);
 
-    fs::rename(downloaded_file, &path)?;
+    utils::move_file(&downloaded_file, &path)?;
     fs::write(version_path()?, release.tag_name)?;
 
     #[cfg(any(target_os = "linux", target_os = "macos"))]

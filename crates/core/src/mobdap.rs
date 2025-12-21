@@ -119,6 +119,8 @@ pub fn update_or_install() -> Result<PathBuf> {
         use std::os::unix::fs::PermissionsExt;
         use tar::Archive;
 
+        use crate::utils;
+
         let tar = GzDecoder::new(file);
         let mut archive = Archive::new(tar);
         archive.unpack(&parent_dir)?;
@@ -131,7 +133,7 @@ pub fn update_or_install() -> Result<PathBuf> {
 
         fs::set_permissions(&mobdap_path, Permissions::from_mode(0o700))?;
 
-        fs::rename(mobdap_path, path()?)?;
+        utils::move_file(&mobdap_path, &path()?)?;
     }
 
     #[cfg(target_os = "windows")]
@@ -147,7 +149,7 @@ pub fn update_or_install() -> Result<PathBuf> {
             bail!("mobdap doesnt exist after unpacking?");
         }
 
-        fs::rename(mobdap_path, path()?)?;
+        utils::move_file(&mobdap_path, &path()?)?;
     }
 
     #[cfg(not(any(target_os = "linux", target_os = "macos", target_os = "windows")))]

@@ -83,3 +83,19 @@ pub fn delete_empty_dirs_from(root_dir: &Path) -> Result<()> {
     }
     Ok(())
 }
+
+// Apparently fs::rename doesnt work on tmpfs
+pub fn move_file(from: &Path, to: &Path) -> Result<()> {
+    if let Err(err) = fs::rename(from, to) {
+        // EXDEV: Cross-device link
+        if err.raw_os_error() == Some(18) {
+            fs::copy(from, to)?;
+            fs::remove_file(from)?;
+            return Ok(());
+        }
+
+        return Err(err.into());
+    }
+
+    Ok(())
+}

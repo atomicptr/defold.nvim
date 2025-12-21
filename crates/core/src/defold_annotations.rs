@@ -8,7 +8,7 @@ use anyhow::{Context, Result, bail};
 use version_compare::Version;
 use zip::ZipArchive;
 
-use crate::{github, project};
+use crate::{github, project, utils};
 
 const OWNER: &str = "astrochili";
 const REPOSITORY: &str = "defold-annotations";
@@ -112,7 +112,7 @@ pub fn install() -> Result<()> {
         );
     }
 
-    fs::rename(defold_api_dir, defold_dir)?;
+    utils::move_file(&defold_api_dir, &defold_dir)?;
     fs::write(version_path()?, release.tag_name)?;
 
     github::clear_downloads(OWNER, REPOSITORY)?;
