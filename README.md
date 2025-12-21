@@ -88,6 +88,11 @@ You're in luck, powershell is surprisingly capable so there is nothing else need
         "mfussenegger/nvim-dap",
     },
 
+    -- This makes sure the native library downloads at installation
+    build = function()
+        require("defold").download()
+    end,
+
     opts = {
         -- config options, see below
     },
@@ -129,6 +134,9 @@ local config = {
         -- extra arguments passed to the `executable` (or neovide)
         extra_arguments = nil,
 
+        -- choose file based sockets (fsock, unix only) or network based sockets (netsock) or use nil for the default
+        socket_type = nil,
+
         -- configure how the terminal is run (optional)
         terminal = {
             -- argument to define how to set the class name of the terminal, usually something like "--class="
@@ -148,11 +156,6 @@ local config = {
 
         -- Add custom arguments to the debugger (default: nil)
         custom_arguments = nil,
-    },
-
-    babashka = {
-        -- Use a custom executable for babashka (default: nil)
-        custom_executable = nil,
     },
 
     -- setup keymaps for Defold actions

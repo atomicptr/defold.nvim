@@ -1,0 +1,41 @@
+[package]
+name = "defold-nvim-core"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+anyhow = { version = "1.0.100", features = ["backtrace"] }
+tar = "0.4.44"
+version-compare = "0.2.1"
+flate2 = "1.1.5"
+zip = "7.0.0"
+dirs = "6.0.0"
+reqwest = { version = "0.12.26", default-features = false, features = [
+    "blocking",
+    "json",
+    "rustls-tls",
+] }
+rust-ini = "0.21.3"
+serde = { version = "1.0.228", features = ["derive"] }
+serde_json = "1.0.145"
+sha3 = "0.10.8"
+strum = { version = "0.27.2", features = ["derive"] }
+tracing = "0.1.43"
+which = "8.0.0"
+url = "2.5.7"
+walkdir = "2.5.0"
+edn-rs = "0.18.0"
+netstat2 = "0.11.2"
+sysinfo = "0.37.2"
+serde_yaml = "0.9.34"
+textwrap = "0.16.2"
+fs_extra = "1.3.0"
+
+[target.'cfg(target_os = "macos")'.dependencies]
+dmg = "0.1.2"
+
+[dev-dependencies]
+pretty_assertions = "1.4.1"
+
+[package.metadata.cargo-machete]
+ignored = ["rust-ini"]

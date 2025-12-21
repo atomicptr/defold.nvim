@@ -1,0 +1,15 @@
+[package]
+name = "defold-nvim-bridge"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+anyhow = { version = "1.0.100", features = ["backtrace"] }
+clap = { version = "4.5.53", features = ["derive"] }
+defold-nvim-core = { path = "../core" }
+dirs = "6.0.0"
+netstat2 = "0.11.2"
+tracing = "0.1.43"
+tracing-appender = "0.2.4"
+tracing-subscriber = "0.3.22"
+which = "8.0.0"

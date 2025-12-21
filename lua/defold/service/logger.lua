@@ -17,7 +17,12 @@ local function level2string(level)
 end
 
 local function log(level, message)
-    local log_file = vim.fs.joinpath(vim.fn.stdpath "data", "defold.nvim", "plugin.log")
+    local osm = require "defold.service.os"
+
+    local logdir = vim.fs.joinpath(osm.cache_dir(), "logs")
+    vim.fn.mkdir(logdir, "p")
+
+    local log_file = vim.fs.joinpath(logdir, "plugin.log")
     local timestamp = os.date "%Y-%m-%d %H:%M:%S"
     local level_str = level2string(level)
 

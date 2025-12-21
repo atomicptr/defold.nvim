@@ -1,0 +1,232 @@
+- name: webview
+  type: table
+  desc: Functions and constants for interacting with webview APIs
+  members:
+
+  - name: create
+    type: function
+    desc: Creates a webview instance.
+          It can show HTML pages as well as evaluate
+           Javascript. The view remains hidden until the first call. There can exist a
+           maximum of 4 webviews at the same time.
+
+           On iOS, the callback will never get a `webview.CALLBACK_RESULT_EVAL_ERROR`,
+           due to the iOS SDK implementation."
+    parameters:
+      - type: function
+        parameters:
+          - name: self
+            type: object
+            desc: The calling script
+
+          - name: webview_id
+            type: number
+            desc: The webview id
+
+          - name: request_id
+            type: number
+            desc: The request id
+
+          - name: type
+            type: enum
+            desc: The type of callback
+
+              - `webview.CALLBACK_RESULT_URL_OK`
+
+              - `webview.CALLBACK_RESULT_URL_ERROR`
+
+              - `webview.CALLBACK_RESULT_URL_LOADING`
+
+              - `webview.CALLBACK_RESULT_EVAL_OK`
+
+              - `webview.CALLBACK_RESULT_EVAL_ERROR`
+
+          - name: data
+            type: table
+            desc: A table holding the data
+            fields:
+              - name: url
+                type: string
+                desc: The url used in the `webview.open()` call. `nil` otherwise.
+              - name: result
+                type: string
+                desc: "Holds the result of either: a failed url open, a successful
+                      eval request or a failed eval. `nil` otherwise."
+
+        name: callback
+        desc: "A callback which receives info about finished requests taking the
+              following parameters:"
+    return:
+      type: number
+      desc: The id number of the webview
+
+    examples:
+      - desc: |-
+                 ```lua
+                 local function webview_callback(self, webview_id, request_id, type, data)
+                     if type == webview.CALLBACK_RESULT_URL_OK then
+                         -- the page is now loaded, let's show it
+                         webview.set_visible(webview_id, 1)
+                     elseif type == webview.CALLBACK_RESULT_URL_ERROR then
+                         print("Failed to load url: " .. data["url"])
+                         print("Error: " .. data["error"])
+                     elseif type == webview.CALLBACK_RESULT_URL_LOADING then
+                         -- a page is loading
+                         -- return false to prevent it from loading
+                         -- return true or nil to continue loading the page
+                         if data.url ~= "https://www.defold.com/" then
+                             return false
+                         end
+                     elseif type == webview.CALLBACK_RESULT_EVAL_OK then
+                         print("Eval ok. Result: " .. data['result'])
+                     elseif type == webview.CALLBACK_RESULT_EVAL_ERROR then
+                         print("Eval not ok. Request # " .. request_id)
+                     end
+                 end
+                 local webview_id = webview.create(webview_callback)
+                 ```
+
+  - name: destroy
+    type: function
+    desc: Destroys an instance of a webview.
+    parameters:
+      - name: webview_id
+        type: number
+        desc: The webview id (returned by the `webview.create()` call)
+
+  - name: open
+    type: function
+    desc: Opens a web page in the webview, using an URL.
+          Once the request is done, the callback (registered in `webview.create()`) is invoked.
+    parameters:
+      - name: webview_id
+        type: number
+        desc: The webview id
+      - name: url
+        type: string
+        desc: The URL to open
+      - name: options
+        type: table
+        desc: "A table of options for the request. Currently it holds these options:"
+        fields:
+          - name: hidden
+            type: boolean
+            desc: If true, the webview will stay hidden (default=false)
+          - name: headers
+            type: table
+            desc: A table of header keys and values
+          - name: transparent
+            type: boolean
+            desc: If true, the webview background will be transparent (default=false)
+    examples:
+      - desc: |-
+                 ```lua
+                 local request_id = webview.open(webview_id, "http://www.defold.com", {hidden = true})
+                 ```
+
+  - name: open_raw
+    type: function
+    desc: Opens a web page in the webview, using HTML data.
+          Once the request is done, the callback (registered in `webview.create()`) is invoked.
+    parameters:
+      - name: webview_id
+        type: number
+        desc: The webview id
+      - name: html
+        type: string
+        desc: The HTML data to display
+      - name: options
+        type: table
+        desc: "A table of options for the request. See `webview.open()`"
+    examples:
+      - desc: |-
+                 ```lua
+                 local html = sys.load_resource("/main/data/test.html")
+                 local request_id = webview.open_raw(webview_id, html, {hidden = true})
+                 ```
+
+  - name: eval
+    type: function
+    desc: Evaluates JavaScript within the context of the currently loaded page (if any).
+          Once the request is done, the callback (registered in `webview.create()`) is invoked. The callback will get the result in the `data["result"]` field.
+    parameters:
+      - name: webview_id
+        type: number
+        desc: The webview id
+      - name: code
+        type: string
+        desc: The JavaScript code to evaluate
+    return:
+      type: number
+      desc: The id number of the request
+    examples:
+      - desc: |-
+                 ```lua
+                 local request_id = webview.eval(webview_id, "GetMyFormData()")
+                 ```
+
+  - name: set_transparent
+    type: function
+    desc: Set transparency of webview background
+    parameters:
+      - name: webview_id
+        type: number
+        desc: The webview id
+      - name: transparent
+        type: boolean
+        desc: If `true`, the webview background becomes transparent, otherwise opaque.
+
+  - name: set_visible
+    type: function
+    desc: Shows or hides a webview
+    parameters:
+      - name: webview_id
+        type: number
+        desc: The webview id
+      - name: visible
+        type: number
+        desc: If `0`, hides the webview. If non zero, shows the view
+
+  - name: is_visible
+    type: function
+    desc: Returns the visibility state of the webview.
+    parameters:
+      - name: webview_id
+        type: number
+        desc: The webview id
+    return:
+      type: number
+      desc: Returns `0` if not visible, `1` if it is visible
+
+  - name: set_position
+    type: function
+    desc: Sets the position and size of the webview
+    parameters:
+      - name: webview_id
+        type: number
+        desc: The webview id
+      - name: x
+        type: number
+        desc: The x position of the webview
+      - name: y
+        type: number
+        desc: The y position of the webview
+      - name: width
+        type: number
+        desc: The width of the webview (-1 to match screen width)
+      - name: height
+        type: number
+        desc: The height of the webview (-1 to match screen height)
+
+#*****************************************************************************************************
+
+  - name: CALLBACK_RESULT_URL_OK
+    type: number
+  - name: CALLBACK_RESULT_URL_ERROR
+    type: number
+  - name: CALLBACK_RESULT_URL_LOADING
+    type: number
+  - name: CALLBACK_RESULT_EVAL_OK
+    type: number
+  - name: CALLBACK_RESULT_EVAL_ERROR
+    type: number

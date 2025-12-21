@@ -1,44 +1,42 @@
 local M = {}
 
 ---List all available Defold commands
+---@param port integer|nil
 ---@return table|nil
-function M.list_commands()
-    local babashka = require "defold.service.babashka"
+function M.list_commands(port)
     local log = require "defold.service.logger"
+    local sidecar = require "defold.sidecar"
 
-    local res = babashka.run_task_json "list-commands"
+    local ok, res = pcall(sidecar.list_commands, port)
 
-    if not res then
-        log.error "Could not fetch commands from Defold, maybe the editor isn't running?"
+    if not ok then
+        log.error(string.format("Could not fetch commands from Defold, because: %s", res))
         return nil
     end
 
-    if res.error then
-        log.error(string.format("Could not fetch commands from Defold, because: %s", res.error))
-        return nil
-    end
-
+    ---@cast res table<string, string>
     return res
 end
 
 ---Sends a command to the Defold editor
+---@param port integer|nil
 ---@param command string
 ---@param dont_report_error boolean|nil
-function M.send_command(command, dont_report_error)
-    local babashka = require "defold.service.babashka"
+function M.send_command(port, command, dont_report_error)
     local log = require "defold.service.logger"
+    local sidecar = require "defold.sidecar"
 
-    local res = babashka.run_task_json("send-command", { command })
+    local _, err = pcall(sidecar.send_command, port, command)
 
-    if res.status == 202 then
+    if not err then
         return
     end
 
-    if dont_report_error or false then
+    if dont_report_error then
         return
     end
 
-    log.error(string.format("Could execute comannd '%s', because: %s", command, res.error or "Something went wrong!"))
+    log.error(string.format("Could not execute comannd '%s', because: %s", command, err or "Something went wrong!"))
 end
 
 return M

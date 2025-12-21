@@ -1,5 +1,8 @@
 local M = {}
 
+local user_agent =
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36"
+
 ---@param command string
 ---@return string
 function M.exec(command)
@@ -20,7 +23,6 @@ end
 function M.name()
     local os_name = vim.loop.os_uname().sysname:lower()
 
-    -- babashka uses macos and not darwin, so we'll do the same
     if os_name == "darwin" then
         return "macos"
     elseif string.find(os_name, "windows") then
@@ -30,8 +32,22 @@ function M.name()
     return os_name
 end
 
+---Test if the OS is Linux
+---@return boolean
+function M.is_linux()
+    return M.name() == "linux"
+end
+
+---Test if the OS is Windows
+---@return boolean
 function M.is_windows()
     return M.name() == "windows"
+end
+
+---Test if the OS is MacOS
+---@return boolean
+function M.is_macos()
+    return M.name() == "macos"
 end
 
 function M.architecture()
@@ -55,21 +71,53 @@ function M.download(url, to_path)
     log.debug(string.format("Downloading '%s' to '%s'", url, to_path))
 
     if M.is_windows() then
-        M.exec(string.format('powershell -Command "Invoke-WebRequest -Uri %s -OutFile %s"', url, to_path))
+        M.exec(
+            string.format(
+                'powershell -Command "Invoke-WebRequest -Uri \\"%s\\" -UserAgent \\"%s\\" -OutFile \\"%s\\""',
+                url,
+                user_agent,
+                to_path
+            )
+        )
         return
     end
 
     if M.command_exists "curl" then
-        M.exec(string.format("curl -L -s -o '%s' %s", to_path, url))
+        M.exec(string.format("curl -L -s --user-agent '%s' -o '%s' %s", user_agent, to_path, url))
         return
     end
 
     if M.command_exists "wget" then
-        M.exec(string.format("wget -q -O '%s' %s", to_path, url))
+        M.exec(string.format("wget -q --user-agent '%s' -O '%s' %s", user_agent, to_path, url))
         return
     end
 
     log.error "Could not find a command to download something like 'curl', 'wget' or 'powershell'"
+end
+
+---Fetch json via url and return it as a lua table. Returns nil on error
+---@param url string
+---@return table|nil
+function M.fetch_json(url)
+    local log = require "defold.service.logger"
+
+    log.debug(string.format("Fetching JSON from '%s'", url))
+
+    local tmp_path = os.tmpname()
+    M.download(url, tmp_path)
+
+    local file = io.open(tmp_path, "r")
+    if not file then
+        log.error "Failed to open downloaded json file"
+        os.remove(tmp_path)
+        return nil
+    end
+
+    local data = file:read "*a"
+    file:close()
+    os.remove(tmp_path)
+
+    return vim.json.decode(data)
 end
 
 ---Move file from location a to b
@@ -116,8 +164,83 @@ function M.plugin_root()
     end
 
     local res = vim.fs.dirname(vim.fs.dirname(vim.fs.dirname(vim.fs.dirname(string.sub(script_path, 2)))))
-    log.debug("Plugin root: " .. res)
     return res
+end
+
+---Returns `Data` directory
+---@return string
+function M.data_dir()
+    if M.is_linux() then
+        if vim.env.XDG_DATA_HOME then
+            local dir = vim.fs.joinpath(vim.env.XDG_DATA_HOME, "defold.nvim")
+            vim.fn.mkdir(dir, "p")
+            return dir
+        end
+    end
+
+    local dir = vim.fs.joinpath(vim.fn.stdpath "data", "defold.nvim")
+    vim.fn.mkdir(dir, "p")
+    return dir
+end
+
+---Returns `Cache` directory
+---@return string
+function M.cache_dir()
+    if M.is_linux() then
+        if vim.env.XDG_CACHE_HOME then
+            local dir = vim.fs.joinpath(vim.env.XDG_CACHE_HOME, "defold.nvim")
+            vim.fn.mkdir(dir, "p")
+            return dir
+        end
+    end
+
+    local dir = vim.fs.joinpath(vim.fn.stdpath "cache", "defold.nvim")
+    vim.fn.mkdir(dir, "p")
+    return dir
+end
+
+---Writes (and overwrites if present) `content` to `path`
+---@param path string
+---@param content string
+function M.write(path, content)
+    local file = io.open(path, "w")
+
+    if not file then
+        local log = require "defold.service.logger"
+        log.error(string.format("Could not open file for writing: %s", path))
+        return
+    end
+
+    file:write(content)
+    file:close()
+end
+
+---Checks if a file was updated within `threshold`
+---@param path string
+---@param threshold integer time in seconds
+---@return boolean
+function M.was_updated_within(path, threshold)
+    local stat = vim.uv.fs_stat(path)
+    if not stat then
+        return false -- doesnt exist, wasnt updated
+    end
+
+    local current_time = os.time()
+    local last_modified = stat.mtime.sec
+
+    return (current_time - last_modified) <= threshold
+end
+
+---@param n integer
+---@return integer
+function M.hours(n)
+    return n * 60 * 60
+end
+
+---@param n integer
+---@return integer
+function M.days(n)
+    return n * M.hours(24)
 end
 
 return M
