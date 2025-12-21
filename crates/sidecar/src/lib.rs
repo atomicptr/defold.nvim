@@ -43,6 +43,28 @@ fn defold_nvim_sidecar(lua: &Lua) -> LuaResult<LuaTable> {
             .with(filter)
             .with(file_layer)
             .init();
+
+        std::panic::set_hook(Box::new(|panic_info| {
+            let payload = panic_info.payload();
+            let message = if let Some(s) = payload.downcast_ref::<&str>() {
+                (*s).to_string()
+            } else if let Some(s) = payload.downcast_ref::<String>() {
+                s.clone()
+            } else {
+                "Unknown panic payload".to_string()
+            };
+
+            let location = panic_info.location().map_or_else(
+                || "unknown location".to_string(),
+                |l| format!("{}:{}:{}", l.file(), l.line(), l.column()),
+            );
+
+            tracing::error!(
+                panic_message = %message,
+                panic_location = %location,
+                "SIDECAR PANIC"
+            );
+        }));
     });
 
     match register_exports(lua) {
