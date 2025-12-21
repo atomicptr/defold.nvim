@@ -36,7 +36,7 @@ pub struct TerminalLauncherSettings {
 #[derive(Debug, Deserialize)]
 pub struct LauncherSettings {
     #[serde(rename = "type")]
-    pub launcher_type: LauncherType,
+    pub launcher_type: Option<LauncherType>,
     pub executable: Option<String>,
     pub socket_type: Option<SocketType>,
     pub extra_arguments: Option<Vec<String>>,
@@ -51,8 +51,8 @@ impl LauncherSettings {
 
         args.push("--launcher-type".to_string());
         args.push(match self.launcher_type {
-            LauncherType::Neovide => "neovide".to_string(),
-            LauncherType::Terminal => "terminal".to_string(),
+            Some(LauncherType::Neovide) | None => "neovide".to_string(),
+            Some(LauncherType::Terminal) => "terminal".to_string(),
         });
 
         if let Some(socket_type) = &self.socket_type {
