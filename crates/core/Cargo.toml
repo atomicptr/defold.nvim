@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-anyhow = "1.0.100"
+anyhow = { version = "1.0.100", features = ["backtrace"] }
 tar = "0.4.44"
 version-compare = "0.2.1"
 flate2 = "1.1.5"
