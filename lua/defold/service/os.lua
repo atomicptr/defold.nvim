@@ -164,7 +164,6 @@ function M.plugin_root()
     end
 
     local res = vim.fs.dirname(vim.fs.dirname(vim.fs.dirname(vim.fs.dirname(string.sub(script_path, 2)))))
-    log.debug("Plugin root: " .. res)
     return res
 end
 

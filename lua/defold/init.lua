@@ -116,13 +116,14 @@ function M.setup(opts)
 
     M.config = vim.tbl_deep_extend("force", default_config, opts or {})
 
-    -- TODO: check if sidecar is available, if not download it (which shouldnt be necessary with some pkg managers)
-
     if M.config.debug then
         M.config.launcher.debug = true
 
         local sidecar = require "defold.sidecar"
-        sidecar.set_log_level "debug"
+        local ok, err = pcall(sidecar.set_log_level, "debug")
+        if not ok then
+            log.error(string.format("Could not setup sidecar: %s", err))
+        end
     end
 
     -- add setup defold command
