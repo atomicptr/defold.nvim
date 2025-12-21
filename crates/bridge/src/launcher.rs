@@ -50,6 +50,13 @@ impl Launcher {
                 .collect(),
         )
     }
+
+    fn filter_params<F>(self, f: F) -> Self
+    where
+        F: Fn(&String) -> bool,
+    {
+        Self(self.0, self.1.into_iter().filter(|s| f(s)).collect())
+    }
 }
 
 const DEFAULT_TERMINALS: [(&str, &str, &str); 5] = [
@@ -417,7 +424,7 @@ pub fn run(
     let launcher = if let Some(line) = line {
         launcher.apply_var(VAR_LINE, &format!("+{line}"))
     } else {
-        launcher
+        launcher.filter_params(|s| s != VAR_LINE)
     };
 
     let launcher = launcher.apply_var(VAR_FILE, file_str);
