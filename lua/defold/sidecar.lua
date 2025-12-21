@@ -1,3 +1,5 @@
+local min_version = "0.0.0"
+
 local github_owner = "atomicptr"
 local github_repository = "defold.nvim"
 local github_file_name = {
@@ -35,6 +37,34 @@ local function lib_extension()
     end
 end
 
+---@return string
+local function version_path()
+    local os = require "defold.service.os"
+
+    local meta_dir = vim.fs.joinpath(os.data_dir(), "meta")
+    vim.fn.mkdir(meta_dir, "p")
+
+    return vim.fs.joinpath(meta_dir, "sidecar_version")
+end
+
+---@return string|nil
+local function version()
+    local os = require "defold.service.os"
+    if not os.file_exists(version_path()) then
+        return nil
+    end
+
+    local file = io.open(version_path(), "r")
+    if not file then
+        return nil
+    end
+
+    local data = file:read "*a"
+    file:close()
+
+    return data
+end
+
 ---Download latest sidecar release, install it at DATA_DIR/lib and return the lib path
 ---@return string|nil
 local function download_release()
@@ -59,17 +89,15 @@ local function download_release()
 
     os.move(file, vim.fs.joinpath(lib_dir, lib_name() .. lib_extension()))
 
-    local meta_dir = vim.fs.joinpath(os.data_dir(), "meta")
-    vim.fn.mkdir(meta_dir, "p")
-
     -- write version to file
-    os.write(vim.fs.joinpath(meta_dir, "sidecar_version"), release.tag_name)
+    os.write(version_path(), release.tag_name)
 
     return lib_dir
 end
 
 local function find_rust_lib_rootdir()
     local os = require "defold.service.os"
+    local log = require "defold.service.logger"
 
     local file_name = string.format("defold_nvim_sidecar%s", lib_extension())
     local file_name_alt = string.format("libdefold_nvim_sidecar%s", lib_extension())
@@ -94,7 +122,41 @@ local function find_rust_lib_rootdir()
         os.file_exists(vim.fs.joinpath(lib_dir, file_name))
         or os.file_exists(vim.fs.joinpath(lib_dir, file_name_alt))
     then
-        -- TODO: check if version is outdated, if yes replace
+        local curr_version = version()
+
+        if not curr_version then
+            return download_release()
+        end
+
+        -- if current version is lower than the minimum version WE GOTTA UPDATE
+        if vim.version.cmp(curr_version, min_version) < 0 then
+            log.info(
+                string.format("Sidecar minimum version %s exceeds our installed version %s", min_version, curr_version)
+            )
+            return download_release()
+        end
+
+        -- if the version path wasnt updated for a week dont check for new one
+        if os.was_updated_within(version_path(), os.days(7)) then
+            return lib_dir
+        end
+
+        local github = require "defold.service.github"
+        local release = github.fetch_release(github_owner, github_repository)
+
+        if not release then
+            return lib_dir
+        end
+
+        -- if new release
+        if vim.version.cmp(curr_version, release.tag_name) < 0 then
+            log.info(string.format("Sidecar new release %s (current %s)", release.tag_name, curr_version))
+            return download_release()
+        end
+
+        -- overwrite file again to delay next check
+        os.write(version_path(), release.tag_name)
+
         return lib_dir
     else
         -- and if that also doesnt exist... download it

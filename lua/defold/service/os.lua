@@ -215,4 +215,32 @@ function M.write(path, content)
     file:close()
 end
 
+---Checks if a file was updated within `threshold`
+---@param path string
+---@param threshold integer time in seconds
+---@return boolean
+function M.was_updated_within(path, threshold)
+    local stat = vim.uv.fs_stat(path)
+    if not stat then
+        return false -- doesnt exist, wasnt updated
+    end
+
+    local current_time = os.time()
+    local last_modified = stat.mtime.sec
+
+    return (current_time - last_modified) <= threshold
+end
+
+---@param n integer
+---@return integer
+function M.hours(n)
+    return n * 60 * 60
+end
+
+---@param n integer
+---@return integer
+function M.days(n)
+    return n * M.hours(24)
+end
+
 return M

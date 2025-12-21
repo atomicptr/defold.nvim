@@ -8,6 +8,8 @@ use version_compare::Version;
 
 use crate::{github, utils};
 
+const MIN_VERSION: &str = "0.0.0";
+
 #[cfg(target_os = "windows")]
 const EXE_SUFFIX: &'static str = ".exe";
 
@@ -84,26 +86,36 @@ fn version() -> Result<String> {
 }
 
 fn is_update_available() -> Result<bool> {
-    if version_path()?.exists() {
-        // if the version file is younger than a week dont bother
-        let last_modified = version_path()?.metadata()?.modified()?;
-        if last_modified.elapsed()? < Duration::from_hours(24 * 7) {
-            return Ok(false);
-        }
+    if !version_path()?.exists() {
+        return Ok(true);
     }
 
     let Ok(v) = version() else {
         return Ok(true);
     };
 
-    // re-write the file again so that we only check once a week
-    fs::write(version_path()?, &v)?;
-
     tracing::debug!("Bridge Version {v} installed");
 
     let Some(installed) = Version::from(&v) else {
+        tracing::debug!("Couldnt parse version");
         return Ok(true);
     };
+
+    // if min version is higher, force update
+    let min_version = Version::from(MIN_VERSION).expect("cant parse min version");
+    if installed < min_version {
+        tracing::debug!("Bridge Min Version {MIN_VERSION} exceeded (current {v})");
+        return Ok(true);
+    }
+
+    // if the version file is younger than a week dont bother
+    let last_modified = version_path()?.metadata()?.modified()?;
+    if last_modified.elapsed()? < Duration::from_hours(24 * 7) {
+        return Ok(false);
+    }
+
+    // re-write the file again so that we only check once a week
+    fs::write(version_path()?, &v)?;
 
     let release = github::fetch_release(OWNER, REPOSITORY)?;
 
@@ -120,7 +132,8 @@ fn install() -> Result<PathBuf> {
     let path = local_path()?;
 
     if path.exists() && !is_update_available()? {
-        return local_path();
+        tracing::debug!("No update available for {}", path.display());
+        return Ok(path);
     }
 
     let (downloaded_file, release) = github::download_release(OWNER, REPOSITORY, NAME)?;
