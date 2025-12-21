@@ -72,13 +72,7 @@ function M.register_nvim_dap(editor_port_fn)
             end,
 
             sourcedirs = function()
-                local libs = { project.defold_api_path() }
-
-                for _, lib in ipairs(project.dependency_api_paths()) do
-                    table.insert(libs, lib)
-                end
-
-                return libs
+                return project.dependency_api_paths()
             end,
 
             -- TODO: make this configurable or better read it from the collection if possible
