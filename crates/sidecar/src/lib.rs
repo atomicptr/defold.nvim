@@ -9,6 +9,7 @@ use std::{
     path::absolute,
     sync::OnceLock,
 };
+use tracing::instrument;
 use tracing::level_filters::LevelFilter;
 use tracing_subscriber::layer::SubscriberExt;
 use tracing_subscriber::reload;
@@ -70,7 +71,7 @@ fn defold_nvim_sidecar(lua: &Lua) -> LuaResult<LuaTable> {
     match register_exports(lua) {
         Ok(exports) => Ok(exports),
         Err(err) => {
-            tracing::error!("{lua:?}");
+            tracing::error!("Register Error: {lua:?}");
             Err(err)
         }
     }
@@ -107,6 +108,7 @@ fn register_exports(lua: &Lua) -> LuaResult<LuaTable> {
 }
 
 #[allow(clippy::needless_pass_by_value)]
+#[instrument(level = "debug", err(Debug), skip_all)]
 fn set_log_level(_lua: &Lua, level: String) -> LuaResult<()> {
     let new_filter = match level.to_lowercase().as_str() {
         "debug" => LevelFilter::DEBUG,
@@ -125,34 +127,40 @@ fn set_log_level(_lua: &Lua, level: String) -> LuaResult<()> {
     Ok(())
 }
 
+#[instrument(level = "debug", err(Debug), skip_all)]
 fn read_game_project(lua: &Lua, path: String) -> LuaResult<Value> {
     let game_project = GameProject::load_from_path(&absolute(path)?)?;
     let val = lua.to_value(&game_project)?;
     Ok(val)
 }
 
+#[instrument(level = "debug", err(Debug), skip_all)]
 fn find_editor_port(_lua: &Lua, _: ()) -> LuaResult<u16> {
     let port = editor::find_port().context("could not find port")?;
     Ok(port)
 }
 
 #[allow(clippy::unnecessary_wraps)]
+#[instrument(level = "debug", err(Debug), skip_all)]
 fn is_editor_port(_lua: &Lua, port: u16) -> LuaResult<bool> {
     Ok(editor::is_editor_port(port))
 }
 
+#[instrument(level = "debug", err(Debug), skip_all)]
 fn list_commands(lua: &Lua, port: Option<u16>) -> LuaResult<LuaTable> {
     let commands = editor::list_commands(port)?;
 
     lua.create_table_from(commands)
 }
 
+#[instrument(level = "debug", err(Debug), skip_all)]
 fn send_command(_lua: &Lua, (port, cmd): (Option<u16>, String)) -> LuaResult<()> {
     editor::send_command(port, &cmd)?;
 
     Ok(())
 }
 
+#[instrument(level = "debug", err(Debug), skip_all)]
 fn set_default_editor(
     lua: &Lua,
     (plugin_root, launcher_settings): (String, LuaValue),
@@ -163,6 +171,7 @@ fn set_default_editor(
     Ok(())
 }
 
+#[instrument(level = "debug", err(Debug), skip_all)]
 fn find_bridge_path(_lua: &Lua, plugin_root: String) -> LuaResult<String> {
     let path = bridge::path(&absolute(plugin_root)?)?;
 
@@ -172,18 +181,21 @@ fn find_bridge_path(_lua: &Lua, plugin_root: String) -> LuaResult<String> {
         .to_string())
 }
 
+#[instrument(level = "debug", err(Debug), skip_all)]
 fn focus_neovim(_lua: &Lua, game_root: String) -> LuaResult<()> {
     focus::focus_neovim(absolute(game_root)?)?;
 
     Ok(())
 }
 
+#[instrument(level = "debug", err(Debug), skip_all)]
 fn focus_game(_lua: &Lua, game_root: String) -> LuaResult<()> {
     focus::focus_game(absolute(game_root)?)?;
 
     Ok(())
 }
 
+#[instrument(level = "debug", err(Debug), skip_all)]
 fn mobdap_install(_lua: &Lua, _: ()) -> LuaResult<String> {
     let path = mobdap::update_or_install()?;
     Ok(path
@@ -192,6 +204,7 @@ fn mobdap_install(_lua: &Lua, _: ()) -> LuaResult<String> {
         .to_string())
 }
 
+#[instrument(level = "debug", err(Debug), skip_all)]
 fn install_dependencies(
     _lua: &Lua,
     (game_root, force_redownload): (String, Option<bool>),
@@ -200,6 +213,7 @@ fn install_dependencies(
     Ok(())
 }
 
+#[instrument(level = "debug", err(Debug), skip_all)]
 fn list_dependency_dirs(_lua: &Lua, game_root: String) -> LuaResult<Vec<String>> {
     let deps = project::list_dependency_dirs(&absolute(game_root)?)?
         .into_iter()

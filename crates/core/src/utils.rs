@@ -6,10 +6,7 @@ use std::{
 };
 
 use anyhow::{Context, Result};
-use fs_extra::{
-    dir::{self, move_dir},
-    file,
-};
+use fs_extra::{dir, file};
 use sha3::{Digest, Sha3_256};
 use url::Url;
 use walkdir::WalkDir;

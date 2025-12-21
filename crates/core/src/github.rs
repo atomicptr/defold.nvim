@@ -26,10 +26,12 @@ pub struct Release {
 pub fn fetch_release(owner: &str, repo: &str) -> Result<Release> {
     let url = format!("https://api.github.com/repos/{owner}/{repo}/releases/latest");
 
+    tracing::debug!("Github: Fetching release {owner}/{repo}");
+
     if let Some(str) = cache::get(&url)
-        && let Ok(res) = serde_json::from_str(&str)
+        && let Ok(res) = serde_json::from_str::<Release>(&str)
     {
-        tracing::debug!("Serving {url} from cache");
+        tracing::debug!("Github: Found {}, serving from cache", res.tag_name);
         return Ok(res);
     }
 
@@ -37,6 +39,8 @@ pub fn fetch_release(owner: &str, repo: &str) -> Result<Release> {
     let res = client.get(&url).header("User-Agent", USER_AGENT).send()?;
 
     let release: Release = res.json()?;
+
+    tracing::debug!("Github: Found {}", release.tag_name);
 
     cache::set(&url, &serde_json::to_string(&release)?)?;
 
