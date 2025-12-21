@@ -6,6 +6,10 @@ use std::{
 };
 
 use anyhow::{Context, Result};
+use fs_extra::{
+    dir::{self, move_dir},
+    file,
+};
 use sha3::{Digest, Sha3_256};
 use url::Url;
 use walkdir::WalkDir;
@@ -86,15 +90,10 @@ pub fn delete_empty_dirs_from(root_dir: &Path) -> Result<()> {
 
 // Apparently fs::rename doesnt work on tmpfs
 pub fn move_file(from: &Path, to: &Path) -> Result<()> {
-    if let Err(err) = fs::rename(from, to) {
-        // EXDEV: Cross-device link
-        if err.raw_os_error() == Some(18) {
-            fs::copy(from, to)?;
-            fs::remove_file(from)?;
-            return Ok(());
-        }
-
-        return Err(err.into());
+    if from.is_dir() {
+        dir::move_dir(from, to, &dir::CopyOptions::new().overwrite(true))?;
+    } else {
+        file::move_file(from, to, &file::CopyOptions::new().overwrite(true))?;
     }
 
     Ok(())

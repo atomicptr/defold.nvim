@@ -29,6 +29,7 @@ netstat2 = "0.11.2"
 sysinfo = "0.37.2"
 serde_yaml = "0.9.34"
 textwrap = "0.16.2"
+fs_extra = "1.3.0"
 
 [dev-dependencies]
 pretty_assertions = "1.4.1"
