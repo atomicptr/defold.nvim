@@ -20,7 +20,6 @@ mod plugin_config;
 mod utils;
 
 #[derive(Parser, Debug)]
-// #[command(version)]
 struct Args {
     #[arg(long = "debug")]
     debug: bool,

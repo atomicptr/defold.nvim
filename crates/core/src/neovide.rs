@@ -16,8 +16,11 @@ const REPOSITORY: &str = "neovide";
 #[cfg(target_os = "linux")]
 const NAME: &str = "neovide-linux-x86_64.tar.gz";
 
-#[cfg(target_os = "macos")]
-const NAME: &'static str = "not supported";
+#[cfg(all(target_os = "macos", target_arch = "x86_64"))]
+const NAME: &str = "Neovide-x86_64-apple-darwin.dmg";
+
+#[cfg(all(target_os = "macos", target_arch = "aarch64"))]
+const NAME: &str = "Neovide-aarch64-apple-darwin.dmg";
 
 #[cfg(target_os = "windows")]
 const NAME: &'static str = "neovide.exe.zip";
@@ -61,12 +64,6 @@ fn version() -> Result<String> {
 }
 
 pub fn is_update_available() -> Result<bool> {
-    // macos is unsupported
-    if cfg!(target_os = "macos") {
-        tracing::debug!("MacOS is not supported, no update available");
-        return Ok(false);
-    }
-
     if version_path()?.exists() {
         // if the version file is younger than a week dont bother
         let last_modified = version_path()?.metadata()?.modified()?;
@@ -152,9 +149,18 @@ pub fn update_or_install() -> Result<PathBuf> {
         utils::move_file(&neovide_path, &path()?)?;
     }
 
-    #[cfg(not(any(target_os = "linux", target_os = "windows")))]
+    #[cfg(target_os = "macos")]
     {
-        bail!("Unsupported operating system");
+        use dmg::Attach;
+        use std::os::unix::fs::PermissionsExt;
+
+        let info = Attach::new(&downloaded_file).with()?;
+
+        let neovide_path = info.mount_point.join("Neovide.app/Contents/MacOS/neovide");
+
+        fs::copy(neovide_path, target_path)?;
+
+        fs::set_permissions(&target_path, Permissions::from_mode(0o700))?;
     }
 
     fs::write(version_path()?, release.tag_name)?;
