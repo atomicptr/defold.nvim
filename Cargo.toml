@@ -10,8 +10,3 @@ pedantic = "warn"
 
 [workspace.lints.rust]
 too-many-lines = "allow"
-
-[profile.release]
-strip = true
-opt-level = 3
-lto = true
