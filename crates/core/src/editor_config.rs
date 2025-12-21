@@ -156,7 +156,12 @@ pub fn set_default_editor(plugin_root: &Path, launcher_settings: &LauncherSettin
         bail!("plugin root '{}' could not be found", plugin_root.display());
     }
 
-    let config_dir = dirs::config_dir().context("could not find config dir")?;
+    let config_dir = if cfg!(target_os = "macos") {
+        // on macos defold stores prefs.editor_settings in ~/Library/Preferences
+        dirs::preference_dir().context("could not find pref dir")?
+    } else {
+        dirs::config_dir().context("could not find config dir")?
+    };
     let path = config_dir.join("Defold").join("prefs.editor_settings");
 
     if !path.exists() {
