@@ -41,23 +41,23 @@ enum Commands {
         #[arg(long = "executable")]
         executable: Option<String>,
 
-        #[arg(long = "extra-arguments", value_delimiter = ' ', num_args = 0..)]
-        extra_arguments: Option<Vec<String>>,
-
         #[arg(long = "terminal-class-argument")]
         terminal_class_argument: Option<String>,
 
         #[arg(long = "terminal-run-argument")]
         terminal_run_argument: Option<String>,
 
-        #[clap(value_name = "GAME_ROOT_DIR", index = 1)]
+        #[clap(value_name = "GAME_ROOT_DIR")]
         game_root_dir: String,
 
-        #[clap(value_name = "FILE", index = 2)]
+        #[clap(value_name = "FILE")]
         file: String,
 
-        #[clap(value_name = "LINE", index = 3)]
+        #[clap(value_name = "LINE")]
         line: Option<usize>,
+
+        #[arg(last = true)]
+        extra_arguments: Option<Vec<String>>,
     },
     /// Focus the currently open instance of Neovim
     FocusNeovim {
@@ -126,10 +126,10 @@ fn main() -> Result<()> {
     tracing_subscriber::fmt()
         .with_file(true)
         .with_line_number(true)
-        .with_max_level(if args.as_ref().is_some_and(|args| args.debug) {
-            Level::DEBUG
-        } else {
-            Level::INFO
+        .with_max_level(match &args {
+            Some(args) if args.debug => Level::DEBUG,
+            Some(_) => Level::INFO,
+            None => Level::DEBUG,
         })
         .with_writer(logfile)
         .with_ansi(false)
@@ -158,7 +158,7 @@ fn main() -> Result<()> {
             file,
             line,
         } => launcher::run(
-            PluginConfig {
+            &PluginConfig {
                 launcher_type,
                 socket_type,
                 executable,

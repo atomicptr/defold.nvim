@@ -161,7 +161,7 @@ fn compile_table(out: &mut String, table: &Value, parents: &Vec<&Value>) -> Resu
             table.name.clone().expect("table must have name")
         )?;
     } else {
-        writeln!(out, "{} = {{}}", table.fully_qualified_name(&parents)?)?;
+        writeln!(out, "{} = {{}}", table.fully_qualified_name(parents)?)?;
     }
 
     if let Some(members) = &table.members {
@@ -299,17 +299,17 @@ fn compile_function(out: &mut String, function: &Value, parents: &Vec<&Value>) -
         String::new()
     };
 
-    if !parents.is_empty() {
+    if parents.is_empty() {
         writeln!(
             out,
             "function {}({params}) end",
-            function.fully_qualified_name(&parents)?,
+            function.name.clone().unwrap()
         )?;
     } else {
         writeln!(
             out,
             "function {}({params}) end",
-            function.name.clone().unwrap()
+            function.fully_qualified_name(parents)?,
         )?;
     }
 

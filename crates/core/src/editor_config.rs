@@ -46,7 +46,7 @@ pub struct LauncherSettings {
 
 impl LauncherSettings {
     #[must_use]
-    pub fn bridge_cli_args(&self) -> Vec<String> {
+    pub fn bridge_pre_cli_args(&self) -> Vec<String> {
         let mut args = Vec::new();
 
         args.push("--launcher-type".to_string());
@@ -68,13 +68,6 @@ impl LauncherSettings {
             args.push(executable.clone());
         }
 
-        if let Some(extra_args) = &self.extra_arguments {
-            args.push("--extra-arguments".to_string());
-            for arg in extra_args {
-                args.push(arg.clone());
-            }
-        }
-
         if let Some(terminal) = &self.terminal {
             if let Some(class_arg) = &terminal.class_argument {
                 args.push("--terminal-class-argument".to_string());
@@ -84,6 +77,20 @@ impl LauncherSettings {
             if let Some(run_arg) = &terminal.run_argument {
                 args.push("--terminal-run-argument".to_string());
                 args.push(run_arg.clone());
+            }
+        }
+
+        args
+    }
+
+    #[must_use]
+    pub fn bridge_post_cli_args(&self) -> Vec<String> {
+        let mut args = Vec::new();
+
+        if let Some(extra_args) = &self.extra_arguments {
+            args.push("--".to_string());
+            for arg in extra_args {
+                args.push(arg.clone());
             }
         }
 
@@ -118,7 +125,8 @@ fn create_runner_script(
 
     let script_path = dir.join(format!("run.{SCRIPT_EXT}"));
     let bridge_path = bridge::path(plugin_root)?;
-    let launch_args = launcher_settings.bridge_cli_args().join(" ");
+    let launch_pre_args = launcher_settings.bridge_pre_cli_args().join(" ");
+    let launch_post_args = launcher_settings.bridge_post_cli_args().join(" ");
 
     fs::write(
         &script_path,
@@ -129,7 +137,7 @@ fn create_runner_script(
                     .to_str()
                     .context("could not convert bridge path")?,
             )
-            .replace("{LAUNCH_ARGS}", &launch_args)
+            .replace("{LAUNCH_PRE_ARGS}", &launch_pre_args)
             .replace(
                 "{DEBUG_FLAG}",
                 if let Some(debug) = launcher_settings.debug
@@ -139,7 +147,8 @@ fn create_runner_script(
                 } else {
                     ""
                 },
-            ),
+            )
+            .replace("{LAUNCH_POST_ARGS}", &launch_post_args),
     )?;
 
     #[cfg(not(target_os = "windows"))]

@@ -19,7 +19,8 @@ const ERR_TERMINAL_NOT_FOUND: &str = "Could not find any suitable terminal";
 
 const VAR_CLASSNAME: &str = "{CLASSNAME}";
 const VAR_ADDRESS: &str = "{ADDR}";
-const VAR_REMOTE_CMD: &str = "{REMOTE_CMD}";
+const VAR_LINE: &str = "{LINE}";
+const VAR_FILE: &str = "{FILE}";
 
 #[derive(Debug)]
 struct Launcher(PathBuf, Vec<String>);
@@ -106,7 +107,8 @@ fn create_launcher(cfg: &PluginConfig, nvim: &String) -> Result<Launcher> {
             args.push(VAR_ADDRESS.to_string());
 
             args.push("--remote".to_string());
-            args.push(VAR_REMOTE_CMD.to_string());
+            args.push(VAR_LINE.to_string());
+            args.push(VAR_FILE.to_string());
 
             Ok(Launcher(executable.clone(), args))
         }
@@ -151,7 +153,8 @@ fn create_launcher(cfg: &PluginConfig, nvim: &String) -> Result<Launcher> {
                 args.push(VAR_ADDRESS.to_string());
 
                 args.push("--remote".to_string());
-                args.push(VAR_REMOTE_CMD.to_string());
+                args.push(VAR_LINE.to_string());
+                args.push(VAR_FILE.to_string());
 
                 Some(Launcher(exe, args))
             } else {
@@ -194,7 +197,8 @@ fn create_launcher(cfg: &PluginConfig, nvim: &String) -> Result<Launcher> {
                     args.push(VAR_ADDRESS.to_string());
 
                     args.push("--remote".to_string());
-                    args.push(VAR_REMOTE_CMD.to_string());
+                    args.push(VAR_LINE.to_string());
+                    args.push(VAR_FILE.to_string());
 
                     return Some(Launcher(path, args));
                 }
@@ -223,7 +227,8 @@ fn create_launcher(cfg: &PluginConfig, nvim: &String) -> Result<Launcher> {
                         args.push(VAR_ADDRESS.to_string());
 
                         args.push("--remote".to_string());
-                        args.push(VAR_REMOTE_CMD.to_string());
+                        args.push(VAR_LINE.to_string());
+                        args.push(VAR_FILE.to_string());
 
                         return Some(Launcher(path, args));
                     }
@@ -260,7 +265,13 @@ fn create_launcher(cfg: &PluginConfig, nvim: &String) -> Result<Launcher> {
     }
 }
 
-fn nvim_open_file_remote(nvim: &str, server: &str, remote_cmd: &str) -> Result<()> {
+fn nvim_open_file_remote(nvim: &str, server: &str, file: &str, line: Option<usize>) -> Result<()> {
+    let remote_cmd = if let Some(line) = line {
+        format!("+{line} {file}")
+    } else {
+        file.to_string()
+    };
+
     tracing::debug!("Open '{remote_cmd}' via socket: {server}");
 
     let out = Command::new(nvim)
@@ -277,7 +288,13 @@ fn nvim_open_file_remote(nvim: &str, server: &str, remote_cmd: &str) -> Result<(
     Ok(())
 }
 
-fn run_fsock(launcher: Launcher, nvim: &str, root_dir: &Path, remote_cmd: &str) -> Result<()> {
+fn run_fsock(
+    launcher: Launcher,
+    nvim: &str,
+    root_dir: &Path,
+    file: &str,
+    line: Option<usize>,
+) -> Result<()> {
     let socket_file = utils::runtime_dir(
         root_dir
             .to_str()
@@ -302,7 +319,8 @@ fn run_fsock(launcher: Launcher, nvim: &str, root_dir: &Path, remote_cmd: &str) 
             socket_file
                 .to_str()
                 .context("could not convert path to string")?,
-            remote_cmd,
+            file,
+            line,
         ) {
             tracing::error!("Failed to communicate with neovim server: {err:?}");
 
@@ -317,7 +335,13 @@ fn run_fsock(launcher: Launcher, nvim: &str, root_dir: &Path, remote_cmd: &str) 
     Ok(())
 }
 
-fn run_netsock(launcher: Launcher, nvim: &str, root_dir: &Path, remote_cmd: &str) -> Result<()> {
+fn run_netsock(
+    launcher: Launcher,
+    nvim: &str,
+    root_dir: &Path,
+    file: &str,
+    line: Option<usize>,
+) -> Result<()> {
     let port_file = utils::runtime_dir(
         root_dir
             .to_str()
@@ -338,7 +362,7 @@ fn run_netsock(launcher: Launcher, nvim: &str, root_dir: &Path, remote_cmd: &str
     if is_port_in_use(port) {
         // if we couldnt communicate with the server despite existing apparently
         // delete it and start a new instance
-        if let Err(err) = nvim_open_file_remote(nvim, &socket, remote_cmd) {
+        if let Err(err) = nvim_open_file_remote(nvim, &socket, file, line) {
             tracing::error!("Failed to communicate with neovim server: {err:?}");
 
             let new_port = utils::find_free_port();
@@ -357,7 +381,7 @@ fn run_netsock(launcher: Launcher, nvim: &str, root_dir: &Path, remote_cmd: &str
 }
 
 pub fn run(
-    plugin_config: PluginConfig,
+    plugin_config: &PluginConfig,
     root_dir: PathBuf,
     file: &Path,
     line: Option<usize>,
@@ -367,7 +391,7 @@ pub fn run(
         .context("could not convert nvim path to string")?
         .to_string();
 
-    let launcher = create_launcher(&plugin_config, &nvim)?;
+    let launcher = create_launcher(plugin_config, &nvim)?;
 
     let launcher = if cfg!(target_os = "linux") {
         launcher.apply_var(
@@ -390,21 +414,22 @@ pub fn run(
 
     let file_str = file.to_str().context("could not convert path to string")?;
 
-    let remote_cmd = match line {
-        Some(line) => format!("+{line} {file_str}"),
-        None => file_str.to_string(),
+    let launcher = if let Some(line) = line {
+        launcher.apply_var(VAR_LINE, &format!("+{line}"))
+    } else {
+        launcher
     };
 
-    let launcher = launcher.apply_var(VAR_REMOTE_CMD, &remote_cmd.clone());
+    let launcher = launcher.apply_var(VAR_FILE, file_str);
 
     match plugin_config.socket_type {
-        Some(SocketType::Fsock) => run_fsock(launcher, &nvim, &root_dir, &remote_cmd)?,
-        Some(SocketType::Netsock) => run_netsock(launcher, &nvim, &root_dir, &remote_cmd)?,
+        Some(SocketType::Fsock) => run_fsock(launcher, &nvim, &root_dir, file_str, line)?,
+        Some(SocketType::Netsock) => run_netsock(launcher, &nvim, &root_dir, file_str, line)?,
         None => {
             if cfg!(target_os = "linux") || cfg!(target_os = "macos") {
-                run_fsock(launcher, &nvim, &root_dir, &remote_cmd)?;
+                run_fsock(launcher, &nvim, &root_dir, file_str, line)?;
             } else {
-                run_netsock(launcher, &nvim, &root_dir, &remote_cmd)?;
+                run_netsock(launcher, &nvim, &root_dir, file_str, line)?;
             }
         }
     }
