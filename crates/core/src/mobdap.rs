@@ -5,6 +5,7 @@ use std::{
 };
 
 use crate::github;
+use crate::utils;
 use anyhow::{Context, Result, bail};
 use version_compare::Version;
 
@@ -118,8 +119,6 @@ pub fn update_or_install() -> Result<PathBuf> {
         use flate2::read::GzDecoder;
         use std::os::unix::fs::PermissionsExt;
         use tar::Archive;
-
-        use crate::utils;
 
         let tar = GzDecoder::new(file);
         let mut archive = Archive::new(tar);
