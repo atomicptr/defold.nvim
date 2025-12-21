@@ -73,7 +73,7 @@ function M.download(url, to_path)
     if M.is_windows() then
         M.exec(
             string.format(
-                'powershell -Command "Invoke-WebRequest -Uri %s -UserAgent "%s" -OutFile %s"',
+                'powershell -Command "Invoke-WebRequest -Uri \\"%s\\" -UserAgent \\"%s\\" -OutFile \\"%s\\""',
                 url,
                 user_agent,
                 to_path
