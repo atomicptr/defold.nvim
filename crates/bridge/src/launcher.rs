@@ -52,7 +52,7 @@ impl Launcher {
 }
 
 const DEFAULT_TERMINALS: [(&str, &str, &str); 5] = [
-    ("alacratty", "--class=", "-e"),
+    ("alacritty", "--class=", "-e"),
     ("foot", "--app-id=", "-e"),
     ("ghostty", "--class=", "-e"),
     ("kitty", "--class=", "-e"),
@@ -91,6 +91,7 @@ fn create_launcher(cfg: &PluginConfig, nvim: &String) -> Result<Launcher> {
             args.push("--neovim-bin".to_string());
             args.push(nvim.clone());
 
+            // only add class on linux
             if cfg!(target_os = "linux") {
                 args.push("--wayland_app_id".to_string());
                 args.push(VAR_CLASSNAME.to_string());
@@ -125,7 +126,10 @@ fn create_launcher(cfg: &PluginConfig, nvim: &String) -> Result<Launcher> {
                     }
                 }
 
-                if let Some(class_arg) = class_arg {
+                // only add class on linux
+                if cfg!(target_os = "linux")
+                    && let Some(class_arg) = class_arg
+                {
                     if class_arg.ends_with('=') {
                         args.push(class_arg.clone() + VAR_CLASSNAME);
                     } else {
@@ -169,11 +173,14 @@ fn create_launcher(cfg: &PluginConfig, nvim: &String) -> Result<Launcher> {
                         .find(|(name, _, _)| *name == exe_name)
                     && let Ok(path) = which(name)
                 {
-                    if class_arg.ends_with('=') {
-                        args.push((*class_arg).to_string() + VAR_CLASSNAME);
-                    } else {
-                        args.push((*class_arg).to_string());
-                        args.push(VAR_CLASSNAME.to_string());
+                    // only add class on linux
+                    if cfg!(target_os = "linux") {
+                        if class_arg.ends_with('=') {
+                            args.push((*class_arg).to_string() + VAR_CLASSNAME);
+                        } else {
+                            args.push((*class_arg).to_string());
+                            args.push(VAR_CLASSNAME.to_string());
+                        }
                     }
 
                     if run_arg.ends_with('=') {
@@ -195,11 +202,14 @@ fn create_launcher(cfg: &PluginConfig, nvim: &String) -> Result<Launcher> {
                 // try finding one of our supported default terminals
                 for (name, class_arg, run_arg) in &DEFAULT_TERMINALS {
                     if let Ok(path) = which(name) {
-                        if class_arg.ends_with('=') {
-                            args.push((*class_arg).to_string() + VAR_CLASSNAME);
-                        } else {
-                            args.push((*class_arg).to_string());
-                            args.push(VAR_CLASSNAME.to_string());
+                        // only add class on linux
+                        if cfg!(target_os = "linux") {
+                            if class_arg.ends_with('=') {
+                                args.push((*class_arg).to_string() + VAR_CLASSNAME);
+                            } else {
+                                args.push((*class_arg).to_string());
+                                args.push(VAR_CLASSNAME.to_string());
+                            }
                         }
 
                         if run_arg.ends_with('=') {
