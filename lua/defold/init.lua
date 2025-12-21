@@ -108,6 +108,10 @@ end
 
 ---@param opts DefoldNvimConfig|nil
 function M.setup(opts)
+    if M.loaded then
+        return
+    end
+
     local log = require "defold.service.logger"
 
     M.config = vim.tbl_deep_extend("force", default_config, opts or {})
