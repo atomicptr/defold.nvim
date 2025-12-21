@@ -213,6 +213,11 @@ function M.editor_port()
     return -1
 end
 
+---Makes sure the native library `sidecar` gets loaded
+function M.download()
+    require "defold.sidecar"
+end
+
 function M.load_plugin()
     if M.loaded then
         return

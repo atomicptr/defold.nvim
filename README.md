@@ -88,7 +88,10 @@ You're in luck, powershell is surprisingly capable so there is nothing else need
         "mfussenegger/nvim-dap",
     },
 
-    version = "*",
+    -- This makes sure the native library downloads at installation
+    build = function()
+        require("defold").download()
+    end,
 
     opts = {
         -- config options, see below
