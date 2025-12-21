@@ -92,7 +92,15 @@ pub fn move_file(from: &Path, to: &Path) -> Result<()> {
     }
 
     if from.is_dir() {
-        dir::move_dir(from, to, &dir::CopyOptions::new().overwrite(true))?;
+        if to.exists() {
+            fs::remove_dir_all(to)?;
+        }
+
+        dir::move_dir(
+            from,
+            to,
+            &dir::CopyOptions::new().overwrite(true).copy_inside(true),
+        )?;
     } else {
         file::move_file(from, to, &file::CopyOptions::new().overwrite(true))?;
     }
