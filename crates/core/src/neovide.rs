@@ -110,7 +110,7 @@ pub fn update_or_install() -> Result<PathBuf> {
         .map(PathBuf::from)
         .context("could not get parent dir")?;
 
-    let file = File::open(downloaded_file)?;
+    let file = File::open(&downloaded_file)?;
 
     #[cfg(target_os = "linux")]
     {
@@ -151,20 +151,21 @@ pub fn update_or_install() -> Result<PathBuf> {
 
     #[cfg(target_os = "macos")]
     {
-        use dmgwiz::{DmgWiz, Verbosity};
+        use dmg::Attach;
         use std::os::unix::fs::PermissionsExt;
 
-        let mut wiz = DmgWiz::from_reader(file, Verbosity::None)?;
-        wiz.extract_all(&parent_dir)?;
+        let handle = Attach::new(downloaded_file).with()?;
 
-        let neovide_path = parent_dir
+        tracing::debug!("Mounted .dmg at {:?}", handle.mount_point);
+
+        let neovide_path = handle
+            .mount_point
             .join("Neovide.app")
             .join("Contents")
             .join("MacOS")
             .join("neovide");
 
         fs::copy(&neovide_path, &path()?)?;
-
         fs::set_permissions(&path()?, Permissions::from_mode(0o700))?;
     }
 
