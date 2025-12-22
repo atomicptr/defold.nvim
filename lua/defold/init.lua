@@ -9,13 +9,8 @@ local root_markers = { "game.project" }
 ---@field type "neovide"|"terminal" Neovim launcher run by Defold
 ---@field executable string|nil Executable to be used by the launcher, nil means we're trying to figure this out ourselves
 ---@field socket_type "fsock"|"netsock"|nil Run Neovims RPC protocol over file socket or network. Nil means it will be picked automatic (fsock on Unix, network on Windows)
----@field extra_arguments table<string>|nil Extra arguments passed to the `executable` (or neovide)
----@field terminal TerminalLauncherSettings|nil Settings for running via terminal
+---@field arguments table<string>|nil Extra arguments passed to the `executable` (or neovide)
 ---@field debug boolean|nil Enable debug settings for the bridge cli
-
----@class TerminalLauncherSettings
----@field class_argument string|nil Argument to define the class name, usually something like "--class="
----@field run_argument   string|nil Argument to define the run argument, usually something like "-e"
 
 ---@class DebuggerSettings Settings for the integrated debugger
 ---@field enable boolean Enable the debugger
@@ -45,8 +40,7 @@ local default_config = {
     launcher = {
         type = "neovide",
         executable = nil,
-        extra_arguments = nil,
-        terminal = nil,
+        arguments = nil,
     },
 
     debugger = {

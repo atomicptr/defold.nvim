@@ -17,6 +17,7 @@ use crate::plugin_config::{LauncherType, PluginConfig, SocketType};
 
 mod launcher;
 mod plugin_config;
+mod terminals;
 mod utils;
 
 #[derive(Parser, Debug)]
@@ -41,12 +42,6 @@ enum Commands {
         #[arg(long = "executable")]
         executable: Option<String>,
 
-        #[arg(long = "terminal-class-argument")]
-        terminal_class_argument: Option<String>,
-
-        #[arg(long = "terminal-run-argument")]
-        terminal_run_argument: Option<String>,
-
         #[clap(value_name = "GAME_ROOT_DIR")]
         game_root_dir: String,
 
@@ -57,7 +52,7 @@ enum Commands {
         line: Option<usize>,
 
         #[arg(last = true)]
-        extra_arguments: Option<Vec<String>>,
+        arguments: Option<Vec<String>>,
     },
     /// Focus the currently open instance of Neovim
     FocusNeovim {
@@ -151,9 +146,7 @@ fn main() -> Result<()> {
             launcher_type,
             socket_type,
             executable,
-            extra_arguments,
-            terminal_class_argument,
-            terminal_run_argument,
+            arguments,
             game_root_dir,
             file,
             line,
@@ -162,9 +155,7 @@ fn main() -> Result<()> {
                 launcher_type,
                 socket_type,
                 executable,
-                extra_arguments,
-                terminal_class_argument,
-                terminal_run_argument,
+                arguments,
             },
             absolute(game_root_dir)?,
             &absolute(file)?,

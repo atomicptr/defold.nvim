@@ -28,19 +28,12 @@ pub enum SocketType {
 }
 
 #[derive(Debug, Deserialize)]
-pub struct TerminalLauncherSettings {
-    pub class_argument: Option<String>,
-    pub run_argument: Option<String>,
-}
-
-#[derive(Debug, Deserialize)]
 pub struct LauncherSettings {
     #[serde(rename = "type")]
     pub launcher_type: Option<LauncherType>,
     pub executable: Option<String>,
     pub socket_type: Option<SocketType>,
-    pub extra_arguments: Option<Vec<String>>,
-    pub terminal: Option<TerminalLauncherSettings>,
+    pub arguments: Option<Vec<String>>,
     pub debug: Option<bool>,
 }
 
@@ -68,18 +61,6 @@ impl LauncherSettings {
             args.push(executable.clone());
         }
 
-        if let Some(terminal) = &self.terminal {
-            if let Some(class_arg) = &terminal.class_argument {
-                args.push("--terminal-class-argument".to_string());
-                args.push(class_arg.clone());
-            }
-
-            if let Some(run_arg) = &terminal.run_argument {
-                args.push("--terminal-run-argument".to_string());
-                args.push(run_arg.clone());
-            }
-        }
-
         args
     }
 
@@ -87,9 +68,9 @@ impl LauncherSettings {
     pub fn bridge_post_cli_args(&self) -> Vec<String> {
         let mut args = Vec::new();
 
-        if let Some(extra_args) = &self.extra_arguments {
+        if let Some(exe_args) = &self.arguments {
             args.push("--".to_string());
-            for arg in extra_args {
+            for arg in exe_args {
                 args.push(arg.clone());
             }
         }

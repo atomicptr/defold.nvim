@@ -112,23 +112,14 @@ local config = {
         -- How to run neovim "neovide" or "terminal" (default: neovide)
         type = "neovide",
 
-        -- path to your neovim or terminal executable (optional)
+        -- path to your launcher executable (optional)
         executable = nil,
 
-        -- extra arguments passed to the `executable` (or neovide)
-        extra_arguments = nil,
+        -- arguments passed to the `executable` (or neovide)
+        arguments = nil,
 
         -- choose file based sockets (fsock, unix only) or network based sockets (netsock) or use nil for the default
         socket_type = nil,
-
-        -- configure how the terminal is run (optional)
-        terminal = {
-            -- argument to define how to set the class name of the terminal, usually something like "--class="
-            class_argument = nil,
-
-            -- argument to define how to run neovim, usually "-e"
-            run_argument = nil,
-        }
     },
 
     debugger = {
@@ -191,6 +182,25 @@ You can retrieve the plugin root via:
 ```lua
 local defold = require "defold"
 local root = defold.plugin_root()
+```
+
+### Custom terminal
+
+In order to use a custom terminal you have to configure the `launcher` section of the settings:
+
+```lua
+{
+    "atomicptr/defold.nvim",
+    -- redacted for brevity...
+    opts = {
+        -- in this example we configure `wezterm`
+        launcher = {
+            type = "terminal",
+            executable = "/run/current-system/sw/bin/wezterm",
+            arguments = { "start", "--class={CLASSNAME}", "--", "{NVIM}" },
+        },
+    },
+}
 ```
 
 ## Available Commands
