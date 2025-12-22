@@ -58,22 +58,6 @@ You can use any other terminal by changing the launcher options to the following
     -- ...
 ```
 
-### Other
-
-We also need some other programs available:
-
-#### Linux & Mac
-
-These should be installed by default on most repos but in case they're not, you have been warned
-
-- ``lsof``, ``ss`` or ``netstat``
--  ``curl`` or ``wget``
--  ``tar``
-
-#### Windows
-
-You're in luck, powershell is surprisingly capable so there is nothing else needed
-
 ## Install
 
 ### Lazy.nvim
