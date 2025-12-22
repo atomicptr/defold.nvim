@@ -33,11 +33,12 @@ Since Neovim is a terminal based application it has to be run through something,
 
 These are the terminal supported by default (when you just switch the launcher type to "terminal")
 
-- [ghostty](https://ghostty.org/)
-- [kitty](https://sw.kovidgoyal.net/kitty/)
 - [alacritty](https://alacritty.org/)
 - [foot](https://codeberg.org/dnkl/foot)
+- [ghostty](https://ghostty.org/)
+- [kitty](https://sw.kovidgoyal.net/kitty/)
 - [st](https://st.suckless.org/)
+- [wezterm](https://wezterm.org/)
 
 You can use any other terminal by changing the launcher options to the following:
 
@@ -154,6 +155,54 @@ local defold = require "defold"
 defold.setup(config)
 ```
 
+### Terminal
+
+If you only have one of the supported terminals installed you don't really have to do anything as defold.nvim will use the
+first one it finds, however assuming you want to use a specific one you gotta specify which one like this:
+
+```lua
+{
+    "atomicptr/defold.nvim",
+    -- redacted for brevity...
+    opts = {
+        -- lets use kitty
+        launcher = {
+            type = "terminal",
+            executable = "kitty",
+        },
+    },
+}
+```
+
+### Custom terminal
+
+In order to use a custom terminal you have to configure the `launcher` section of the settings:
+
+```lua
+{
+    "atomicptr/defold.nvim",
+    -- ...
+    opts = {
+        -- this time we'll add `wezterm` via absolute path
+        launcher = {
+            type = "terminal",
+            executable = "/run/current-system/sw/bin/wezterm",
+            arguments = { "start", "--class={CLASSNAME}", "--", "{NVIM}" },
+        },
+    },
+}
+```
+
+Consider adding support for the custom terminal to [`crates/bridge/src/terminals.rs`](./crates/bridge/src/terminals.rs).
+
+### Variables
+
+defold.nvim is replacing these variables in the arguments list
+
+- **{CLASSNAME}** - (Linux only) The class name we'll use for the terminal window
+- **{ADDR}** - The address (netsock) or path to the socket (fsock)
+- **{NVIM}** - Path to the Neovim executable
+
 ## Setup
 
 ### Setup Neovim
@@ -182,25 +231,6 @@ You can retrieve the plugin root via:
 ```lua
 local defold = require "defold"
 local root = defold.plugin_root()
-```
-
-### Custom terminal
-
-In order to use a custom terminal you have to configure the `launcher` section of the settings:
-
-```lua
-{
-    "atomicptr/defold.nvim",
-    -- redacted for brevity...
-    opts = {
-        -- in this example we configure `wezterm`
-        launcher = {
-            type = "terminal",
-            executable = "/run/current-system/sw/bin/wezterm",
-            arguments = { "start", "--class={CLASSNAME}", "--", "{NVIM}" },
-        },
-    },
-}
 ```
 
 ## Available Commands
