@@ -1,5 +1,5 @@
 use anyhow::Context;
-use defold_nvim_core::{bridge, editor, editor_config, mobdap, project};
+use defold_nvim_core::{bridge, editor, editor_config, mobdap, project, utils};
 use defold_nvim_core::{focus, game_project::GameProject};
 use mlua::Value;
 use mlua::prelude::*;
@@ -80,7 +80,7 @@ fn defold_nvim_sidecar(lua: &Lua) -> LuaResult<LuaTable> {
 fn register_exports(lua: &Lua) -> LuaResult<LuaTable> {
     let exports = lua.create_table()?;
 
-    exports.set("version", lua.create_string(env!("CARGO_PKG_VERSION"))?)?;
+    exports.set("version", lua.create_string(utils::version())?)?;
     exports.set("set_log_level", lua.create_function(set_log_level)?)?;
     exports.set("read_game_project", lua.create_function(read_game_project)?)?;
     exports.set("find_editor_port", lua.create_function(find_editor_port)?)?;
@@ -172,8 +172,8 @@ fn set_default_editor(
 }
 
 #[instrument(level = "debug", err(Debug), skip_all)]
-fn find_bridge_path(_lua: &Lua, plugin_root: String) -> LuaResult<String> {
-    let path = bridge::path(&absolute(plugin_root)?)?;
+fn find_bridge_path(_lua: &Lua, plugin_root: Option<String>) -> LuaResult<String> {
+    let path = bridge::path(plugin_root.and_then(|str| absolute(str).ok()).as_deref())?;
 
     Ok(path
         .to_str()

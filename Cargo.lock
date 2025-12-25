@@ -414,7 +414,7 @@ checksum = "26bf8fc351c5ed29b5c2f0cbbac1b209b74f60ecd62e675a998df72c49af5204"
 
 [[package]]
 name = "defold-nvim-bridge"
-version = "0.1.0"
+version = "0.1.4"
 dependencies = [
  "anyhow",
  "clap",
@@ -430,7 +430,7 @@ dependencies = [
 
 [[package]]
 name = "defold-nvim-core"
-version = "0.1.0"
+version = "0.1.4"
 dependencies = [
  "anyhow",
  "dirs",
@@ -460,7 +460,7 @@ dependencies = [
 
 [[package]]
 name = "defold-nvim-sidecar"
-version = "0.1.0"
+version = "0.1.4"
 dependencies = [
  "anyhow",
  "defold-nvim-core",

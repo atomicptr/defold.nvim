@@ -105,7 +105,7 @@ fn create_runner_script(
     fs::create_dir_all(&dir)?;
 
     let script_path = dir.join(format!("run.{SCRIPT_EXT}"));
-    let bridge_path = bridge::path(plugin_root)?;
+    let bridge_path = bridge::path(Some(plugin_root))?;
     let launch_pre_args = launcher_settings.bridge_pre_cli_args().join(" ");
     let launch_post_args = launcher_settings.bridge_post_cli_args().join(" ");
 

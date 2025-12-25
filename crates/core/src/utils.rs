@@ -107,3 +107,7 @@ pub fn move_file(from: &Path, to: &Path) -> Result<()> {
 
     Ok(())
 }
+
+pub fn version() -> String {
+    env!("CARGO_PKG_VERSION").to_string()
+}

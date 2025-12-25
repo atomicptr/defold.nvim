@@ -17,6 +17,7 @@ jobs:
         config:
           - name: Linux x86
             os: ubuntu-latest
+            cargo-tools: cargo-edit,cargo-cross
             artifact:
               sidecar: target/x86_64-unknown-linux-gnu/release/libdefold_nvim_sidecar.so
               bridge: target/x86_64-unknown-linux-gnu/release/defold-nvim-bridge
@@ -25,6 +26,7 @@ jobs:
               bridge: target/release/linux-x86-defold-nvim-bridge
           - name: MacOS x86
             os: macos-15-intel
+            cargo-tools: cargo-edit
             artifact:
               sidecar: target/release/libdefold_nvim_sidecar.dylib
               bridge: target/release/defold-nvim-bridge
@@ -33,6 +35,7 @@ jobs:
               bridge: target/release/macos-x86-defold-nvim-bridge
           - name: MacOS ARM
             os: macos-latest
+            cargo-tools: cargo-edit
             artifact:
               sidecar: target/release/libdefold_nvim_sidecar.dylib
               bridge: target/release/defold-nvim-bridge
@@ -41,6 +44,7 @@ jobs:
               bridge: target/release/macos-arm-defold-nvim-bridge
           - name: Windows x86
             os: windows-latest
+            cargo-tools: cargo-edit
             artifact:
               sidecar: target/release/defold_nvim_sidecar.dll
               bridge: target/release/defold-nvim-bridge.exe
@@ -53,11 +57,20 @@ jobs:
       - uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
           rustflags: ""
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: ${{ matrix.config.cargo-tools }}
+
+      - name: set version ${{ matrix.config.name }}
+        shell: bash
+        run: |
+          TAG_NAME=${GITHUB_REF#refs/tags/}
+          VERSION=${TAG_NAME#v}
+          cargo set-version $VERSION
 
       - name: build ${{ matrix.config.name }}
         if: contains(matrix.config.os, 'ubuntu')
         run: |
-          cargo install cargo-cross
           cargo cross build --release --target x86_64-unknown-linux-gnu
 
       - name: build ${{ matrix.config.name }}
