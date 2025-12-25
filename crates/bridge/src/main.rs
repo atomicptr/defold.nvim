@@ -17,7 +17,6 @@ use crate::plugin_config::{LauncherType, PluginConfig, SocketType};
 
 mod launcher;
 mod plugin_config;
-mod terminals;
 mod utils;
 
 #[derive(Parser, Debug)]

@@ -1,17 +1,17 @@
 use std::{
     fs::{self},
     path::{Path, PathBuf},
-    process::Command,
+    process::{Child, Command},
 };
 
 use anyhow::{Context, Result, bail};
 use defold_nvim_core::{focus::focus_neovim, utils::classname};
+use termlauncher::{Application, CustomTerminal, Terminal};
 use which::which;
 
 use crate::{
     neovide,
     plugin_config::{LauncherType, PluginConfig, SocketType},
-    terminals::{RunArg, Terminal},
     utils::{self, is_port_in_use},
 };
 
@@ -22,57 +22,36 @@ const VAR_CLASSNAME: &str = "{CLASSNAME}";
 const VAR_ADDRESS: &str = "{ADDR}";
 const VAR_LINE: &str = "{LINE}";
 const VAR_FILE: &str = "{FILE}";
-const VAR_NVIM: &str = "{NVIM}";
 
-#[derive(Debug)]
-struct Launcher(PathBuf, Vec<String>);
+fn report_process_errors(child: Child) -> Result<()> {
+    let output = child.wait_with_output()?;
 
-impl Launcher {
-    fn run(self) -> Result<()> {
-        tracing::debug!("Run launcher {self:?}");
-
-        let exe = self.0;
-        let args = self.1;
-
-        let mut cmd = Command::new(exe);
-        cmd.args(args);
-
-        tracing::debug!("Command Run: {cmd:?}");
-
-        let out = cmd.output()?;
-
-        if !out.stdout.is_empty() {
-            tracing::debug!("Command Out: {}", String::from_utf8(out.stdout)?);
-        }
-
-        if !out.stderr.is_empty() {
-            let res = String::from_utf8(out.stderr)?;
-            tracing::error!("Command Err: {res}");
-            bail!(res);
-        }
-
-        Ok(())
+    if !output.stdout.is_empty() {
+        tracing::debug!("Proccess Out: {}", String::from_utf8(output.stdout)?);
     }
 
-    fn apply_var(self, var: &str, replace_with: &str) -> Self {
-        Self(
-            self.0,
-            self.1
-                .iter()
-                .map(|s| s.replace(var, replace_with))
-                .collect(),
-        )
+    if !output.stderr.is_empty() {
+        tracing::error!("Proccess Err: {}", String::from_utf8(output.stderr)?);
     }
 
-    fn filter_params<F>(self, f: F) -> Self
-    where
-        F: Fn(&String) -> bool,
-    {
-        Self(self.0, self.1.into_iter().filter(|s| f(s)).collect())
+    Ok(())
+}
+
+fn apply_launcher_vars(launcher: &Terminal, var: &str, replace_with: &str) -> Terminal {
+    match launcher {
+        Terminal::Custom(term) => Terminal::Custom(CustomTerminal {
+            arguments: apply_vars(&term.arguments, var, replace_with),
+            ..term.clone()
+        }),
+        term => term.clone(),
     }
 }
 
-fn create_launcher(cfg: &PluginConfig, nvim: &String) -> Result<Launcher> {
+fn apply_vars(args: &[String], var: &str, replace_with: &str) -> Vec<String> {
+    args.iter().map(|s| s.replace(var, replace_with)).collect()
+}
+
+fn create_launcher(cfg: &PluginConfig) -> Result<Terminal> {
     match cfg.launcher_type {
         Some(LauncherType::Neovide) => {
             let executable = &cfg
@@ -93,18 +72,8 @@ fn create_launcher(cfg: &PluginConfig, nvim: &String) -> Result<Launcher> {
                 bail!(ERR_NEOVIDE_NOT_FOUND);
             }
 
-            let mut args = Vec::new();
+            let mut args = cfg.arguments.clone().unwrap_or_default();
 
-            if let Some(exe_args) = &cfg.arguments {
-                for exe_arg in exe_args {
-                    args.push(exe_arg.clone());
-                }
-            }
-
-            args.push("--neovim-bin".to_string());
-            args.push(nvim.clone());
-
-            // only add class on linux
             if cfg!(target_os = "linux") {
                 args.push("--wayland_app_id".to_string());
                 args.push(VAR_CLASSNAME.to_string());
@@ -113,140 +82,72 @@ fn create_launcher(cfg: &PluginConfig, nvim: &String) -> Result<Launcher> {
                 args.push(VAR_CLASSNAME.to_string());
             }
 
-            args.push("--".to_string());
-
-            args.push("--listen".to_string());
-            args.push(VAR_ADDRESS.to_string());
-
-            args.push("--remote".to_string());
-            args.push(VAR_LINE.to_string());
-            args.push(VAR_FILE.to_string());
-
-            Ok(Launcher(executable.clone(), args))
+            Ok(Terminal::Custom(CustomTerminal {
+                executable: executable
+                    .to_str()
+                    .context("could not convert path to string")?
+                    .to_string(),
+                arguments: args,
+                run_arg: Some("--neovim-bin".to_string()),
+                ..Default::default()
+            }))
         }
         Some(LauncherType::Terminal) => {
-            let mut args = Vec::new();
-
-            if let Some(exe_args) = &cfg.arguments {
-                for exe_arg in exe_args {
-                    args.push(exe_arg.clone());
-                }
-            }
-
+            // terminal specified by absolute path
             if let Some(executable) = &cfg.executable.clone().map(PathBuf::from)
                 && executable.is_absolute()
                 && executable.exists()
             {
-                let term = Terminal {
+                let term = Terminal::Custom(CustomTerminal {
                     executable: cfg.executable.clone().unwrap(),
-                    arguments: Vec::new(),
-                    run_arg: None,
-                    class_arg: None,
-                };
+                    arguments: cfg.arguments.clone().unwrap_or_default(),
+                    ..Default::default()
+                });
 
                 tracing::debug!("Terminal specified by absolute path {term:?}");
 
-                return make_launcher_from_terminal(&term, args, nvim)
-                    .context(ERR_TERMINAL_NOT_FOUND);
+                Ok(term)
             } else if let Some(exe_name) = &cfg.executable
                 && let Some(term) = Terminal::find_by_name(exe_name)
-                && term.find_executable().is_some()
+                && term.is_available()
             {
                 tracing::debug!("Looking for terminal by name {exe_name} found {term:?}");
 
-                // executable specifies only the name o f which terminal we want to use
-                return make_launcher_from_terminal(&term, args, nvim)
-                    .context(ERR_TERMINAL_NOT_FOUND);
+                Ok(term)
+            } else {
+                tracing::debug!(
+                    "No terminal specific terminal specified or not found, looking for available one..."
+                );
+
+                if let Some(term) = Terminal::find_available() {
+                    tracing::debug!("Found {term:?}");
+
+                    Ok(term)
+                } else {
+                    bail!(ERR_TERMINAL_NOT_FOUND);
+                }
             }
-
-            tracing::debug!(
-                "No terminal specific terminal specified or not found, looking for available one..."
-            );
-
-            if let Some(term) = Terminal::find_available() {
-                tracing::debug!("Found {term:?}");
-
-                return make_launcher_from_terminal(&term, args, nvim)
-                    .context(ERR_TERMINAL_NOT_FOUND);
-            }
-
-            bail!(ERR_TERMINAL_NOT_FOUND);
         }
         None => {
-            if let Ok(launcher) = create_launcher(
-                &PluginConfig {
-                    launcher_type: Some(LauncherType::Neovide),
-                    ..cfg.clone()
-                },
-                nvim,
-            ) {
-                return Ok(launcher);
+            // lets try to create one using Neovide
+            if let Ok(term) = create_launcher(&PluginConfig {
+                launcher_type: Some(LauncherType::Neovide),
+                ..cfg.clone()
+            }) {
+                return Ok(term);
             }
 
-            if let Ok(launcher) = create_launcher(
-                &PluginConfig {
-                    launcher_type: Some(LauncherType::Terminal),
-                    ..cfg.clone()
-                },
-                nvim,
-            ) {
-                return Ok(launcher);
+            // if that doesnt work try again with terminal
+            if let Ok(term) = create_launcher(&PluginConfig {
+                launcher_type: Some(LauncherType::Terminal),
+                ..cfg.clone()
+            }) {
+                return Ok(term);
             }
 
             bail!("Could neither find Neovide nor any supported terminal")
         }
     }
-}
-
-fn make_launcher_from_terminal(
-    term: &Terminal,
-    mut args: Vec<String>,
-    nvim: &String,
-) -> Option<Launcher> {
-    let exe_path = term.find_executable()?;
-
-    // prepend our arguments
-    for arg in term.arguments.iter().rev() {
-        args.insert(0, arg.clone());
-    }
-
-    // only add class on linux
-    if cfg!(target_os = "linux")
-        && let Some(class_arg) = &term.class_arg
-    {
-        if class_arg.ends_with('=') {
-            args.push((*class_arg).clone() + VAR_CLASSNAME);
-        } else {
-            args.push((*class_arg).clone());
-            args.push(VAR_CLASSNAME.to_string());
-        }
-    }
-
-    if let Some(run_arg) = &term.run_arg {
-        match run_arg {
-            RunArg::Arg(run_arg) => {
-                if run_arg.ends_with('=') {
-                    args.push((*run_arg).clone() + nvim);
-                } else {
-                    args.push((*run_arg).clone());
-                    args.push((*nvim).clone());
-                }
-            }
-            RunArg::End => {
-                args.push("--".to_string());
-                args.push(nvim.clone());
-            }
-        }
-    }
-
-    args.push("--listen".to_string());
-    args.push(VAR_ADDRESS.to_string());
-
-    args.push("--remote".to_string());
-    args.push(VAR_LINE.to_string());
-    args.push(VAR_FILE.to_string());
-
-    Some(Launcher(exe_path, args))
 }
 
 fn nvim_open_file_remote(nvim: &str, server: &str, file: &str, line: Option<usize>) -> Result<()> {
@@ -273,7 +174,8 @@ fn nvim_open_file_remote(nvim: &str, server: &str, file: &str, line: Option<usiz
 }
 
 fn run_fsock(
-    launcher: Launcher,
+    launcher: &Terminal,
+    app: Application,
     nvim: &str,
     root_dir: &Path,
     file: &str,
@@ -288,7 +190,10 @@ fn run_fsock(
 
     tracing::debug!("Using fsock at {socket_file:?}");
 
-    let launcher = launcher.apply_var(
+    let mut app = app;
+
+    app.args = apply_vars(
+        &app.args,
         VAR_ADDRESS,
         socket_file
             .to_str()
@@ -309,18 +214,19 @@ fn run_fsock(
             tracing::error!("Failed to communicate with neovim server: {err:?}");
 
             fs::remove_file(socket_file)?;
-            launcher.run()?;
+            report_process_errors(app.launch_with(launcher)?)?;
         }
 
         return Ok(());
     }
 
-    launcher.run()?;
+    report_process_errors(app.launch_with(launcher)?)?;
     Ok(())
 }
 
 fn run_netsock(
-    launcher: Launcher,
+    launcher: &Terminal,
+    mut app: Application,
     nvim: &str,
     root_dir: &Path,
     file: &str,
@@ -353,14 +259,18 @@ fn run_netsock(
             let socket = format!("127.0.0.1:{new_port}");
             tracing::debug!("Trying to use netsock with port {socket}");
             fs::write(port_file, new_port.to_string())?;
-            launcher.apply_var(VAR_ADDRESS, &socket).run()?;
+
+            app.args = apply_vars(&app.args, VAR_ADDRESS, &socket);
+            report_process_errors(app.launch_with(launcher)?)?;
         }
 
         return Ok(());
     }
 
     fs::write(port_file, port.to_string())?;
-    launcher.apply_var(VAR_ADDRESS, &socket).run()?;
+    app.args = apply_vars(&app.args, VAR_ADDRESS, &socket);
+    report_process_errors(app.launch_with(launcher)?)?;
+
     Ok(())
 }
 
@@ -375,41 +285,59 @@ pub fn run(
         .context("could not convert nvim path to string")?
         .to_string();
 
-    let launcher = create_launcher(plugin_config, &nvim)?;
+    let mut launcher = create_launcher(plugin_config)?;
 
-    let launcher = if cfg!(target_os = "linux") {
-        launcher.apply_var(
-            VAR_CLASSNAME,
-            &classname(
-                root_dir
-                    .to_str()
-                    .context("could not convert path to string")?,
-            )?,
-        )
-    } else {
-        launcher
-    };
+    let mut app = Application::new(&nvim)
+        .with_arg("--listen")
+        .with_arg(VAR_ADDRESS)
+        .with_arg("--remote")
+        .with_arg(VAR_LINE)
+        .with_arg(VAR_FILE);
+
+    #[cfg(target_os = "linux")]
+    {
+        let class = &classname(
+            root_dir
+                .to_str()
+                .context("could not convert path to string")?,
+        )?;
+
+        app = app.with_class(class);
+
+        // if is custom replace it in their args too
+        launcher = if let Terminal::Custom(_) = launcher {
+            apply_launcher_vars(&launcher, VAR_CLASSNAME, class)
+        } else {
+            launcher
+        };
+    }
 
     let file_str = file.to_str().context("could not convert path to string")?;
 
-    let launcher = if let Some(line) = line {
-        launcher.apply_var(VAR_LINE, &format!("+{line}"))
+    let mut app = if let Some(line) = line {
+        app.args = apply_vars(&app.args, VAR_LINE, &format!("+{line}"));
+        app
     } else {
-        launcher.filter_params(|s| s != VAR_LINE)
+        app.args.retain(|s| *s != VAR_LINE);
+        app
     };
 
-    let launcher = launcher
-        .apply_var(VAR_FILE, file_str)
-        .apply_var(VAR_NVIM, &nvim);
+    app.args = apply_vars(&app.args, VAR_FILE, file_str);
+
+    // due to Neovide having both a run argument with "--neovim-bin" and using the "--" separator
+    // we kinda need to prepend this to the application
+    if matches!(plugin_config.launcher_type, Some(LauncherType::Neovide)) {
+        app.args.insert(0, "--".to_string());
+    }
 
     match plugin_config.socket_type {
-        Some(SocketType::Fsock) => run_fsock(launcher, &nvim, &root_dir, file_str, line)?,
-        Some(SocketType::Netsock) => run_netsock(launcher, &nvim, &root_dir, file_str, line)?,
+        Some(SocketType::Fsock) => run_fsock(&launcher, app, &nvim, &root_dir, file_str, line)?,
+        Some(SocketType::Netsock) => run_netsock(&launcher, app, &nvim, &root_dir, file_str, line)?,
         None => {
             if cfg!(target_os = "linux") || cfg!(target_os = "macos") {
-                run_fsock(launcher, &nvim, &root_dir, file_str, line)?;
+                run_fsock(&launcher, app, &nvim, &root_dir, file_str, line)?;
             } else {
-                run_netsock(launcher, &nvim, &root_dir, file_str, line)?;
+                run_netsock(&launcher, app, &nvim, &root_dir, file_str, line)?;
             }
         }
     }
