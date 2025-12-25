@@ -10,8 +10,6 @@ use crate::{release_downloader, utils};
 const EXECUTABLE_NAME: &str = "defold-nvim-bridge";
 const OWNER: &str = "atomicptr";
 const REPOSITORY: &str = "defold.nvim";
-#[cfg(not(target_os = "windows"))]
-const EXE_SUFFIX: &str = "";
 
 #[cfg(target_os = "linux")]
 const ASSET_NAME: &str = "linux-x86-defold-nvim-bridge";
