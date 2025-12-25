@@ -94,6 +94,7 @@ defold.nvim is replacing these variables in the arguments list
 ```lua
 {
     "atomicptr/defold.nvim",
+    version = '*',
     lazy = false,
 
     -- (Optional) Required when using the debugger
