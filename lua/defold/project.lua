@@ -23,6 +23,11 @@ end
 ---@return boolean
 function M.is_defold_project()
     local root_dir = M.project_root()
+
+    if not root_dir then
+        return false
+    end
+
     return vim.fn.filereadable(root_dir .. "/game.project") == 1
 end
 
