@@ -81,13 +81,16 @@ enum Commands {
         game_root_dir: String,
     },
     /// Finds the open editor port
-    FindEditorPort,
+    FindEditorPort {
+        #[clap(value_name = "GAME_ROOT_DIR", index = 1)]
+        game_root_dir: String,
+    },
     /// Sends a command to the editor
     SendCommand {
-        #[clap(long = "port")]
-        port: Option<u16>,
+        #[clap(value_name = "GAME_ROOT_DIR", index = 1)]
+        game_root_dir: String,
 
-        #[clap(value_name = "COMMAND", index = 1)]
+        #[clap(value_name = "COMMAND", index = 2)]
         command: String,
     },
     /// Compile `.script_api` file and return the resulting `.lua` in stdout
@@ -186,15 +189,20 @@ fn main() -> Result<()> {
                 tracing::info!("{}", dir.display());
             }
         }
-        Commands::FindEditorPort => {
-            if let Some(port) = editor::find_port() {
+        Commands::FindEditorPort { game_root_dir } => {
+            if let Some(port) = editor::find_port(&absolute(game_root_dir)?) {
                 println!("Editor is running at port {port}");
             } else {
                 println!("Could not find editor port, is the editor open?");
             }
         }
-        Commands::SendCommand { port, command } => {
-            editor::send_command(port, &command)?;
+        Commands::SendCommand {
+            game_root_dir,
+            command,
+        } => {
+            if let Some(port) = editor::find_port(&absolute(game_root_dir)?) {
+                editor::send_command(port, &command)?;
+            }
         }
         Commands::CompileScriptApi { input } => {
             if !input.exists() {

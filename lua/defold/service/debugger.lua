@@ -41,8 +41,7 @@ function M.setup(custom_executable, custom_arguments)
     M.mobdap_path()
 end
 
----@param editor_port_fn fun(): integer
-function M.register_nvim_dap(editor_port_fn)
+function M.register_nvim_dap()
     local log = require "defold.service.logger"
 
     local dap_installed, dap = pcall(require, "dap")
@@ -83,7 +82,7 @@ function M.register_nvim_dap(editor_port_fn)
     dap.listeners.after.event_mobdap_waiting_for_connection.defold_nvim_start_game = function(_, _)
         log.debug "debugger: connected"
 
-        editor.send_command(editor_port_fn(), "build")
+        editor.send_command "build"
     end
 
     dap.listeners.after.event_stopped.defold_nvim_switch_focus_on_stop = function(_, _)

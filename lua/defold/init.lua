@@ -1,5 +1,3 @@
-local root_markers = { "game.project" }
-
 ---@class DefoldEditorSettings Settings for the Defold Game Engine
 ---@field set_default_editor boolean Automatically set defold.nvim as the default editor in Defold
 ---@field auto_fetch_dependencies boolean Automatically fetch dependencies on launch
@@ -68,18 +66,6 @@ M.loaded = false
 ---@type DefoldNvimConfig
 M.config = default_config
 
----Returns true if we are in a defold project
----@return boolean
-function M.is_defold_project()
-    local root_dir = vim.fs.root(0, root_markers)
-
-    if not root_dir then
-        return false
-    end
-
-    return vim.fn.filereadable(root_dir .. "/game.project") == 1
-end
-
 ---@return string
 function M.plugin_root()
     local os = require "defold.service.os"
@@ -144,8 +130,10 @@ function M.setup(opts)
         callback = function(ev)
             local ft = vim.filetype.match { buf = ev.buf }
 
+            local project = require "defold.project"
+
             if ft == "lua" then
-                local root = vim.fs.root(ev.buf, root_markers)
+                local root = project.project_root()
 
                 -- not a defold project?
                 if not root then
@@ -172,6 +160,8 @@ function M.setup(opts)
     })
 
     vim.defer_fn(function()
+        local project = require "defold.project"
+
         if M.config.defold.set_default_editor then
             local sidecar = require "defold.sidecar"
             local ok, err = pcall(sidecar.set_default_editor, M.plugin_root(), M.config.launcher)
@@ -186,30 +176,14 @@ function M.setup(opts)
             debugger.setup(M.config.debugger.custom_executable, M.config.debugger.custom_arguments)
         end
 
-        if not M.config.force_plugin_enabled and not M.is_defold_project() then
-            local root_dir = vim.fs.root(0, root_markers)
+        if not M.config.force_plugin_enabled and not project.is_defold_project() then
+            local root_dir = project.project_root()
             log.debug(string.format("Project was not loaded because: '%s' was not a Defold project", root_dir))
             return
         end
 
         M.load_plugin()
     end, 0)
-end
-
----@return integer
-function M.editor_port()
-    local sidecar = require "defold.sidecar"
-
-    local ok, res = pcall(sidecar.find_editor_port)
-
-    if ok then
-        return res
-    end
-
-    local log = require "defold.service.logger"
-    log.error(string.format("Could not find editor port, because: %s", res))
-
-    return -1
 end
 
 ---Makes sure the native library `sidecar` gets loaded
@@ -257,7 +231,7 @@ function M.load_plugin()
         vim.api.nvim_create_autocmd("BufWritePost", {
             pattern = { "*.lua", "*.script", "*.gui_script" },
             callback = function()
-                editor.send_command(M.editor_port(), "hot-reload", true)
+                editor.send_command("hot-reload", true)
             end,
         })
     end
@@ -291,19 +265,19 @@ function M.load_plugin()
                 return
             end
 
-            editor.send_command(M.editor_port(), cmds[idx])
+            editor.send_command(cmds[idx])
         end)
     end, { nargs = 0, desc = "Select a command to run" })
 
     -- add the ":DefoldSend cmd" command to send commands to the editor
     vim.api.nvim_create_user_command("DefoldSend", function(opt)
-        editor.send_command(M.editor_port(), opt.args)
+        editor.send_command(opt.args)
     end, { nargs = 1, desc = "Send a command to the Defold editor" })
 
     -- add the ":DefoldFetch" command to fetch dependencies & annoatations
     vim.api.nvim_create_user_command("DefoldFetch", function(opt)
         -- when a user runs DefoldFetch I recon they also expect us to update the dependencies
-        editor.send_command(M.editor_port(), "fetch-libraries", true)
+        editor.send_command("fetch-libraries", true)
 
         project.install_dependencies(opt.bang)
 
@@ -312,7 +286,7 @@ function M.load_plugin()
 
     -- integrate the debugger into dap
     if M.config.debugger.enable then
-        debugger.register_nvim_dap(M.editor_port)
+        debugger.register_nvim_dap()
     end
 
     -- add snippets
@@ -326,7 +300,7 @@ function M.load_plugin()
         log.debug(string.format("Setup action '%s' for keymap '%s'", action, vim.json.encode(keymap)))
 
         vim.keymap.set(keymap.mode, keymap.mapping, function()
-            editor.send_command(M.editor_port(), action)
+            editor.send_command(action)
         end)
     end
 

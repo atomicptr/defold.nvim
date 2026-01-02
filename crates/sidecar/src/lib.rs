@@ -83,7 +83,6 @@ fn register_exports(lua: &Lua) -> LuaResult<LuaTable> {
     exports.set("version", lua.create_string(utils::version())?)?;
     exports.set("set_log_level", lua.create_function(set_log_level)?)?;
     exports.set("read_game_project", lua.create_function(read_game_project)?)?;
-    exports.set("find_editor_port", lua.create_function(find_editor_port)?)?;
     exports.set("is_editor_port", lua.create_function(is_editor_port)?)?;
     exports.set("list_commands", lua.create_function(list_commands)?)?;
     exports.set("send_command", lua.create_function(send_command)?)?;
@@ -134,12 +133,6 @@ fn read_game_project(lua: &Lua, path: String) -> LuaResult<Value> {
     Ok(val)
 }
 
-#[instrument(level = "debug", err(Debug), skip_all)]
-fn find_editor_port(_lua: &Lua, _: ()) -> LuaResult<u16> {
-    let port = editor::find_port().context("could not find port")?;
-    Ok(port)
-}
-
 #[allow(clippy::unnecessary_wraps)]
 #[instrument(level = "debug", err(Debug), skip_all)]
 fn is_editor_port(_lua: &Lua, port: u16) -> LuaResult<bool> {
@@ -147,14 +140,14 @@ fn is_editor_port(_lua: &Lua, port: u16) -> LuaResult<bool> {
 }
 
 #[instrument(level = "debug", err(Debug), skip_all)]
-fn list_commands(lua: &Lua, port: Option<u16>) -> LuaResult<LuaTable> {
+fn list_commands(lua: &Lua, port: u16) -> LuaResult<LuaTable> {
     let commands = editor::list_commands(port)?;
 
     lua.create_table_from(commands)
 }
 
 #[instrument(level = "debug", err(Debug), skip_all)]
-fn send_command(_lua: &Lua, (port, cmd): (Option<u16>, String)) -> LuaResult<()> {
+fn send_command(_lua: &Lua, (port, cmd): (u16, String)) -> LuaResult<()> {
     editor::send_command(port, &cmd)?;
 
     Ok(())

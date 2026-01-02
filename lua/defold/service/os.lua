@@ -215,6 +215,24 @@ function M.write(path, content)
     file:close()
 end
 
+---Read file to string
+---@param path string
+---@return string|nil
+function M.read_to_string(path)
+    local file = io.open(path, "r")
+
+    if not file then
+        local log = require "defold.service.logger"
+        log.error(string.format("Could not open file for reading: %s", path))
+        return nil
+    end
+
+    local content = file:read "*all"
+    file:close()
+
+    return content
+end
+
 ---Checks if a file was updated within `threshold`
 ---@param path string
 ---@param threshold integer time in seconds

@@ -1,4 +1,4 @@
-local min_version = "0.0.0"
+local min_version = "0.2.0"
 
 local github_owner = "atomicptr"
 local github_repository = "defold.nvim"
@@ -180,10 +180,9 @@ package.cpath = package.cpath
 ---@field version string
 ---@field set_log_level function(level: "debug"|"info"|"error")
 ---@field read_game_project function(path: string): GameProject
----@field find_editor_port function(): integer
 ---@field is_editor_port function(port: integer): boolean
----@field list_commands function(port: integer|nil): table<string, string>
----@field send_command function(port: integer|nil, cmd: string)
+---@field list_commands function(port: integer): table<string, string>
+---@field send_command function(port: integer, cmd: string)
 ---@field set_default_editor function(plugin_root: string, launcher_config: LauncherSettings)
 ---@field find_bridge_path function(plugin_root: string|nil): string
 ---@field focus_neovim function(game_root: string)
