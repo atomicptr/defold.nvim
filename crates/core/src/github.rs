@@ -94,6 +94,7 @@ where
 }
 
 pub fn download_release(owner: &str, repo: &str, name: &str) -> Result<(PathBuf, Release)> {
-    download_release_matching(owner, repo, |asset| asset.name == name)
-        .map_err(|_| anyhow::anyhow!("Could not find asset {name} for {owner}/{repo}"))
+    download_release_matching(owner, repo, |asset| asset.name == name).map_err(|err| {
+        anyhow::anyhow!("Could not find asset {name} for {owner}/{repo} because: {err:?}")
+    })
 }

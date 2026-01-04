@@ -1,6 +1,6 @@
 [package]
 name = "defold-nvim-core"
-version = "0.2.1"
+version = "0.2.2"
 edition = "2024"
 
 [dependencies]
@@ -11,6 +11,7 @@ flate2 = "1.1.5"
 zip = "7.0.0"
 dirs = "6.0.0"
 reqwest = { version = "0.13.1", default-features = false, features = [
+    "rustls",
     "blocking",
     "json",
 ] }
