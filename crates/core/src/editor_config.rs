@@ -1,13 +1,11 @@
 use anyhow::{Context, Result, bail};
-use edn_rs::Edn;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use std::{
     fs,
     path::{Path, PathBuf},
-    str::FromStr,
 };
 
-use crate::bridge;
+use crate::{bridge, editor};
 
 #[derive(Debug, Deserialize)]
 pub enum LauncherType {
@@ -141,42 +139,46 @@ fn create_runner_script(
     Ok(script_path)
 }
 
-pub fn set_default_editor(plugin_root: &Path, launcher_settings: &LauncherSettings) -> Result<()> {
+#[derive(Serialize)]
+struct EditorConfig {
+    #[serde(rename = "custom-editor")]
+    custom_editor: String,
+
+    #[serde(rename = "open-file")]
+    open_file: String,
+
+    #[serde(rename = "open-file-at-line")]
+    open_file_at_line: String,
+}
+
+pub fn set_default_editor(
+    port: u16,
+    plugin_root: &Path,
+    launcher_settings: &LauncherSettings,
+) -> Result<()> {
+    if !editor::is_editor_port(port) {
+        bail!("No edito was found runnign at {port}");
+    }
+
     if !plugin_root.exists() {
         bail!("plugin root '{}' could not be found", plugin_root.display());
     }
 
-    let config_dir = if cfg!(target_os = "macos") {
-        // on macos defold stores prefs.editor_settings in ~/Library/Preferences
-        dirs::preference_dir().context("could not find pref dir")?
-    } else {
-        dirs::config_dir().context("could not find config dir")?
-    };
-    let path = config_dir.join("Defold").join("prefs.editor_settings");
-
-    if !path.exists() {
-        bail!(
-            "prefs.editor_settings file {} could not be found",
-            path.display()
-        );
-    }
-
-    let data = fs::read_to_string(&path)?;
-
-    let mut config = Edn::from_str(&data).map_err(|err| anyhow::anyhow!(err.to_string()))?;
-
-    config[":code"][":custom-editor"] = Edn::Str(
-        create_runner_script(plugin_root, launcher_settings)?
+    let config = EditorConfig {
+        custom_editor: create_runner_script(plugin_root, launcher_settings)?
             .to_str()
             .context("could not convert path to string")?
             .to_string(),
-    );
-    config[":code"][":open-file"] = Edn::Str("{file}".to_string());
-    config[":code"][":open-file-at-line"] = Edn::Str("{file} {line}".to_string());
+        open_file: "{file}".to_string(),
+        open_file_at_line: "{file} {line}".to_string(),
+    };
 
-    let config_str = &Edn::to_string(&config);
+    let url = format!("http://localhost:{port}/prefs/code");
 
-    fs::write(path, config_str)?;
+    reqwest::blocking::Client::new()
+        .post(url)
+        .json(&config)
+        .send()?;
 
     Ok(())
 }
