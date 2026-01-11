@@ -108,8 +108,16 @@ function M.setup(opts)
 
     -- add setup defold command
     vim.api.nvim_create_user_command("SetupDefold", function()
+        local project = require "defold.project"
+        local port = project.editor_port()
+
+        if not port then
+            log.error "Editor is not running, please make sure the editor for this project is running."
+            return
+        end
+
         local sidecar = require "defold.sidecar"
-        local ok, err = pcall(sidecar.set_default_editor, M.plugin_root(), M.config.launcher)
+        local ok, err = pcall(sidecar.set_default_editor, port, M.plugin_root(), M.config.launcher)
         if not ok then
             log.error(string.format("Could not set default editor because: %s", err))
         end
@@ -161,10 +169,11 @@ function M.setup(opts)
 
     vim.defer_fn(function()
         local project = require "defold.project"
+        local port = project.editor_port()
 
-        if M.config.defold.set_default_editor then
+        if M.config.defold.set_default_editor and port then
             local sidecar = require "defold.sidecar"
-            local ok, err = pcall(sidecar.set_default_editor, M.plugin_root(), M.config.launcher)
+            local ok, err = pcall(sidecar.set_default_editor, port, M.plugin_root(), M.config.launcher)
 
             if not ok then
                 log.error(string.format("Could not set default editor because: %s", err))

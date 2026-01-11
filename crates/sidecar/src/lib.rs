@@ -156,10 +156,10 @@ fn send_command(_lua: &Lua, (port, cmd): (u16, String)) -> LuaResult<()> {
 #[instrument(level = "debug", err(Debug), skip_all)]
 fn set_default_editor(
     lua: &Lua,
-    (plugin_root, launcher_settings): (String, LuaValue),
+    (port, plugin_root, launcher_settings): (u16, String, LuaValue),
 ) -> LuaResult<()> {
     let launcher_settings = lua.from_value(launcher_settings)?;
-    editor_config::set_default_editor(&PathBuf::from(plugin_root), &launcher_settings)?;
+    editor_config::set_default_editor(port, &PathBuf::from(plugin_root), &launcher_settings)?;
 
     Ok(())
 }

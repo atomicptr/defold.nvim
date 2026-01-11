@@ -97,9 +97,12 @@ defold.nvim is replacing these variables in the arguments list
     version = '*',
     lazy = false,
 
-    -- (Optional) Required when using the debugger
     dependencies = {
+        -- (Optional) Required when using the debugger
         "mfussenegger/nvim-dap",
+
+        -- (Optional) Required when using snippets
+        "L3MON4D3/LuaSnip",
     },
 
     -- This makes sure the native library downloads at installation
@@ -186,18 +189,19 @@ defold.setup(config)
 
 ## Setup
 
-### Setup Neovim
+### Initial Setup
 
-By installing and running the plugin once, Defold should automatically use Neovim as its editor. (Unless you disabled the setting above)
-
-If you manually want to setup Defold, run `:SetupDefold`
+1. Install the plugin (see above)
+2. Install [Defold](https://defold.com/)
+3. Start Defold and open a project
+4. Open Neovim in the projects directory and run `:SetupDefold`
+5. Done, when you try to open files via Defold now they should open in a Neovim window.
 
 ### Setup Debugging
 
 For debugging we're using [mobdap](https://github.com/atomicptr/mobdap) which is running on top of [MobDebug](https://github.com/pkulchenko/MobDebug) so you need to have that available
-in your project.
-
-The easiest way is using [defold-mobdebug](https://github.com/atomicptr/defold-mobdebug) in your project.
+in your project. This plugin is handling the installation of mobdap automatically, but you still need to add MobDebug in
+your project. The easiest way is using [defold-mobdebug](https://github.com/atomicptr/defold-mobdebug) in your project.
 
 [(Read this)](https://github.com/atomicptr/defold-mobdebug?tab=readme-ov-file#installation)
 
