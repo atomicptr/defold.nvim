@@ -5,7 +5,7 @@ edition = "2024"
 
 [dependencies]
 anyhow = { version = "1.0.100", features = ["backtrace"] }
-clap = { version = "4.5.54", features = ["derive"] }
+clap = { version = "4.5.57", features = ["derive"] }
 defold-nvim-core = { path = "../core" }
 dirs = "6.0.0"
 netstat2 = "0.11.2"

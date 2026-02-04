@@ -11,7 +11,7 @@ crate-type = ["cdylib"]
 anyhow = { version = "1.0.100", features = ["backtrace"] }
 defold-nvim-core = { path = "../core" }
 dirs = "6.0.0"
-mlua = { version = "0.11.5", features = [
+mlua = { version = "0.11.6", features = [
     "module",
     "luajit",
     "serde",
