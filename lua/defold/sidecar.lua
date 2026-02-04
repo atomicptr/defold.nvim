@@ -183,7 +183,7 @@ package.cpath = package.cpath
 ---@field is_editor_port function(port: integer): boolean
 ---@field list_commands function(port: integer): table<string, string>
 ---@field send_command function(port: integer, cmd: string)
----@field set_default_editor function(plugin_root: string, launcher_config: LauncherSettings)
+---@field set_default_editor function(port: integer, plugin_root: string, launcher_config: LauncherSettings)
 ---@field find_bridge_path function(plugin_root: string|nil): string
 ---@field focus_neovim function(game_root: string)
 ---@field focus_game function(game_root: string)
