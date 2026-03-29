@@ -21,7 +21,7 @@ function M.command_exists(cmd)
 end
 
 function M.name()
-    local os_name = vim.loop.os_uname().sysname:lower()
+    local os_name = vim.uv.os_uname().sysname:lower()
 
     if os_name == "darwin" then
         return "macos"
@@ -51,11 +51,17 @@ function M.is_macos()
 end
 
 function M.architecture()
-    local machine = vim.loop.os_uname().machine
+    local machine = vim.uv.os_uname().machine
 
     if machine == "x86_64" then
         return "amd64"
-    elseif machine == "aarch64_be" or machine == "aarch64" or machine == "armv8b" or machine == "armv8l" then
+    elseif
+        machine == "aarch64"
+        or machine == "aarch64_be"
+        or machine == "arm64"
+        or machine == "armv8b"
+        or machine == "armv8l"
+    then
         return "aarch64"
     else
         return "unknown"
