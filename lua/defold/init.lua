@@ -1,7 +1,7 @@
 ---@class DefoldEditorSettings Settings for the Defold Game Engine
----@field set_default_editor boolean Automatically set defold.nvim as the default editor in Defold
----@field auto_fetch_dependencies boolean Automatically fetch dependencies on launch
----@field hot_reload_enabled boolean Enable hot reloading when saving scripts in Neovim
+---@field set_default_editor boolean|nil Automatically set defold.nvim as the default editor in Defold
+---@field auto_fetch_dependencies boolean|nil Automatically fetch dependencies on launch
+---@field hot_reload_enabled boolean|nil Enable hot reloading when saving scripts in Neovim
 
 ---@class LauncherSettings Settings for the Neovim launcher run by Defold
 ---@field type "neovide"|"terminal" Neovim launcher run by Defold
@@ -11,7 +11,7 @@
 ---@field debug boolean|nil Enable debug settings for the bridge cli
 
 ---@class DebuggerSettings Settings for the integrated debugger
----@field enable boolean Enable the debugger
+---@field enable boolean|nil Enable the debugger
 ---@field custom_executable string|nil Use a custom executable for the debugger
 ---@field custom_arguments table<string>|nil Custom arguments for the debugger
 
@@ -20,12 +20,12 @@
 ---@field mapping string
 
 ---@class DefoldNvimConfig Settings for defold.nvim
----@field defold DefoldEditorSettings Settings for the Defold Game Engine
----@field launcher LauncherSettings Settings for the Neovim launcher run by Defold
----@field debugger DebuggerSettings Settings for the integrated debugger
+---@field defold DefoldEditorSettings|nil Settings for the Defold Game Engine
+---@field launcher LauncherSettings|nil Settings for the Neovim launcher run by Defold
+---@field debugger DebuggerSettings|nil Settings for the integrated debugger
 ---@field keymaps table<string, Keymap>|nil Settings for key -> action mappings
----@field force_plugin_enabled boolean Force the plugin to be always enabled (even if we can't find the game.project file)
----@field debug boolean Enable debug settings for the plugin
+---@field force_plugin_enabled boolean|nil Force the plugin to be always enabled (even if we can't find the game.project file)
+---@field debug boolean|nil Enable debug settings for the plugin
 
 ---@type DefoldNvimConfig
 local default_config = {
