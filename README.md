@@ -266,6 +266,11 @@ Here's how you can interact with Defold directly from Neovim:
 * **:SetupDefold**
     This commands does the required setup for Defold to use Neovim as its external editor (this will be done by default unless disabled, see config above)
 
+## Troubleshooting
+
+Should you have problems, please open Neovim (preferably through Defold) and use the command `:checkhealth defold`, this should give you a short list of several checks that might help to identify
+the issue. If it didn't, please be sure to include the health check if you report the issue.
+
 ## Special Thanks
 
 - [astrochili/defold-annotations](https://github.com/astrochili/defold-annotations)
