@@ -89,6 +89,38 @@ defold.nvim is replacing these variables in the arguments list
 
 ## Install
 
+### vim.pack (recommended)
+
+```lua
+-- install the plugin
+vim.pack.add({
+    -- optional dependencies
+    "https://github.com/mfussenegger/nvim-dap", -- (Optional) Required when using the debugger
+    "https://github.com/L3MON4D3/LuaSnip",      -- (Optional) Required when using snippets
+
+    "https://github.com/atomicptr/defold.nvim",
+})
+
+-- setup the plugin
+require("defold").setup({
+    -- config options, see below
+})
+
+-- download the native library at installation/updates
+vim.api.nvim_create_autocmd("PackChanged", {
+    callback = function(ev)
+        if ev.data.spec.name ~= "defold.nvim" then
+            return
+        end
+
+        if ev.data.kind == "install" or ev.data.kind == "update" then
+            require("defold").download()
+        end
+    end,
+})
+
+```
+
 ### Lazy.nvim
 
 ```lua
