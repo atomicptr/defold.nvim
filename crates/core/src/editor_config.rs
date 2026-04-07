@@ -32,6 +32,7 @@ pub struct LauncherSettings {
     pub executable: Option<String>,
     pub socket_type: Option<SocketType>,
     pub arguments: Option<Vec<String>>,
+    pub appname: Option<String>,
     pub debug: Option<bool>,
 }
 
@@ -57,6 +58,11 @@ impl LauncherSettings {
         if let Some(executable) = &self.executable {
             args.push("--executable".to_string());
             args.push(executable.clone());
+        }
+
+        if let Some(appname) = &self.appname {
+            args.push("--appname".to_string());
+            args.push(appname.clone());
         }
 
         args

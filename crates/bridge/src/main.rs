@@ -41,6 +41,9 @@ enum Commands {
         #[arg(long = "executable")]
         executable: Option<String>,
 
+        #[arg(long = "appname")]
+        appname: Option<String>,
+
         #[clap(value_name = "GAME_ROOT_DIR")]
         game_root_dir: String,
 
@@ -148,6 +151,7 @@ fn main() -> Result<()> {
             launcher_type,
             socket_type,
             executable,
+            appname,
             arguments,
             game_root_dir,
             file,
@@ -157,6 +161,7 @@ fn main() -> Result<()> {
                 launcher_type,
                 socket_type,
                 executable,
+                appname,
                 arguments,
             },
             absolute(game_root_dir)?,

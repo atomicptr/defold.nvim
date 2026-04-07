@@ -23,15 +23,24 @@ const VAR_ADDRESS: &str = "{ADDR}";
 const VAR_LINE: &str = "{LINE}";
 const VAR_FILE: &str = "{FILE}";
 
-fn report_process_errors(child: Child) -> Result<()> {
-    let output = child.wait_with_output()?;
+fn report_process_errors(mut child: Child) -> Result<()> {
+    match child.try_wait()? {
+        Some(status) => {
+            let output = child.wait_with_output()?;
 
-    if !output.stdout.is_empty() {
-        tracing::debug!("Proccess Out: {}", String::from_utf8(output.stdout)?);
-    }
+            if !output.stdout.is_empty() {
+                tracing::debug!("Proccess Out: {}", String::from_utf8(output.stdout)?);
+            }
 
-    if !output.stderr.is_empty() {
-        tracing::error!("Proccess Err: {}", String::from_utf8(output.stderr)?);
+            if !output.stderr.is_empty() {
+                tracing::error!("Proccess Err: {}", String::from_utf8(output.stderr)?);
+            }
+
+            tracing::debug!("Process exited with: {status}");
+        }
+        None => {
+            tracing::debug!("Process still running, detaching...");
+        }
     }
 
     Ok(())
@@ -328,6 +337,11 @@ pub fn run(
     // we kinda need to prepend this to the application
     if matches!(plugin_config.launcher_type, Some(LauncherType::Neovide)) {
         app.args.insert(0, "--".to_string());
+    }
+
+    if let Some(appname) = &plugin_config.appname {
+        app.env_vars
+            .insert("NVIM_APPNAME".to_string(), appname.clone());
     }
 
     match plugin_config.socket_type {

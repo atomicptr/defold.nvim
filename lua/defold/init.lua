@@ -8,6 +8,7 @@
 ---@field executable string|nil Executable to be used by the launcher, nil means we're trying to figure this out ourselves
 ---@field socket_type "fsock"|"netsock"|nil Run Neovims RPC protocol over file socket or network. Nil means it will be picked automatic (fsock on Unix, network on Windows)
 ---@field arguments table<string>|nil Extra arguments passed to the `executable` (or neovide)
+---@field appname string|nil Sets `NVIM_APPNAME` to run the editor in a special configuration
 ---@field debug boolean|nil Enable debug settings for the bridge cli
 
 ---@class DebuggerSettings Settings for the integrated debugger
@@ -88,13 +89,14 @@ end
 
 ---@param opts DefoldNvimConfig|nil
 function M.setup(opts)
+    -- keep this first so that every call to setup updates the config
+    M.config = vim.tbl_deep_extend("force", M.config, opts or {})
+
     if M.loaded then
         return
     end
 
     local log = require "defold.service.logger"
-
-    M.config = vim.tbl_deep_extend("force", default_config, opts or {})
 
     if M.config.debug then
         M.config.launcher.debug = true

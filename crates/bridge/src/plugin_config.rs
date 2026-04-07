@@ -21,5 +21,6 @@ pub struct PluginConfig {
     pub launcher_type: Option<LauncherType>,
     pub socket_type: Option<SocketType>,
     pub executable: Option<String>,
+    pub appname: Option<String>,
     pub arguments: Option<Vec<String>>,
 }

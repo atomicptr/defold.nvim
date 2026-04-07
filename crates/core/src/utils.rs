@@ -11,12 +11,13 @@ use sha3::{Digest, Sha3_256};
 use url::Url;
 use walkdir::WalkDir;
 
+#[must_use]
 pub fn sha3(str: &str) -> String {
     let mut hasher = Sha3_256::new();
     hasher.update(str.as_bytes());
     let result = hasher.finalize();
 
-    format!("{:x}", result)
+    hex::encode(result)
 }
 
 pub fn project_id(root_dir: &str) -> Result<String> {
