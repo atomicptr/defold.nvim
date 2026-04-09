@@ -7,7 +7,7 @@ use std::{
 use crate::{
     defold_annotations,
     game_project::GameProject,
-    script_api,
+    path, script_api,
     utils::{self, sha3},
 };
 use anyhow::{Context, Result, bail};
@@ -21,10 +21,7 @@ fn ident(string: &str) -> Result<String> {
 }
 
 pub fn deps_root() -> Result<PathBuf> {
-    let dir = dirs::data_dir()
-        .context("could not get data dir")?
-        .join("defold.nvim")
-        .join("deps");
+    let dir = path::data_dir()?.join("deps");
     fs::create_dir_all(&dir)?;
     Ok(dir)
 }

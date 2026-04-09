@@ -7,7 +7,7 @@ use std::{
 
 use anyhow::{Context, Result, bail};
 
-use crate::{release_downloader, utils};
+use crate::{path, release_downloader, utils};
 
 const EXECUTABLE_NAME: &str = "neovide";
 const OWNER: &str = "neovide";
@@ -26,10 +26,7 @@ const ASSET_NAME: &str = "Neovide-aarch64-apple-darwin.dmg";
 const ASSET_NAME: &'static str = "neovide.exe.zip";
 
 fn bin_dir() -> Result<PathBuf> {
-    let dir = dirs::data_dir()
-        .context("could not get data dir")?
-        .join("defold.nvim")
-        .join("bin");
+    let dir = path::data_dir()?.join("bin");
 
     Ok(dir)
 }

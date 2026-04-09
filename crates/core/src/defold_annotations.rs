@@ -8,7 +8,7 @@ use anyhow::{Context, Result, bail};
 use version_compare::Version;
 use zip::ZipArchive;
 
-use crate::{github, project, utils};
+use crate::{github, path, project, utils};
 
 const OWNER: &str = "astrochili";
 const REPOSITORY: &str = "defold-annotations";
@@ -19,10 +19,7 @@ pub fn dir() -> Result<PathBuf> {
 }
 
 fn version_path() -> Result<PathBuf> {
-    let dir = dirs::data_dir()
-        .context("could not get data dir")?
-        .join("defold.nvim")
-        .join("meta");
+    let dir = path::data_dir()?.join("meta");
 
     fs::create_dir_all(&dir)?;
 

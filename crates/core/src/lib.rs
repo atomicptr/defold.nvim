@@ -9,6 +9,7 @@ pub mod github;
 pub mod mobdap;
 pub mod neovide;
 pub mod nvim_server;
+pub mod path;
 pub mod project;
 mod release_downloader;
 pub mod script_api;

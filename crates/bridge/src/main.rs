@@ -3,12 +3,12 @@ use std::{
     path::{PathBuf, absolute},
 };
 
-use anyhow::{Context, Result};
+use anyhow::Result;
 use clap::{Parser, Subcommand};
 use defold_nvim_core::{
     editor,
     focus::{focus_game, focus_neovim},
-    mobdap, neovide, project, script_api,
+    mobdap, neovide, path, project, script_api,
 };
 use tracing::Level;
 use tracing_appender::rolling::never;
@@ -116,10 +116,7 @@ fn main() -> Result<()> {
         }
     };
 
-    let logs = dirs::cache_dir()
-        .context("could not get cache dir")?
-        .join("defold.nvim")
-        .join("logs");
+    let logs = path::cache_dir()?.join("logs");
 
     fs::create_dir_all(&logs)?;
 

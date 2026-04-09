@@ -1,4 +1,4 @@
-use crate::utils::project_id;
+use crate::{path, utils::project_id};
 use anyhow::{Context, Result, bail};
 use std::{
     fs,
@@ -36,9 +36,7 @@ pub fn runtime_dir(root_dir: &Path) -> Result<PathBuf> {
         .to_str()
         .context("could not convert root dir to string")?;
 
-    let dir = dirs::cache_dir()
-        .context("could not get cache dir")?
-        .join("defold.nvim")
+    let dir = path::cache_dir()?
         .join("runtime")
         .join(project_id(root_dir)?);
 

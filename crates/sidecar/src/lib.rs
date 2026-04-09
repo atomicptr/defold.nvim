@@ -1,5 +1,5 @@
 use anyhow::Context;
-use defold_nvim_core::{bridge, editor, editor_config, mobdap, nvim_server, project, utils};
+use defold_nvim_core::{bridge, editor, editor_config, mobdap, nvim_server, path, project, utils};
 use defold_nvim_core::{focus, game_project::GameProject};
 use mlua::Value;
 use mlua::prelude::*;
@@ -22,9 +22,8 @@ static LOG_RELOAD_HANDLE: OnceLock<reload::Handle<LevelFilter, tracing_subscribe
 #[mlua::lua_module]
 fn defold_nvim_sidecar(lua: &Lua) -> LuaResult<LuaTable> {
     LOG_INIT.get_or_init(|| {
-        let log_dir = dirs::cache_dir()
+        let log_dir = path::cache_dir()
             .expect("could not get cache dir")
-            .join("defold.nvim")
             .join("logs");
 
         fs::create_dir_all(&log_dir).expect("could not create logs dir");
@@ -106,6 +105,8 @@ fn register_exports(lua: &Lua) -> LuaResult<LuaTable> {
         "list_dependency_dirs",
         lua.create_function(list_dependency_dirs)?,
     )?;
+    exports.set("data_dir", lua.create_function(data_dir)?)?;
+    exports.set("cache_dir", lua.create_function(cache_dir)?)?;
 
     Ok(exports)
 }
@@ -243,4 +244,20 @@ fn list_dependency_dirs(_lua: &Lua, game_root: String) -> LuaResult<Vec<String>>
         })
         .collect();
     Ok(deps)
+}
+
+fn data_dir(_lua: &Lua, _: ()) -> LuaResult<String> {
+    let dir = path::data_dir()?
+        .to_str()
+        .context("could not convert to string")?
+        .to_string();
+    Ok(dir)
+}
+
+fn cache_dir(_lua: &Lua, _: ()) -> LuaResult<String> {
+    let dir = path::cache_dir()?
+        .to_str()
+        .context("could not convert to string")?
+        .to_string();
+    Ok(dir)
 }

@@ -1,12 +1,9 @@
-use crate::utils::sha3;
-use anyhow::{Context, Result};
+use crate::{path, utils::sha3};
+use anyhow::Result;
 use std::{fs, path::PathBuf, time::Duration};
 
 fn cache_dir() -> Result<PathBuf> {
-    let dir = dirs::cache_dir()
-        .context("could not get cache dir")?
-        .join("defold.nvim")
-        .join("cache");
+    let dir = path::cache_dir()?.join("cache");
 
     fs::create_dir_all(&dir)?;
 

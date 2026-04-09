@@ -6,12 +6,18 @@ function M.check()
     local os = require "defold.service.os"
 
     vim.health.info(string.format("OS: %s / %s", os.name(), os.architecture()))
+    vim.health.info(string.format("Plugin Root: %s", os.plugin_root()))
+    vim.health.info(string.format("Data Dir: %s", os.data_dir()))
+    vim.health.info(string.format("Cache Dir: %s", os.cache_dir()))
 
     vim.health.start "Sidecar"
 
     local sidecar_ok, sidecar = pcall(require, "defold.sidecar")
+    ---@cast sidecar Sidecar
     if sidecar_ok then
         vim.health.ok(string.format("Sidecar Loaded Version: %s", sidecar.version))
+        vim.health.info(string.format("Sidecar Data Dir: %s", sidecar.data_dir()))
+        vim.health.info(string.format("Sidecar Cache Dir: %s", sidecar.cache_dir()))
     else
         vim.health.error(string.format("Sidecar Not Available: %s", sidecar))
     end
@@ -68,6 +74,24 @@ function M.check()
         vim.health.ok(string.format("Editor Port found at: %d", editor_port))
     else
         vim.health.warn "Could not find editor port, is the editor running?"
+    end
+
+    ---@type {config: DefoldNvimConfig}
+    local defold = require "defold"
+
+    vim.health.start "Launcher"
+
+    vim.health.info(string.format("Launcher Type: %s", defold.config.launcher.type))
+    vim.health.info(string.format("Socket Type: %s", defold.config.launcher.socket_type))
+
+    if sidecar_ok then
+        local server_addr_ok, server_addr =
+            pcall(sidecar.resolve_nvim_server_addr, project.project_root(), defold.config.launcher.socket_type)
+        if server_addr_ok then
+            vim.health.ok(string.format("Server Address: %s", server_addr))
+        else
+            vim.health.error(string.format "Could not determine server address")
+        end
     end
 end
 

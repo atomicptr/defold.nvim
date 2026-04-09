@@ -5,7 +5,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use crate::{bridge, editor};
+use crate::{bridge, editor, path};
 
 #[derive(Debug, Deserialize)]
 pub enum LauncherType {
@@ -102,10 +102,7 @@ fn create_runner_script(
     plugin_root: &Path,
     launcher_settings: &LauncherSettings,
 ) -> Result<PathBuf> {
-    let dir = dirs::data_dir()
-        .context("could not get data dir")?
-        .join("defold.nvim")
-        .join("bin");
+    let dir = path::data_dir()?.join("bin");
     fs::create_dir_all(&dir)?;
 
     let script_path = dir.join(format!("run.{SCRIPT_EXT}"));

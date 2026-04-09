@@ -1,11 +1,11 @@
-use anyhow::{Context, Result};
+use anyhow::Result;
 use std::{
     fs::{self},
     path::{Path, PathBuf},
 };
 use version_compare::Version;
 
-use crate::{release_downloader, utils};
+use crate::{path, release_downloader, utils};
 
 const EXECUTABLE_NAME: &str = "defold-nvim-bridge";
 const OWNER: &str = "atomicptr";
@@ -51,10 +51,7 @@ fn exe_name() -> String {
 }
 
 fn local_path() -> Result<PathBuf> {
-    let dir = dirs::data_dir()
-        .context("could not get data dir")?
-        .join("defold.nvim")
-        .join("bin");
+    let dir = path::data_dir()?.join("bin");
 
     fs::create_dir_all(&dir)?;
 

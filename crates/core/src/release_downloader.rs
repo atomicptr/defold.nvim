@@ -1,4 +1,4 @@
-use anyhow::{Context, Result, bail};
+use anyhow::{Result, bail};
 use std::{
     fs,
     path::{Path, PathBuf},
@@ -6,16 +6,12 @@ use std::{
 };
 use version_compare::Version;
 
-use crate::github;
+use crate::{github, path};
 
 const CACHE_DURATION: u64 = 8; // hours
 
 pub fn make_path(executable_name: &str) -> Result<PathBuf> {
-    let dir = dirs::data_dir()
-        .context("could not get data dir")?
-        .join("defold.nvim")
-        .join("bin");
-
+    let dir = path::data_dir()?.join("bin");
     fs::create_dir_all(&dir)?;
 
     let suffix = if cfg!(target_os = "windows") {
@@ -28,10 +24,7 @@ pub fn make_path(executable_name: &str) -> Result<PathBuf> {
 }
 
 pub fn version_path(executable_name: &str) -> Result<PathBuf> {
-    let dir = dirs::data_dir()
-        .context("could not get data dir")?
-        .join("defold.nvim")
-        .join("meta");
+    let dir = path::data_dir()?.join("meta");
 
     fs::create_dir_all(&dir)?;
 
