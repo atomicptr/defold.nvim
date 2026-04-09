@@ -1,5 +1,5 @@
 use anyhow::Context;
-use defold_nvim_core::{bridge, editor, editor_config, mobdap, project, utils};
+use defold_nvim_core::{bridge, editor, editor_config, mobdap, nvim_server, project, utils};
 use defold_nvim_core::{focus, game_project::GameProject};
 use mlua::Value;
 use mlua::prelude::*;
@@ -91,6 +91,10 @@ fn register_exports(lua: &Lua) -> LuaResult<LuaTable> {
         lua.create_function(set_default_editor)?,
     )?;
     exports.set("find_bridge_path", lua.create_function(find_bridge_path)?)?;
+    exports.set(
+        "resolve_nvim_server_addr",
+        lua.create_function(resolve_nvim_server_addr)?,
+    )?;
     exports.set("focus_neovim", lua.create_function(focus_neovim)?)?;
     exports.set("focus_game", lua.create_function(focus_game)?)?;
     exports.set("mobdap_install", lua.create_function(mobdap_install)?)?;
@@ -178,6 +182,21 @@ fn find_bridge_path(_lua: &Lua, plugin_root: Option<String>) -> LuaResult<String
         .to_str()
         .context("could not convert path to string")?
         .to_string())
+}
+
+#[instrument(level = "debug", err(Debug), skip_all)]
+fn resolve_nvim_server_addr(
+    _lua: &Lua,
+    (game_root, socket_type): (String, Option<String>),
+) -> LuaResult<String> {
+    let root = absolute(game_root)?;
+    let socket_type = socket_type
+        .as_deref()
+        .map(nvim_server::SocketType::parse)
+        .transpose()?;
+
+    let addr = nvim_server::resolve_server_addr(&root, socket_type)?;
+    Ok(addr)
 }
 
 #[instrument(level = "debug", err(Debug), skip_all)]

@@ -171,6 +171,11 @@ function M.setup(opts)
 
     vim.defer_fn(function()
         local project = require "defold.project"
+
+        if project.is_defold_project() then
+            project.ensure_nvim_server(M.config.launcher.socket_type)
+        end
+
         local port = project.editor_port()
 
         if M.config.defold.set_default_editor and port then

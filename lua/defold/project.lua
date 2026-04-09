@@ -31,6 +31,57 @@ function M.is_defold_project()
     return vim.fn.filereadable(root_dir .. "/game.project") == 1
 end
 
+---@return boolean
+local function is_server_registered(server_addr)
+    for _, addr in ipairs(vim.fn.serverlist()) do
+        if addr == server_addr then
+            return true
+        end
+    end
+
+    return false
+end
+
+---@param socket_type "fsock"|"netsock"|nil
+---@return string|nil
+function M.ensure_nvim_server(socket_type)
+    local log = require "defold.service.logger"
+
+    for _, arg in ipairs(vim.v.argv) do
+        -- if neovim was started with `--listen` flag we don't need to try to start a new server
+        if arg == "--listen" then
+            log.debug "Neovim was started with `--listen`, no need to start a server"
+            return nil
+        end
+    end
+
+    local root = M.project_root()
+    if not root then
+        return nil
+    end
+
+    local sidecar = require "defold.sidecar"
+
+    local ok_addr, addr = pcall(sidecar.resolve_nvim_server_addr, root, socket_type)
+    if not ok_addr then
+        log.error(string.format("Could not resolve Neovim server address because: %s", addr))
+        return nil
+    end
+
+    if is_server_registered(addr) then
+        log.debug(string.format("Neovim is running with server: %s", addr))
+        return addr
+    end
+
+    local ok_server, server = pcall(vim.fn.serverstart, addr)
+    if ok_server then
+        log.debug(string.format("Started new Neovim server at: %s", server))
+        return server
+    end
+
+    return nil
+end
+
 M._editor_port = nil
 
 ---Find defold editor port for current project

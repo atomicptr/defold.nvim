@@ -185,6 +185,7 @@ package.cpath = package.cpath
 ---@field send_command function(port: integer, cmd: string)
 ---@field set_default_editor function(port: integer, plugin_root: string, launcher_config: LauncherSettings)
 ---@field find_bridge_path function(plugin_root: string|nil): string
+---@field resolve_nvim_server_addr function(game_root: string, socket_type: "fsock"|"netsock"|nil): string
 ---@field focus_neovim function(game_root: string)
 ---@field focus_game function(game_root: string)
 ---@field mobdap_install function(): string

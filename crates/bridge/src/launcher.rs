@@ -1,19 +1,17 @@
+use crate::{
+    neovide,
+    plugin_config::{LauncherType, PluginConfig, SocketType},
+    utils::is_port_in_use,
+};
+use anyhow::{Context, Result, bail};
+use defold_nvim_core::{focus::focus_neovim, nvim_server, utils::classname};
 use std::{
     fs::{self},
     path::{Path, PathBuf},
     process::{Child, Command},
 };
-
-use anyhow::{Context, Result, bail};
-use defold_nvim_core::{focus::focus_neovim, utils::classname};
 use termlauncher::{Application, CustomTerminal, Terminal};
 use which::which;
-
-use crate::{
-    neovide,
-    plugin_config::{LauncherType, PluginConfig, SocketType},
-    utils::{self, is_port_in_use},
-};
 
 const ERR_NEOVIDE_NOT_FOUND: &str = "Could not find Neovide, have you installed it?";
 const ERR_TERMINAL_NOT_FOUND: &str = "Could not find any suitable terminal";
@@ -190,12 +188,7 @@ fn run_fsock(
     file: &str,
     line: Option<usize>,
 ) -> Result<()> {
-    let socket_file = utils::runtime_dir(
-        root_dir
-            .to_str()
-            .context("could not convert path to string")?,
-    )?
-    .join("neovim.sock");
+    let socket_file = nvim_server::fsock_path(root_dir)?;
 
     tracing::debug!("Using fsock at {socket_file:?}");
 
@@ -241,18 +234,8 @@ fn run_netsock(
     file: &str,
     line: Option<usize>,
 ) -> Result<()> {
-    let port_file = utils::runtime_dir(
-        root_dir
-            .to_str()
-            .context("could not convert path to string")?,
-    )?
-    .join("port");
-
-    let port: u16 = if port_file.exists() {
-        fs::read_to_string(&port_file)?.parse()?
-    } else {
-        utils::find_free_port()
-    };
+    let port_file = nvim_server::netsock_port_file(root_dir)?;
+    let port = nvim_server::read_or_allocate_netsock_port(root_dir)?;
 
     let socket = format!("127.0.0.1:{port}");
 
@@ -264,10 +247,8 @@ fn run_netsock(
         if let Err(err) = nvim_open_file_remote(nvim, &socket, file, line) {
             tracing::error!("Failed to communicate with neovim server: {err:?}");
 
-            let new_port = utils::find_free_port();
-            let socket = format!("127.0.0.1:{new_port}");
+            let socket = nvim_server::allocate_new_netsock_addr(root_dir)?;
             tracing::debug!("Trying to use netsock with port {socket}");
-            fs::write(port_file, new_port.to_string())?;
 
             app.args = apply_vars(&app.args, VAR_ADDRESS, &socket);
             report_process_errors(app.launch_with(launcher)?)?;
