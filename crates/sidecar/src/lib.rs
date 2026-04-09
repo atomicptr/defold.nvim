@@ -143,7 +143,13 @@ fn is_editor_port(_lua: &Lua, port: u16) -> LuaResult<bool> {
 fn list_commands(lua: &Lua, port: u16) -> LuaResult<LuaTable> {
     let commands = editor::list_commands(port)?;
 
-    lua.create_table_from(commands)
+    let table = lua.create_table()?;
+
+    for (i, cmd) in commands.into_iter().enumerate() {
+        table.set(i + 1, cmd)?;
+    }
+
+    Ok(table)
 }
 
 #[instrument(level = "debug", err(Debug), skip_all)]

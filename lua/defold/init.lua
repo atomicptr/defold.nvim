@@ -258,14 +258,14 @@ function M.load_plugin()
             return
         end
 
-        for cmd, desc in pairs(commands) do
+        for _, cmd in ipairs(commands) do
             -- hide debugger related commands as they'd give the user the impression that these
             -- work with our debugger integration
             local is_debugger_command = string.find(cmd, "debugger")
 
             if not is_debugger_command then
                 table.insert(cmds, cmd)
-                table.insert(options, string.format("%s - %s", cmd, desc))
+                table.insert(options, cmd)
             end
         end
 

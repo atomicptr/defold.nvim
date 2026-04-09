@@ -1,7 +1,7 @@
 local M = {}
 
 ---List all available Defold commands
----@return table|nil
+---@return string[]
 function M.list_commands()
     local log = require "defold.service.logger"
     local project = require "defold.project"
@@ -10,7 +10,7 @@ function M.list_commands()
 
     if not port then
         log.error "Could not find Defold editor, is it running?"
-        return
+        return {}
     end
 
     local sidecar = require "defold.sidecar"
@@ -19,10 +19,9 @@ function M.list_commands()
 
     if not ok then
         log.error(string.format("Could not fetch commands from Defold, because: %s", res))
-        return nil
+        return {}
     end
 
-    ---@cast res table<string, string>
     return res
 end
 

@@ -17,6 +17,10 @@ Batteries-included development environment for the [Defold game engine](https://
 
 ## System Requirements
 
+### Defold
+
+The minimum supported Defold version is: **1.12.3**
+
 ### Operating System
 
 - Linux 🐧   - First class & fully supported
