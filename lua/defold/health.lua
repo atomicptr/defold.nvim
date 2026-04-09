@@ -16,8 +16,16 @@ function M.check()
     ---@cast sidecar Sidecar
     if sidecar_ok then
         vim.health.ok(string.format("Sidecar Loaded Version: %s", sidecar.version))
-        vim.health.info(string.format("Sidecar Data Dir: %s", sidecar.data_dir()))
-        vim.health.info(string.format("Sidecar Cache Dir: %s", sidecar.cache_dir()))
+
+        local data_dir_ok, data_dir = pcall(sidecar.data_dir)
+        if data_dir_ok then
+            vim.health.info(string.format("Sidecar Data Dir: %s", data_dir))
+        end
+
+        local cache_dir_ok, cache_dir = pcall(sidecar.cache_dir)
+        if cache_dir_ok then
+            vim.health.info(string.format("Sidecar Cache Dir: %s", cache_dir))
+        end
     else
         vim.health.error(string.format("Sidecar Not Available: %s", sidecar))
     end
