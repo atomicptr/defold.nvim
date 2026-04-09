@@ -101,6 +101,8 @@ enum Commands {
         #[clap(value_name = "SCRIPT_API_FILE", index = 1)]
         input: PathBuf,
     },
+    /// Print the version of this executable
+    Version,
 }
 
 fn main() -> Result<()> {
@@ -219,6 +221,9 @@ fn main() -> Result<()> {
             let res = script_api::compile(&data)?;
 
             println!("{res}");
+        }
+        Commands::Version => {
+            println!("{}", env!("CARGO_PKG_VERSION"));
         }
     }
 

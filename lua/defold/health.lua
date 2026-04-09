@@ -21,6 +21,16 @@ function M.check()
     local bridge_path_ok, bridge_path = pcall(sidecar.find_bridge_path, require("defold").plugin_root())
     if bridge_path_ok then
         vim.health.ok(string.format("Bridge Path: %s", bridge_path))
+
+        local bridge_version_ok, bridge_version = pcall(function()
+            return vim.fn.system { bridge_path, "version" }
+        end)
+
+        if bridge_version_ok then
+            vim.health.ok(string.format("Bridge Version: %s", vim.trim(bridge_version)))
+        else
+            vim.health.error(string.format("Bridge Version: Could not get version: %s", bridge_version))
+        end
     else
         vim.health.error(string.format("Bridge Not Found: %s", bridge_path))
     end
