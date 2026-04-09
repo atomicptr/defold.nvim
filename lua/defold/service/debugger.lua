@@ -46,7 +46,7 @@ function M.register_nvim_dap()
 
     local dap_installed, dap = pcall(require, "dap")
     if not dap_installed then
-        log.error "Debugger enabled but could not find plugin: mfussenegger/nvim-dap"
+        log.warn "Debugger enabled but could not find plugin: mfussenegger/nvim-dap"
         return
     end
 
