@@ -108,30 +108,6 @@ function M.setup(opts)
         end
     end
 
-    -- add setup defold command
-    vim.api.nvim_create_user_command("SetupDefold", function()
-        local project = require "defold.project"
-        local port = project.editor_port()
-
-        if not port then
-            log.error "Editor is not running, please make sure the editor for this project is running."
-            return
-        end
-
-        local sidecar = require "defold.sidecar"
-        local ok, err = pcall(sidecar.set_default_editor, port, M.plugin_root(), M.config.launcher)
-        if not ok then
-            log.error(string.format("Could not set default editor because: %s", err))
-        end
-
-        if M.config.debugger.enable then
-            local debugger = require "defold.service.debugger"
-            debugger.setup(M.config.debugger.custom_executable, M.config.debugger.custom_arguments)
-        end
-
-        log.info "Defold setup successfully"
-    end, { nargs = 0, desc = "Setup Defold to use Neovim as its default editor" })
-
     -- register some filetypes
     vim.filetype.add(require("defold.config.filetype").minimal)
 
@@ -176,20 +152,12 @@ function M.setup(opts)
             project.ensure_nvim_server(M.config.launcher.socket_type)
         end
 
-        local port = project.editor_port()
-
-        if M.config.defold.set_default_editor and port then
-            local sidecar = require "defold.sidecar"
-            local ok, err = pcall(sidecar.set_default_editor, port, M.plugin_root(), M.config.launcher)
-
-            if not ok then
-                log.error(string.format("Could not set default editor because: %s", err))
-            end
+        if M.config.defold.set_default_editor then
+            M.setup_default_editor()
         end
 
         if M.config.debugger.enable then
-            local debugger = require "defold.service.debugger"
-            debugger.setup(M.config.debugger.custom_executable, M.config.debugger.custom_arguments)
+            M.setup_debugger()
         end
 
         if not M.config.force_plugin_enabled and not project.is_defold_project() then
@@ -324,6 +292,31 @@ function M.load_plugin()
     if M.config.defold.auto_fetch_dependencies then
         project.install_dependencies(false)
     end
+end
+
+---Sets Neovim as the default Defold editor
+function M.setup_default_editor()
+    local project = require "defold.project"
+    local log = require "defold.service.logger"
+
+    local port = project.editor_port()
+
+    if not port then
+        return
+    end
+
+    local sidecar = require "defold.sidecar"
+    local ok, err = pcall(sidecar.set_default_editor, port, M.plugin_root(), M.config.launcher)
+
+    if not ok then
+        log.error(string.format("Could not set default editor because: %s", err))
+    end
+end
+
+---Sets up MobDap as the debugger
+function M.setup_debugger()
+    local debugger = require "defold.service.debugger"
+    debugger.setup(M.config.debugger.custom_executable, M.config.debugger.custom_arguments)
 end
 
 return M

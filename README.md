@@ -216,8 +216,18 @@ defold.setup(config)
 1. Install the plugin (see above)
 2. Install [Defold](https://defold.com/)
 3. Start Defold and open a project
-4. Open Neovim in the projects directory and run `:SetupDefold`
-5. Done, when you try to open files via Defold now they should open in a Neovim window.
+4. Open Neovim in the projects directory once (Defold must be running)
+5. Done, when you try to open files via Defold now they open in your current Neovim instance or in a new window if none could be found.
+
+#### Manual Setup
+
+If you have the auto setup for the Defold external editor disabled and/or you want to initialize this a different way, use:
+
+`:lua require("defold").setup_default_editor()`
+
+Similarly the Debugger can be initialized using
+
+`:lua require("defold").setup_debugger()`
 
 ### Setup Debugging
 
@@ -253,13 +263,15 @@ Here's how you can interact with Defold directly from Neovim:
 * **:DefoldFetch**
     This command fetches all Defold dependencies and creates annotations for the Lua LSP. Run with bang to force re-downloading the annotations.
 
-* **:SetupDefold**
-    This commands does the required setup for Defold to use Neovim as its external editor (this will be done by default unless disabled, see config above)
-
 ## Troubleshooting
 
 Should you have problems, please open Neovim (preferably through Defold) and use the command `:checkhealth defold`, this should give you a short list of several checks that might help to identify
 the issue. If it didn't, please be sure to include the health check if you report the issue.
+
+There are also logs available, you can find the paths inside `:checkhealth defold`.
+
+- **System > Cache Dir**: The location of the plugin logs
+- **Sidecar > Sidecar Cache Dir**: The location of the sidecar (Neovim native extension) and bridge (Tool that calls Neovim instances)
 
 ## Special Thanks
 
