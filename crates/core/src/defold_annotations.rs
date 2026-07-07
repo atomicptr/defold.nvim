@@ -6,6 +6,7 @@ use std::{
 
 use anyhow::{Context, Result, bail};
 use version_compare::Version;
+use walkdir::{DirEntry, WalkDir};
 use zip::ZipArchive;
 
 use crate::{github, path, project, utils};
@@ -100,7 +101,15 @@ pub fn install() -> Result<()> {
     let mut archive = ZipArchive::new(file)?;
     archive.extract(parent_dir)?;
 
-    let defold_api_dir = parent_dir.join("defold_api");
+    let Some(defold_api_dir) = WalkDir::new(parent_dir)
+        .into_iter()
+        .filter_map(Result::ok)
+        .filter(|e| e.file_type().is_dir())
+        .find(|e| e.file_name() == "defold_api")
+        .map(DirEntry::into_path)
+    else {
+        bail!("Defold Annotations Dir could not be found");
+    };
 
     if !defold_api_dir.exists() {
         bail!(
