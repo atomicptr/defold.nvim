@@ -1,4 +1,4 @@
-local min_version = "0.5.3"
+local min_version = "0.5.5"
 
 local github_owner = "atomicptr"
 local github_repository = "defold.nvim"
