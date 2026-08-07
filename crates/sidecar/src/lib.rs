@@ -158,10 +158,11 @@ fn list_commands(lua: &Lua, port: u16) -> LuaResult<LuaTable> {
 }
 
 #[instrument(level = "debug", err(Debug), skip_all)]
-fn send_command(_lua: &Lua, (port, cmd): (u16, String)) -> LuaResult<()> {
-    editor::send_command(port, &cmd)?;
+fn send_command(lua: &Lua, (port, cmd): (u16, String)) -> LuaResult<Value> {
+    let res = editor::send_command(port, &cmd)?;
+    let val = lua.to_value(&res)?;
 
-    Ok(())
+    Ok(val)
 }
 
 #[instrument(level = "debug", err(Debug), skip_all)]

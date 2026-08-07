@@ -1,4 +1,4 @@
-local min_version = "0.5.5"
+local min_version = "0.6.0"
 
 local github_owner = "atomicptr"
 local github_repository = "defold.nvim"
@@ -176,13 +176,34 @@ package.cpath = package.cpath
 ---@field title string
 ---@field dependencies string[]
 
+---@class CommandResult
+---@field success boolean
+---@field issues Issue[]
+---@field status integer
+
+---@class Issue
+---@field message string
+---@field severity IssueSeverity
+---@field resource string|nil
+---@field range Range|nil
+
+---@alias IssueSeverity "error"|"warning"|"info"
+
+---@class Range
+---@field start Position
+---@field end Position
+
+---@class Position
+---@field line integer
+---@field character integer
+
 ---@class Sidecar
 ---@field version string
 ---@field set_log_level function(level: "debug"|"info"|"error")
 ---@field read_game_project function(path: string): GameProject
 ---@field is_editor_port function(port: integer): boolean
 ---@field list_commands function(port: integer): table<string, string>
----@field send_command function(port: integer, cmd: string)
+---@field send_command function(port: integer, cmd: string): CommandResult
 ---@field set_default_editor function(port: integer, plugin_root: string, launcher_config: LauncherSettings)
 ---@field find_bridge_path function(plugin_root: string|nil): string
 ---@field resolve_nvim_server_addr function(game_root: string, socket_type: "fsock"|"netsock"|nil): string

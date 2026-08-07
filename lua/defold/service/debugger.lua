@@ -41,7 +41,8 @@ function M.setup(custom_executable, custom_arguments)
     M.mobdap_path()
 end
 
-function M.register_nvim_dap()
+---@param config DefoldNvimConfig
+function M.register_nvim_dap(config)
     local log = require "defold.service.logger"
 
     local dap_installed, dap = pcall(require, "dap")
@@ -82,7 +83,11 @@ function M.register_nvim_dap()
     dap.listeners.after.event_mobdap_waiting_for_connection.defold_nvim_start_game = function(_, _)
         log.debug "debugger: connected"
 
-        editor.send_command "build"
+        local res = editor.send_command "build"
+
+        if config.quickfix.enable then
+            editor.open_quickfix_from_command_result(res, config.quickfix.min_severity, config.quickfix.open_list)
+        end
     end
 
     dap.listeners.after.event_stopped.defold_nvim_switch_focus_on_stop = function(_, _)

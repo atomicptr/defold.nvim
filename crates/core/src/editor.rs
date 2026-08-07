@@ -3,6 +3,8 @@ use std::{fs, path::Path};
 use anyhow::{Context, Result, bail};
 use serde_json::Value;
 
+use crate::editor_commands::CommandResult;
+
 fn editor_url(port: u16) -> String {
     format!("http://127.0.0.1:{port}")
 }
@@ -73,14 +75,23 @@ pub fn list_commands(port: u16) -> Result<Vec<String>> {
     }
 }
 
-pub fn send_command(port: u16, cmd: &str) -> Result<()> {
+pub fn send_command(port: u16, cmd: &str) -> Result<CommandResult> {
     let url = command_url(port, Some(cmd.to_string()));
 
     let res = reqwest::blocking::Client::new().post(url).send()?;
+    let status = res.status().as_u16();
 
-    if !res.status().is_success() {
-        bail!("could not send command {cmd}, status: {:?}", res.status());
-    }
+    let result = match res.json::<CommandResult>() {
+        Ok(mut body) => {
+            body.status = status;
+            body
+        }
+        Err(_) => CommandResult {
+            success: false,
+            issues: vec![],
+            status,
+        },
+    };
 
-    Ok(())
+    Ok(result)
 }

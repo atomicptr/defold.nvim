@@ -16,6 +16,11 @@
 ---@field custom_executable string|nil Use a custom executable for the debugger
 ---@field custom_arguments table<string>|nil Custom arguments for the debugger
 
+---@class Quickfix Settings for the integrated Quickfix support
+---@field enable boolean|nil Enable quickfix mode (default true)
+---@field min_severity IssueSeverity|nil Minimum severity to report Defold errors in quickfix (default "error")
+---@field open_list boolean|nil Opens the quickfix list after sending the command (default true)
+
 ---@class Keymap
 ---@field mode string|string[]
 ---@field mapping string
@@ -24,6 +29,7 @@
 ---@field defold DefoldEditorSettings|nil Settings for the Defold Game Engine
 ---@field launcher LauncherSettings|nil Settings for the Neovim launcher run by Defold
 ---@field debugger DebuggerSettings|nil Settings for the integrated debugger
+---@field quickfix Quickfix|nil Settings for the integrated Quickfix support
 ---@field keymaps table<string, Keymap>|nil Settings for key -> action mappings
 ---@field force_plugin_enabled boolean|nil Force the plugin to be always enabled (even if we can't find the game.project file)
 ---@field debug boolean|nil Enable debug settings for the plugin
@@ -46,6 +52,12 @@ local default_config = {
         enable = true,
         custom_executable = nil,
         custom_arguments = nil,
+    },
+
+    quickfix = {
+        enable = true,
+        min_severity = "error",
+        open_list = true,
     },
 
     keymaps = {
@@ -215,7 +227,15 @@ function M.load_plugin()
         vim.api.nvim_create_autocmd("BufWritePost", {
             pattern = { "*.lua", "*.script", "*.gui_script" },
             callback = function()
-                editor.send_command("hot-reload", true)
+                local res = editor.send_command("hot-reload", true)
+
+                if M.config.quickfix.enable then
+                    editor.open_quickfix_from_command_result(
+                        res,
+                        M.config.quickfix.min_severity,
+                        M.config.quickfix.open_list
+                    )
+                end
             end,
         })
     end
@@ -255,7 +275,11 @@ function M.load_plugin()
 
     -- add the ":DefoldSend cmd" command to send commands to the editor
     vim.api.nvim_create_user_command("DefoldSend", function(opt)
-        editor.send_command(opt.args)
+        local res = editor.send_command(opt.args)
+
+        if M.config.quickfix.enable then
+            editor.open_quickfix_from_command_result(res, M.config.quickfix.min_severity, M.config.quickfix.open_list)
+        end
     end, { nargs = 1, desc = "Send a command to the Defold editor" })
 
     -- add the ":DefoldFetch" command to fetch dependencies & annoatations
@@ -270,7 +294,7 @@ function M.load_plugin()
 
     -- integrate the debugger into dap
     if M.config.debugger.enable then
-        debugger.register_nvim_dap()
+        debugger.register_nvim_dap(M.config)
     end
 
     -- add snippets
@@ -284,7 +308,15 @@ function M.load_plugin()
         log.debug(string.format("Setup action '%s' for keymap '%s'", action, vim.json.encode(keymap)))
 
         vim.keymap.set(keymap.mode, keymap.mapping, function()
-            editor.send_command(action)
+            local res = editor.send_command(action)
+
+            if M.config.quickfix.enable then
+                editor.open_quickfix_from_command_result(
+                    res,
+                    M.config.quickfix.min_severity,
+                    M.config.quickfix.open_list
+                )
+            end
         end)
     end
 
