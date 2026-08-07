@@ -188,6 +188,17 @@ local config = {
         custom_arguments = nil,
     },
 
+    quickfix = {
+        -- Enable support for quickfix (default: true)
+        enable = true,
+
+        -- Set minimum build error severity for an issue to be added to the quickfix list (default: error)
+        min_severity = "error",
+
+        -- Automatically open the quickfix list after an issue has been found (default: true)
+        open_list = true,
+    },
+
     -- setup keymaps for Defold actions
     keymaps = {
 
