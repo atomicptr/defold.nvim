@@ -4,7 +4,7 @@ version = "0.5.5"
 edition = "2024"
 
 [dependencies]
-anyhow = { version = "1.0.103", features = ["backtrace"] }
+anyhow = { version = "1.0.104", features = ["backtrace"] }
 tar = "0.4.46"
 version-compare = "0.2.1"
 flate2 = "1.1.9"
@@ -16,12 +16,12 @@ reqwest = { version = "0.13.4", default-features = false, features = [
     "json",
 ] }
 rust-ini = "0.21.3"
-serde = { version = "1.0.228", features = ["derive"] }
-serde_json = "1.0.150"
+serde = { version = "1.0.229", features = ["derive"] }
+serde_json = "1.0.151"
 sha3 = "0.11.0"
 strum = { version = "0.28.0", features = ["derive"] }
 tracing = "0.1.44"
-which = "8.0.4"
+which = "8.0.5"
 url = "2.5.8"
 walkdir = "2.5.0"
 serde_yaml = "0.9.34"
