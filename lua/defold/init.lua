@@ -16,23 +16,56 @@
 ---@field custom_executable string|nil Use a custom executable for the debugger
 ---@field custom_arguments table<string>|nil Custom arguments for the debugger
 
----@class Quickfix Settings for the integrated Quickfix support
+---@class QuickfixSettings Settings for the integrated Quickfix support
 ---@field enable boolean|nil Enable quickfix mode (default true)
 ---@field min_severity IssueSeverity|nil Minimum severity to report Defold errors in quickfix (default "error")
 ---@field open_list boolean|nil Opens the quickfix list after sending the command (default true)
 
----@class Keymap
----@field mode string|string[]
----@field mapping string
+---@class GameRunnerSettings Settings for running the game through Defold
+---@field mode? "make"|"send" Decide whenever the game will be run through `:make` or through `:DefoldSend build` (default: make)
+---@field show_logs? boolean Show logs when launching the game (only when `mode` is set to "make") (default: true)
+---@field errorformat? string[] The errorformat being used by quicklist (only used on `mode` "make")
 
 ---@class DefoldNvimConfig Settings for defold.nvim
 ---@field defold DefoldEditorSettings|nil Settings for the Defold Game Engine
 ---@field launcher LauncherSettings|nil Settings for the Neovim launcher run by Defold
 ---@field debugger DebuggerSettings|nil Settings for the integrated debugger
----@field quickfix Quickfix|nil Settings for the integrated Quickfix support
----@field keymaps table<string, Keymap>|nil Settings for key -> action mappings
+---@field quickfix QuickfixSettings|nil Settings for the integrated Quickfix support
+---@field game_runner GameRunnerSettings|nil Settings for running the game through Defold
+---@field setup_make boolean Whenever or not defold.nvim sets up `:make`
 ---@field force_plugin_enabled boolean|nil Force the plugin to be always enabled (even if we can't find the game.project file)
 ---@field debug boolean|nil Enable debug settings for the plugin
+
+local errorformat = {
+    -- multi-line error, capture only message and location
+    "%+EERROR:%*[^:]: %f:%l: %m",
+
+    -- stack traces
+    "%-Cstack traceback:",
+    "%-C%\\s*%\\[C%\\]:-1: in function %m",
+    "%-C%\\s*%\\[C%\\]: in function %m",
+    "%-C%\\s*%f:%l: in function <%*[^>]>",
+    "%-C%\\s*%f:%l: in function %m",
+    "%-C%\\s*%f:%l: in main chunk",
+    "%-C%\\s*%f:%l: %m",
+
+    -- terminators
+    "%Z%\\s*%f:%l: in function <%*[^>]>",
+    "%Z%\\s*%f:%l: in function %m",
+    "%Z%\\s*%f:%l: in main chunk",
+    "%Z%\\s*%f:%l: %m",
+
+    -- single-line
+    "ERROR:%*[^:]: %f:%l: %m",
+    "WARNING:%*[^:]: %f:%l: %m",
+
+    -- ignore
+    "%-GINFO:%.%#",
+    "%-GDEBUG:%.%#",
+    "%-GWARNING:%.%#",
+    "%-G%s",
+    "%-G%.%#",
+}
 
 ---@type DefoldNvimConfig
 local default_config = {
@@ -60,13 +93,13 @@ local default_config = {
         open_list = true,
     },
 
-    keymaps = {
-        build = {
-            mode = { "n", "i" },
-            mapping = "<C-b>",
-        },
+    game_runner = {
+        mode = "make",
+        show_logs = true,
+        errorformat = errorformat,
     },
 
+    setup_make = true,
     force_plugin_enabled = false,
     debug = false,
 }
@@ -78,6 +111,9 @@ M.loaded = false
 
 ---@type DefoldNvimConfig
 M.config = default_config
+
+---@type string[]
+M.default_errorformat = errorformat
 
 ---@return string
 function M.plugin_root()
@@ -118,6 +154,11 @@ function M.setup(opts)
         if not ok then
             log.error(string.format("Could not setup sidecar: %s", err))
         end
+    end
+
+    -- if setup make is not enabled, set run mode to command
+    if not M.config.setup_make then
+        M.config.game_runner.mode = "send"
     end
 
     -- register some filetypes
@@ -240,6 +281,25 @@ function M.load_plugin()
         })
     end
 
+    -- integrate with `:make`
+    if M.config.setup_make and bridge_ok then
+        local make_cmd = string.format(
+            '%s build-game "%s" --min-severity %s',
+            bridge_path,
+            project.project_root(),
+            M.config.quickfix.min_severity
+        )
+
+        if not M.config.game_runner.show_logs then
+            make_cmd = make_cmd .. " --disable-logs"
+        end
+
+        log.debug(string.format("`:make` command: %s", make_cmd))
+
+        vim.opt.makeprg = make_cmd
+        vim.opt.errorformat = M.config.game_runner.errorformat
+    end
+
     -- add the :Defold command for interacting with the editor
     vim.api.nvim_create_user_command("Defold", function()
         local cmds = {}
@@ -282,6 +342,11 @@ function M.load_plugin()
         end
     end, { nargs = 1, desc = "Send a command to the Defold editor" })
 
+    -- add the ":DefoldRun" command to run the game
+    vim.api.nvim_create_user_command("DefoldRun", function()
+        editor.run_game(M.config)
+    end, { nargs = 0, desc = "Run the game through Defold" })
+
     -- add the ":DefoldFetch" command to fetch dependencies & annoatations
     vim.api.nvim_create_user_command("DefoldFetch", function(opt)
         -- when a user runs DefoldFetch I recon they also expect us to update the dependencies
@@ -302,23 +367,6 @@ function M.load_plugin()
 
     -- add icons
     require("defold.service.icons").install()
-
-    -- setup keymaps
-    for action, keymap in pairs(M.config.keymaps) do
-        log.debug(string.format("Setup action '%s' for keymap '%s'", action, vim.json.encode(keymap)))
-
-        vim.keymap.set(keymap.mode, keymap.mapping, function()
-            local res = editor.send_command(action)
-
-            if M.config.quickfix.enable then
-                editor.open_quickfix_from_command_result(
-                    res,
-                    M.config.quickfix.min_severity,
-                    M.config.quickfix.open_list
-                )
-            end
-        end)
-    end
 
     -- fetch dependencies
     if M.config.defold.auto_fetch_dependencies then

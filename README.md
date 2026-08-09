@@ -19,7 +19,7 @@ Batteries-included development environment for the [Defold game engine](https://
 
 ### Defold
 
-The minimum supported Defold version is: **1.12.3**
+The minimum supported Defold version is: **1.13.0**
 
 ### Operating System
 
@@ -199,18 +199,20 @@ local config = {
         open_list = true,
     },
 
-    -- setup keymaps for Defold actions
-    keymaps = {
+    game_runner = {
+        -- Run the game through `:make` or through `:DefoldSend build` (default: make)
+        mode = "make",
 
-        -- build (& run) action
-        build = {
-            -- make this available in normal and insert mode
-            mode = { "n", "i" },
+        -- Show log when running the game (only when `mode` is set to "make") (default: true)
+        show_logs = true,
 
-            -- run via Ctrl+b
-            mapping = "<C-b>",
-        },
+        -- The Neovim errorformat used on the logs, see https://neovim.io/doc/user/options/#'errorformat'
+        -- This can be extended to do cool shit like have quickfix pick up special logs your games logger sends
+        errorformat = errorformat,
     },
+
+    -- setup the `:make` command in Defold projects to launch the game (default: true)
+    setup_make = true,
 
     -- Force the plugin to be always enabled (even if we can't find the game.project file) (default: false)
     force_plugin_enabled = false,
@@ -270,6 +272,9 @@ Here's how you can interact with Defold directly from Neovim:
 
 * **:DefoldSend `<command>`**
     This command lets you send any arbitrary command directly to your Defold editor. Use this for scripting or keybindings. For example, use **`:DefoldSend build`** to trigger build & run.
+
+* **:DefoldRun**
+    This commands runs your game through the editor.
 
 * **:DefoldFetch**
     This command fetches all Defold dependencies and creates annotations for the Lua LSP. Run with bang to force re-downloading the annotations.

@@ -4,7 +4,7 @@ use std::{
 };
 
 use anyhow::Result;
-use clap::{Parser, Subcommand};
+use clap::{ArgAction, Parser, Subcommand};
 use defold_nvim_core::{
     editor,
     focus::{focus_game, focus_neovim},
@@ -13,8 +13,12 @@ use defold_nvim_core::{
 use tracing::Level;
 use tracing_appender::rolling::never;
 
-use crate::plugin_config::{LauncherType, PluginConfig, SocketType};
+use crate::{
+    build_game::{Severity, build_game},
+    plugin_config::{LauncherType, PluginConfig, SocketType},
+};
 
+mod build_game;
 mod launcher;
 mod plugin_config;
 mod utils;
@@ -101,6 +105,16 @@ enum Commands {
         #[clap(value_name = "SCRIPT_API_FILE", index = 1)]
         input: PathBuf,
     },
+    BuildGame {
+        #[clap(value_name = "GAME_ROOT_DIR", index = 1)]
+        game_root_dir: String,
+
+        #[arg(long = "min-severity")]
+        min_severity: Severity,
+
+        #[arg(long, action = ArgAction::SetTrue)]
+        disable_logs: bool,
+    },
     /// Print the version of this executable
     Version,
 }
@@ -184,7 +198,7 @@ fn main() -> Result<()> {
             let root_dir = absolute(&game_root_dir)?;
 
             project::install_dependencies(&root_dir, force_redownload)?;
-            println!("Finished installing dependencies for {game_root_dir}",);
+            println!("Finished installing dependencies for {game_root_dir}");
         }
         Commands::ListDependencies { game_root_dir } => {
             let root_dir = absolute(&game_root_dir)?;
@@ -218,6 +232,18 @@ fn main() -> Result<()> {
             let res = script_api::compile(&data)?;
 
             println!("{res}");
+        }
+        Commands::BuildGame {
+            game_root_dir,
+            min_severity,
+            disable_logs,
+        } => {
+            let Some(port) = editor::find_port(&absolute(game_root_dir)?) else {
+                println!("Could not find editor port, is the editor open?");
+                return Ok(());
+            };
+
+            build_game(port, min_severity, !disable_logs)?
         }
         Commands::Version => {
             println!("{}", env!("CARGO_PKG_VERSION"));

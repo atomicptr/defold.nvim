@@ -144,4 +144,22 @@ function M.open_quickfix_from_command_result(result, min_severity, open_quickfix
     end
 end
 
+---Runs the game through Defold
+---@param config DefoldNvimConfig
+---@param mode? "make"|"build"|nil
+function M.run_game(config, mode)
+    mode = mode or config.game_runner.mode
+
+    if mode == "make" then
+        vim.cmd "make"
+        return
+    end
+
+    local res = M.send_command "build"
+
+    if config.quickfix.enable then
+        M.open_quickfix_from_command_result(res, config.quickfix.min_severity, config.quickfix.open_list)
+    end
+end
+
 return M

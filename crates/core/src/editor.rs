@@ -95,3 +95,7 @@ pub fn send_command(port: u16, cmd: &str) -> Result<CommandResult> {
 
     Ok(result)
 }
+
+pub fn console_stream_url(port: u16) -> String {
+    format!("http://localhost:{port}/console/stream")
+}
