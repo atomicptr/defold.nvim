@@ -284,7 +284,7 @@ function M.load_plugin()
     -- integrate with `:make`
     if M.config.setup_make and bridge_ok then
         local make_cmd = string.format(
-            '%s build-game "%s" --min-severity %s',
+            '"%s" build-game "%s" --min-severity %s',
             bridge_path,
             project.project_root(),
             M.config.quickfix.min_severity
