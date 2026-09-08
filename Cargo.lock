@@ -465,7 +465,7 @@ checksum = "ac6b926516df9c60bfa16e107b21086399f8285a44ca9711344b9e553c5146e2"
 
 [[package]]
 name = "defold-nvim-bridge"
-version = "0.8.0"
+version = "0.8.1"
 dependencies = [
  "anyhow",
  "clap",
@@ -483,7 +483,7 @@ dependencies = [
 
 [[package]]
 name = "defold-nvim-core"
-version = "0.8.0"
+version = "0.8.1"
 dependencies = [
  "anyhow",
  "dirs",
@@ -511,7 +511,7 @@ dependencies = [
 
 [[package]]
 name = "defold-nvim-sidecar"
-version = "0.8.0"
+version = "0.8.1"
 dependencies = [
  "anyhow",
  "defold-nvim-core",
@@ -2318,9 +2318,9 @@ dependencies = [
 
 [[package]]
 name = "termlauncher"
-version = "0.3.0"
+version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "68beadcade82f0aeb63ad18f7de98317a5d4cfb2043a99a1d0b781a4e5059dd7"
+checksum = "2fb7566ae8006beab12ce639bf99f1b38a70389fdc8e2f345e67a865f0c6b081"
 dependencies = [
  "log",
  "which",

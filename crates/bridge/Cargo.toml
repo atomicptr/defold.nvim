@@ -1,6 +1,6 @@
 [package]
 name = "defold-nvim-bridge"
-version = "0.8.0"
+version = "0.8.1"
 edition = "2024"
 
 [dependencies]
@@ -14,8 +14,8 @@ reqwest = { version = "0.13.4", default-features = false, features = [
     "blocking",
 ] }
 sysinfo = "0.39.6"
-termlauncher = "0.3.0"
+termlauncher = "0.4.0"
 tracing = "0.1.44"
 tracing-appender = "0.2.5"
 tracing-subscriber = "0.3.23"
-which = "8.0.5"
+which = "8.0.6"
