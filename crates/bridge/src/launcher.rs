@@ -44,9 +44,15 @@ fn report_process_errors(mut child: Child) -> Result<()> {
     Ok(())
 }
 
-fn apply_launcher_vars(launcher: &Terminal, var: &str, replace_with: &str) -> Terminal {
+fn apply_launcher_vars(
+    launcher: &Terminal,
+    plugin_config: &PluginConfig,
+    var: &str,
+    replace_with: &str,
+) -> Terminal {
     match launcher {
         Terminal::Custom(term) => Terminal::Custom(CustomTerminal {
+            run_arg: plugin_config.run_arg.clone(),
             arguments: apply_vars(&term.arguments, var, replace_with),
             ..term.clone()
         }),
@@ -296,7 +302,7 @@ pub fn run(
 
         // if is custom replace it in their args too
         launcher = if let Terminal::Custom(_) = launcher {
-            apply_launcher_vars(&launcher, VAR_CLASSNAME, class)
+            apply_launcher_vars(&launcher, &plugin_config, VAR_CLASSNAME, class)
         } else {
             launcher
         };

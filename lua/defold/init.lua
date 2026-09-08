@@ -1,40 +1,41 @@
 ---@class DefoldEditorSettings Settings for the Defold Game Engine
----@field set_default_editor boolean|nil Automatically set defold.nvim as the default editor in Defold
----@field auto_fetch_dependencies boolean|nil Automatically fetch dependencies on launch
----@field hot_reload_enabled boolean|nil Enable hot reloading when saving scripts in Neovim
+---@field set_default_editor?      boolean Automatically set defold.nvim as the default editor in Defold
+---@field auto_fetch_dependencies? boolean Automatically fetch dependencies on launch
+---@field hot_reload_enabled?      boolean Enable hot reloading when saving scripts in Neovim
 
 ---@class LauncherSettings Settings for the Neovim launcher run by Defold
----@field type "neovide"|"terminal" Neovim launcher run by Defold
----@field executable string|nil Executable to be used by the launcher, nil means we're trying to figure this out ourselves
----@field socket_type "fsock"|"netsock"|nil Run Neovims RPC protocol over file socket or network. Nil means it will be picked automatic (fsock on Unix, network on Windows)
----@field arguments table<string>|nil Extra arguments passed to the `executable` (or neovide)
----@field appname string|nil Sets `NVIM_APPNAME` to run the editor in a special configuration
----@field debug boolean|nil Enable debug settings for the bridge cli
+---@field type         "neovide"|"terminal" Neovim launcher run by Defold
+---@field executable?  string Executable to be used by the launcher, nil means we're trying to figure this out ourselves
+---@field socket_type? "fsock"|"netsock" Run Neovims RPC protocol over file socket or network. Nil means it will be picked automatic (fsock on Unix, network on Windows)
+---@field run_arg?     string (Custom Terminal only) Argument to specify how the command is run usually "-e"
+---@field arguments?   table<string> Extra arguments passed to the `executable` (or neovide)
+---@field appname?     string Sets `NVIM_APPNAME` to run the editor in a special configuration
+---@field debug?       boolean Enable debug settings for the bridge cli
 
 ---@class DebuggerSettings Settings for the integrated debugger
----@field enable boolean|nil Enable the debugger
----@field custom_executable string|nil Use a custom executable for the debugger
----@field custom_arguments table<string>|nil Custom arguments for the debugger
+---@field enable?            boolean Enable the debugger
+---@field custom_executable? string Use a custom executable for the debugger
+---@field custom_arguments?  table<string> Custom arguments for the debugger
 
 ---@class QuickfixSettings Settings for the integrated Quickfix support
----@field enable boolean|nil Enable quickfix mode (default true)
----@field min_severity IssueSeverity|nil Minimum severity to report Defold errors in quickfix (default "error")
----@field open_list boolean|nil Opens the quickfix list after sending the command (default true)
+---@field enable?       boolean Enable quickfix mode (default true)
+---@field min_severity? IssueSeverity Minimum severity to report Defold errors in quickfix (default "error")
+---@field open_list?    boolean Opens the quickfix list after sending the command (default true)
 
 ---@class GameRunnerSettings Settings for running the game through Defold
----@field mode? "make"|"send" Decide whenever the game will be run through `:make` or through `:DefoldSend build` (default: make)
----@field show_logs? boolean Show logs when launching the game (only when `mode` is set to "make") (default: true)
+---@field mode?        "make"|"send" Decide whenever the game will be run through `:make` or through `:DefoldSend build` (default: make)
+---@field show_logs?   boolean Show logs when launching the game (only when `mode` is set to "make") (default: true)
 ---@field errorformat? string[] The errorformat being used by quicklist (only used on `mode` "make")
 
 ---@class DefoldNvimConfig Settings for defold.nvim
----@field defold DefoldEditorSettings|nil Settings for the Defold Game Engine
----@field launcher LauncherSettings|nil Settings for the Neovim launcher run by Defold
----@field debugger DebuggerSettings|nil Settings for the integrated debugger
----@field quickfix QuickfixSettings|nil Settings for the integrated Quickfix support
----@field game_runner GameRunnerSettings|nil Settings for running the game through Defold
----@field setup_make boolean Whenever or not defold.nvim sets up `:make`
----@field force_plugin_enabled boolean|nil Force the plugin to be always enabled (even if we can't find the game.project file)
----@field debug boolean|nil Enable debug settings for the plugin
+---@field defold?               DefoldEditorSettings Settings for the Defold Game Engine
+---@field launcher?             LauncherSettings Settings for the Neovim launcher run by Defold
+---@field debugger?             DebuggerSettings Settings for the integrated debugger
+---@field quickfix?             QuickfixSettings Settings for the integrated Quickfix support
+---@field game_runner?          GameRunnerSettings Settings for running the game through Defold
+---@field setup_make?           boolean Whenever or not defold.nvim sets up `:make`
+---@field force_plugin_enabled? boolean Force the plugin to be always enabled (even if we can't find the game.project file)
+---@field debug?                boolean Enable debug settings for the plugin
 
 local errorformat = {
     -- multi-line error, capture only message and location

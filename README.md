@@ -170,6 +170,12 @@ local config = {
         -- path to your launcher executable (optional)
         executable = nil,
 
+        -- when using custom terminals (custom executable) you might want to overwrite how the command is applied to
+        -- the terminal by default this uses "my-terminal -- nvim ..." but some terminals might need something like
+        -- `my-terminal -e nvim ...` making `-e` your run_arg
+        -- See: https://github.com/atomicptr/termlauncher/blob/master/src/terminals/custom.rs#L64
+        run_arg = nil,
+
         -- arguments passed to the `executable` (or neovide)
         arguments = nil,
 
