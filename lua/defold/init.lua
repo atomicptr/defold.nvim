@@ -95,7 +95,7 @@ local default_config = {
     },
 
     game_runner = {
-        mode = "make",
+        mode = nil,
         show_logs = true,
         errorformat = errorformat,
     },
@@ -138,6 +138,17 @@ end
 
 ---@param opts DefoldNvimConfig|nil
 function M.setup(opts)
+    if M.config.game_runner.mode == nil then
+        local os = require "defold.service.os"
+
+        M.config.game_runner.mode = "make"
+
+        -- default to "send" on windows since make is broken: https://github.com/atomicptr/defold.nvim/issues/66
+        if os.is_windows() then
+            M.config.game_runner.mode = "send"
+        end
+    end
+
     -- keep this first so that every call to setup updates the config
     M.config = vim.tbl_deep_extend("force", M.config, opts or {})
 
