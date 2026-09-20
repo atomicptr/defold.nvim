@@ -84,6 +84,32 @@ function M.check()
         vim.health.warn "Could not find editor port, is the editor running?"
     end
 
+    if project.is_defold_project() then
+        vim.health.start "Defold - Dependencies"
+
+        local project_root = project.project_root(false)
+
+        local ok, deps = pcall(sidecar.list_dependency_dirs, project_root)
+        if not ok then
+            vim.health.warn "Could not find dependencies"
+        else
+            for _, dep in ipairs(deps) do
+                local dirname = vim.fs.basename(dep)
+
+                -- annotations
+                if dirname == "defold" then
+                    vim.health.ok(string.format("Defold: %s", dep))
+                else
+                    local libs = vim.fn.readdir(dep)
+
+                    for _, lib in ipairs(libs) do
+                        vim.health.ok(string.format("Ext %s: %s", lib, dep))
+                    end
+                end
+            end
+        end
+    end
+
     ---@type {config: DefoldNvimConfig}
     local defold = require "defold"
 
