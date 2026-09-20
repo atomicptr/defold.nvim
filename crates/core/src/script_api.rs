@@ -1,6 +1,5 @@
 use anyhow::{Result, bail};
-use serde::Deserialize;
-use serde_with::{OneOrMany, serde_as};
+use serde::{Deserialize, Deserializer};
 use std::fmt::Write;
 
 const LINE_WRAP: usize = 120;
@@ -28,7 +27,6 @@ impl Type {
     }
 }
 
-#[serde_as]
 #[derive(Debug, Deserialize, Default)]
 struct Value {
     pub name: Option<String>,
@@ -41,8 +39,11 @@ struct Value {
     pub examples: Option<Vec<Value>>,
     pub parameters: Option<Vec<Value>>,
 
-    #[serde(alias = "return")]
-    #[serde_as(deserialize_as = "Option<OneOrMany<_>>")]
+    #[serde(
+        alias = "return",
+        default,
+        deserialize_with = "deserialize_one_or_many"
+    )]
     pub returns: Option<Vec<Value>>,
 }
 
@@ -423,6 +424,26 @@ pub fn compile(input: &str) -> Result<String> {
     }
 
     Ok(out)
+}
+
+fn deserialize_one_or_many<'de, T, D>(deserializer: D) -> Result<Option<Vec<T>>, D::Error>
+where
+    T: Deserialize<'de>,
+    D: Deserializer<'de>,
+{
+    #[derive(Deserialize)]
+    #[serde(untagged)]
+    enum OneOrMany<T> {
+        One(T),
+        Many(Vec<T>),
+    }
+
+    let opt = Option::<OneOrMany<T>>::deserialize(deserializer)?;
+
+    Ok(opt.map(|val| match val {
+        OneOrMany::One(v) => vec![v],
+        OneOrMany::Many(v) => v,
+    }))
 }
 
 #[cfg(test)]
