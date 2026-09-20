@@ -222,8 +222,19 @@ fn compile_script_api_files(from_dir: &Path) -> Result<()> {
             target_path.display()
         );
 
+        if target_path.exists() {
+            tracing::info!("{} already exists, skipping...", target_path.display());
+            return Ok(());
+        }
+
         let input = fs::read_to_string(file)?;
-        let output = script_api::compile(&input)?;
+        let output = match script_api::compile(&input) {
+            Ok(output) => output,
+            Err(err) => {
+                tracing::error!("Could not compile {}: {err}", file.display());
+                continue;
+            }
+        };
 
         let mut file = File::create(target_path)?;
         file.write_all(output.as_bytes())?;
