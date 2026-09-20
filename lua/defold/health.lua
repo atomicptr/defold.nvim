@@ -103,7 +103,7 @@ function M.check()
                     local libs = vim.fn.readdir(dep)
 
                     for _, lib in ipairs(libs) do
-                        vim.health.ok(string.format("Ext %s: %s", lib, dep))
+                        vim.health.ok(string.format("Ext %s: %s", lib, vim.fs.joinpath(dep, lib)))
                     end
                 end
             end
