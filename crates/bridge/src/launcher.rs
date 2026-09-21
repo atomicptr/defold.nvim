@@ -52,7 +52,7 @@ fn apply_launcher_vars(
 ) -> Terminal {
     match launcher {
         Terminal::Custom(term) => Terminal::Custom(CustomTerminal {
-            run_arg: plugin_config.run_arg.clone(),
+            run_arg: plugin_config.run_arg.clone().or(term.run_arg.clone()),
             arguments: apply_vars(&term.arguments, var, replace_with),
             ..term.clone()
         }),
@@ -172,12 +172,17 @@ fn nvim_open_file_remote(nvim: &str, server: &str, file: &str, line: Option<usiz
 
     tracing::debug!("Open '{remote_cmd}' via socket: {server}");
 
-    let out = Command::new(nvim)
+    let mut cmd = Command::new(nvim);
+
+    cmd.arg("--headless")
         .arg("--server")
         .arg(server)
         .arg("--remote-send")
-        .arg(format!("\"<C-\\\\><C-n>:edit {remote_cmd}<CR>\""))
-        .output()?;
+        .arg(format!("\"<C-\\\\><C-n>:edit {remote_cmd}<CR>\""));
+
+    tracing::debug!("open remote file command: {cmd:?}");
+
+    let out = cmd.output()?;
 
     if !out.stderr.is_empty() {
         bail!(String::from_utf8(out.stderr)?);
@@ -302,7 +307,7 @@ pub fn run(
 
         // if is custom replace it in their args too
         launcher = if let Terminal::Custom(_) = launcher {
-            apply_launcher_vars(&launcher, &plugin_config, VAR_CLASSNAME, class)
+            apply_launcher_vars(&launcher, plugin_config, VAR_CLASSNAME, class)
         } else {
             launcher
         };
