@@ -78,12 +78,14 @@ fn switch(switcher_type: SwitcherType) -> Result<()> {
         Switcher::HyprCtl => {
             Command::new(switcher.path().unwrap())
                 .arg("dispatch")
-                .arg("focuswindow")
-                .arg(match switcher_type {
-                    SwitcherType::Class(class) => format!("class:{class}"),
-                    SwitcherType::Title(title) => format!("title:{title}"),
-                    _ => bail!("Unsupported switcher type {switcher_type:?} for {switcher:?}"),
-                })
+                .arg(format!(
+                    r#"hl.dsp.focus {{ window = "{}" }}"#,
+                    match switcher_type {
+                        SwitcherType::Class(class) => format!("class:{class}"),
+                        SwitcherType::Title(title) => format!("title:{title}"),
+                        _ => bail!("Unsupported switcher type {switcher_type:?} for {switcher:?}"),
+                    }
+                ))
                 .spawn()?
                 .wait()?;
 
