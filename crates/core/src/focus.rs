@@ -75,7 +75,7 @@ fn switch(switcher_type: SwitcherType) -> Result<()> {
 
     #[cfg(target_os = "linux")]
     return match switcher {
-        Switcher::HyprCtl => {
+        Switcher::HyprCtl => run_switch_cmd(
             Command::new(switcher.path().unwrap())
                 .arg("dispatch")
                 .arg(format!(
@@ -85,28 +85,17 @@ fn switch(switcher_type: SwitcherType) -> Result<()> {
                         SwitcherType::Title(title) => format!("title:{title}"),
                         _ => bail!("Unsupported switcher type {switcher_type:?} for {switcher:?}"),
                     }
-                ))
-                .spawn()?
-                .wait()?;
-
-            Ok(())
-        }
-        Switcher::SwayMsg => {
-            Command::new(switcher.path().unwrap())
-                .arg(format!(
-                    "[{}={}] focus",
-                    match switcher_type {
-                        SwitcherType::Class(_) => "class".to_string(),
-                        SwitcherType::Title(_) => "title".to_string(),
-                        _ => bail!("Unsupported switcher type {switcher_type:?} for {switcher:?}"),
-                    },
-                    switcher_type.value(),
-                ))
-                .spawn()?
-                .wait()?;
-
-            Ok(())
-        }
+                )),
+        ),
+        Switcher::SwayMsg => run_switch_cmd(Command::new(switcher.path().unwrap()).arg(format!(
+            "[{}={}] focus",
+            match switcher_type {
+                SwitcherType::Class(_) => "class".to_string(),
+                SwitcherType::Title(_) => "title".to_string(),
+                _ => bail!("Unsupported switcher type {switcher_type:?} for {switcher:?}"),
+            },
+            switcher_type.value(),
+        ))),
         Switcher::WmCtrl => {
             let mut cmd = Command::new(switcher.path().unwrap());
 
@@ -114,11 +103,11 @@ fn switch(switcher_type: SwitcherType) -> Result<()> {
                 cmd.arg("-x");
             }
 
-            cmd.arg("-a").arg(switcher_type.value()).spawn()?.wait()?;
+            cmd.arg("-a").arg(switcher_type.value());
 
-            Ok(())
+            run_switch_cmd(&mut cmd)
         }
-        Switcher::XDoTool => {
+        Switcher::XDoTool => run_switch_cmd(
             Command::new(switcher.path().unwrap())
                 .arg("search")
                 .arg(match switcher_type {
@@ -127,27 +116,19 @@ fn switch(switcher_type: SwitcherType) -> Result<()> {
                     _ => bail!("Unsupported switcher type {switcher_type:?} for {switcher:?}"),
                 })
                 .arg(switcher_type.value())
-                .arg("windowactivate")
-                .spawn()?
-                .wait()?;
-
-            Ok(())
-        }
+                .arg("windowactivate"),
+        ),
     };
 
     #[cfg(target_os = "macos")]
     return match switcher {
         Switcher::OsaScript => {
-            Command::new(switcher.path().unwrap())
+            run_switch_cmd(Command::new(switcher.path().unwrap())
                 .arg("-e")
                 .arg(match switcher_type {
                     SwitcherType::AppName(app_name) => format!("'tell application \"System Events\" to tell process \"{app_name}\" to set frontmost to true'"),
                     _ => bail!("Unsupported switcher type {switcher_type:?} for {switcher:?}"),
-                })
-                .spawn()?
-                .wait()?;
-
-            Ok(())
+                }))
         }
     };
 
@@ -155,6 +136,13 @@ fn switch(switcher_type: SwitcherType) -> Result<()> {
     return Ok(());
 }
 
+fn run_switch_cmd(cmd: &mut Command) -> Result<()> {
+    tracing::debug!("Executing switch cmd: {cmd:?}");
+
+    cmd.spawn()?.wait()?;
+
+    Ok(())
+}
 pub fn focus_neovim(root_dir: PathBuf) -> Result<()> {
     if !root_dir.join("game.project").exists() {
         bail!("Could not find game.project file in {root_dir:?}: Not a valid Defold directory");
