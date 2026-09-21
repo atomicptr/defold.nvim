@@ -1,7 +1,7 @@
 use crate::{
     neovide,
     plugin_config::{LauncherType, PluginConfig, SocketType},
-    utils::is_port_in_use,
+    utils::{self, is_port_in_use},
 };
 use anyhow::{Context, Result, bail};
 use defold_nvim_core::{focus::focus_neovim, nvim_server, utils::classname};
@@ -205,35 +205,42 @@ fn run_fsock(
     line: Option<usize>,
 ) -> Result<()> {
     let socket_file = nvim_server::fsock_path(root_dir)?;
+    let socket_file_str = socket_file
+        .to_str()
+        .context("could not convert string to path")?;
 
     tracing::debug!("Using fsock at {socket_file:?}");
 
     let mut app = app;
 
-    app.args = apply_vars(
-        &app.args,
-        VAR_ADDRESS,
-        socket_file
-            .to_str()
-            .context("could not convert socket file to string")?,
-    );
+    app.args = apply_vars(&app.args, VAR_ADDRESS, socket_file_str);
 
     if socket_file.exists() {
-        // if we couldnt communicate with the server despite existing apparently
-        // delete it and start a new instance
-        if let Err(err) = nvim_open_file_remote(
-            nvim,
-            socket_file
-                .to_str()
-                .context("could not convert path to string")?,
-            file,
-            line,
-        ) {
-            tracing::error!("Failed to communicate with neovim server: {err:?}");
+        if nvim_is_alive(nvim, socket_file_str) {
+            // if we couldnt communicate with the server despite existing apparently
+            // delete it and start a new instance
+            if let Err(err) = nvim_open_file_remote(
+                nvim,
+                socket_file
+                    .to_str()
+                    .context("could not convert path to string")?,
+                file,
+                line,
+            ) {
+                tracing::error!("Failed to communicate with neovim server: {err:?}");
 
-            fs::remove_file(socket_file)?;
-            report_process_errors(app.launch_with(launcher)?)?;
+                fs::remove_file(socket_file)?;
+                report_process_errors(app.launch_with(launcher)?)?;
+            }
+
+            return Ok(());
         }
+
+        tracing::error!("nvim has failed alive check");
+        utils::search_and_kill_process(socket_file_str);
+
+        fs::remove_file(socket_file)?;
+        report_process_errors(app.launch_with(launcher)?)?;
 
         return Ok(());
     }
@@ -258,17 +265,30 @@ fn run_netsock(
     tracing::debug!("Trying to use netsock with port {socket}");
 
     if is_port_in_use(port) {
-        // if we couldnt communicate with the server despite existing apparently
-        // delete it and start a new instance
-        if let Err(err) = nvim_open_file_remote(nvim, &socket, file, line) {
-            tracing::error!("Failed to communicate with neovim server: {err:?}");
+        if nvim_is_alive(nvim, &socket) {
+            // if we couldnt communicate with the server despite existing apparently
+            // delete it and start a new instance
+            if let Err(err) = nvim_open_file_remote(nvim, &socket, file, line) {
+                tracing::error!("Failed to communicate with neovim server: {err:?}");
 
-            let socket = nvim_server::allocate_new_netsock_addr(root_dir)?;
-            tracing::debug!("Trying to use netsock with port {socket}");
+                let socket = nvim_server::allocate_new_netsock_addr(root_dir)?;
+                tracing::debug!("Trying to use netsock with port {socket}");
 
-            app.args = apply_vars(&app.args, VAR_ADDRESS, &socket);
-            report_process_errors(app.launch_with(launcher)?)?;
+                app.args = apply_vars(&app.args, VAR_ADDRESS, &socket);
+                report_process_errors(app.launch_with(launcher)?)?;
+            }
+
+            return Ok(());
         }
+
+        tracing::error!("nvim has failed alive check");
+        utils::search_and_kill_process(&socket);
+
+        let socket = nvim_server::allocate_new_netsock_addr(root_dir)?;
+        tracing::debug!("Trying to use netsock with port {socket}");
+
+        app.args = apply_vars(&app.args, VAR_ADDRESS, &socket);
+        report_process_errors(app.launch_with(launcher)?)?;
 
         return Ok(());
     }
@@ -278,6 +298,29 @@ fn run_netsock(
     report_process_errors(app.launch_with(launcher)?)?;
 
     Ok(())
+}
+
+fn nvim_is_alive(nvim: &str, server: &str) -> bool {
+    let mut cmd = Command::new(nvim);
+
+    cmd.arg("--headless")
+        .arg("--server")
+        .arg(server)
+        .arg("--remote-expr")
+        .arg(r#"'bufname("")'"#);
+
+    tracing::debug!("nvim alive command: {cmd:?}");
+
+    match cmd.status() {
+        Ok(status) => {
+            tracing::debug!("nvim alive check response: {status}");
+            status.success()
+        }
+        Err(err) => {
+            tracing::debug!("nvim alive check failed: {err}");
+            false
+        }
+    }
 }
 
 pub fn run(
