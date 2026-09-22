@@ -494,7 +494,7 @@ checksum = "ac6b926516df9c60bfa16e107b21086399f8285a44ca9711344b9e553c5146e2"
 
 [[package]]
 name = "defold-nvim-bridge"
-version = "0.8.3"
+version = "0.9.0"
 dependencies = [
  "anyhow",
  "clap",
@@ -512,7 +512,7 @@ dependencies = [
 
 [[package]]
 name = "defold-nvim-core"
-version = "0.8.3"
+version = "0.9.0"
 dependencies = [
  "anyhow",
  "chumsky",
@@ -541,7 +541,7 @@ dependencies = [
 
 [[package]]
 name = "defold-nvim-sidecar"
-version = "0.8.3"
+version = "0.9.0"
 dependencies = [
  "anyhow",
  "defold-nvim-core",
@@ -1262,9 +1262,9 @@ dependencies = [
 
 [[package]]
 name = "libredox"
-version = "0.1.24"
+version = "0.1.25"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6480ccc157a1389bb2e4891b24751b0f798ba640d22386f23143fbcc89da195a"
+checksum = "61ff90caf6077a803a240f62fdbe88645a890bbca49ef8174c3cb0404362171d"
 dependencies = [
  "libc",
 ]
