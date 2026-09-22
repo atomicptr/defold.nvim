@@ -41,7 +41,7 @@ function M.setup(custom_executable, custom_arguments)
     M.mobdap_path()
 end
 
----@param config DefoldNvimConfig
+---@param config defold.Config
 function M.register_nvim_dap(config)
     local log = require "defold.service.logger"
 

@@ -172,48 +172,57 @@ package.cpath = package.cpath
     .. ";"
     .. string.format("%s/?%s", plugin_rootdir, lib_extension())
 
----@class GameProject
----@field title string
+---@class defold.sidecar.GameProject
+---@field title        string
 ---@field dependencies string[]
 
----@class CommandResult
+---@class defold.sidecar.CommandResult
 ---@field success boolean
----@field issues Issue[]
----@field status integer
+---@field issues  defold.sidecar.Issue[]
+---@field status  integer
 
----@class Issue
----@field message string
----@field severity IssueSeverity
+---@class defold.sidecar.Issue
+---@field message  string
+---@field severity defold.sidecar.IssueSeverity
 ---@field resource string|nil
----@field range Range|nil
+---@field range    defold.sidecar.Range|nil
 
----@alias IssueSeverity "error"|"warning"|"info"
+---@alias defold.sidecar.IssueSeverity "error"|"warning"|"info"
 
----@class Range
----@field start Position
----@field end Position
+---@class defold.sidecar.Range
+---@field start defold.sidecar.Position
+---@field end   defold.sidecar.Position
 
----@class Position
----@field line integer
+---@class defold.sidecar.Position
+---@field line      integer
 ---@field character integer
 
+---@class defold.sidecar.PathEntry
+---@field collection_name? string
+---@field game_object_id?  string
+---@field component_id?    string
+---@field from_location?   string
+---@field is_component     boolean
+---@field same_game_object boolean
+
 ---@class Sidecar
----@field version string
----@field set_log_level function(level: "debug"|"info"|"error")
----@field read_game_project function(path: string): GameProject
----@field is_editor_port function(port: integer): boolean
----@field list_commands function(port: integer): table<string, string>
----@field send_command function(port: integer, cmd: string): CommandResult
----@field set_default_editor function(port: integer, plugin_root: string, launcher_config: LauncherSettings)
----@field find_bridge_path function(plugin_root: string|nil): string
----@field resolve_nvim_server_addr function(game_root: string, socket_type: "fsock"|"netsock"|nil): string
----@field focus_neovim function(game_root: string)
----@field focus_game function(game_root: string)
----@field mobdap_install function(): string
----@field install_dependencies function(game_root: string, force_redownload: boolean|nil)
----@field list_dependency_dirs function(game_root: string): string[]
----@field data_dir function(): string
----@field cache_dir function(): string
+---@field version                  string
+---@field set_log_level            fun(level: "debug"|"info"|"error")
+---@field read_game_project        fun(path: string): defold.sidecar.GameProject
+---@field is_editor_port           fun(port: integer): boolean
+---@field list_commands            fun(port: integer): table<string, string>
+---@field send_command             fun(port: integer, cmd: string): defold.sidecar.CommandResult
+---@field set_default_editor       fun(port: integer, plugin_root: string, launcher_config: defold.config.Launcher)
+---@field find_bridge_path         fun(plugin_root: string|nil): string
+---@field resolve_nvim_server_addr fun(game_root: string, socket_type: "fsock"|"netsock"|nil): string
+---@field focus_neovim             fun(game_root: string)
+---@field focus_game               fun(game_root: string)
+---@field mobdap_install           fun(): string
+---@field install_dependencies     fun(game_root: string, force_redownload: boolean|nil)
+---@field list_dependency_dirs     fun(game_root: string): string[]
+---@field fetch_defold_paths_for   fun(game_root: string, filepath: string): defold.sidecar.PathEntry[]
+---@field data_dir                 fun(): string
+---@field cache_dir                fun(): string
 
 ---@type Sidecar
 local rust_plugin = require "defold_nvim_sidecar"

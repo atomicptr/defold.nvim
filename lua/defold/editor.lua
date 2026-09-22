@@ -28,7 +28,7 @@ end
 ---Sends a command to the Defold editor
 ---@param command string
 ---@param dont_report_error boolean|nil
----@return CommandResult|nil
+---@return defold.sidecar.CommandResult|nil
 function M.send_command(command, dont_report_error)
     local log = require "defold.service.logger"
     local project = require "defold.project"
@@ -46,7 +46,7 @@ function M.send_command(command, dont_report_error)
 
     local sidecar = require "defold.sidecar"
 
-    ---@type boolean, CommandResult|nil
+    ---@type boolean, defold.sidecar.CommandResult|nil
     local ok, res = pcall(sidecar.send_command, port, command)
     if ok then
         return res
@@ -67,7 +67,7 @@ function M.send_command(command, dont_report_error)
     )
 end
 
----@param severity IssueSeverity
+---@param severity defold.sidecar.IssueSeverity
 ---@return integer
 local function issue_severity_value(severity)
     if severity == "info" then
@@ -83,8 +83,8 @@ end
 
 ---Opens the Neovim Quickfix list from a command result
 ---If there are no issues this is a no-op
----@param result CommandResult|nil
----@param min_severity? IssueSeverity
+---@param result defold.sidecar.CommandResult|nil
+---@param min_severity? defold.sidecar.IssueSeverity
 ---@param open_quickfix? boolean
 function M.open_quickfix_from_command_result(result, min_severity, open_quickfix)
     -- nothing to do
@@ -97,7 +97,7 @@ function M.open_quickfix_from_command_result(result, min_severity, open_quickfix
         open_quickfix = true
     end
 
-    ---@type Issue[]
+    ---@type defold.sidecar.Issue[]
     local issues = {}
 
     local min_severity_value = issue_severity_value(min_severity or "error")
@@ -115,7 +115,7 @@ function M.open_quickfix_from_command_result(result, min_severity, open_quickfix
 
     local items = {}
 
-    ---@type table<IssueSeverity, string>
+    ---@type table<defold.sidecar.IssueSeverity, string>
     local severity_map = {
         error = "E",
         warning = "W",
@@ -145,8 +145,8 @@ function M.open_quickfix_from_command_result(result, min_severity, open_quickfix
 end
 
 ---Runs the game through Defold
----@param config DefoldNvimConfig
----@param mode? "make"|"build"|nil
+---@param config defold.Config
+---@param mode? "make"|"send"|nil
 function M.run_game(config, mode)
     mode = mode or config.game_runner.mode
 

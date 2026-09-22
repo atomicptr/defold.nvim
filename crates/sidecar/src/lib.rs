@@ -1,9 +1,12 @@
 use anyhow::Context;
-use defold_nvim_core::{bridge, editor, editor_config, mobdap, nvim_server, path, project, utils};
+use defold_nvim_core::{
+    bridge, defold_paths, editor, editor_config, mobdap, nvim_server, path, project, utils,
+};
 use defold_nvim_core::{focus, game_project::GameProject};
-use mlua::Value;
+use mlua::Value::{self};
 use mlua::prelude::*;
 use std::path::PathBuf;
+use std::str::FromStr;
 use std::{
     fs::{self},
     path::absolute,
@@ -104,6 +107,10 @@ fn register_exports(lua: &Lua) -> LuaResult<LuaTable> {
     exports.set(
         "list_dependency_dirs",
         lua.create_function(list_dependency_dirs)?,
+    )?;
+    exports.set(
+        "fetch_defold_paths_for",
+        lua.create_function(fetch_defold_paths_for)?,
     )?;
     exports.set("data_dir", lua.create_function(data_dir)?)?;
     exports.set("cache_dir", lua.create_function(cache_dir)?)?;
@@ -245,6 +252,32 @@ fn list_dependency_dirs(_lua: &Lua, game_root: String) -> LuaResult<Vec<String>>
         })
         .collect();
     Ok(deps)
+}
+
+#[instrument(level = "debug", err(Debug), skip_all)]
+fn fetch_defold_paths_for(lua: &Lua, (root_dir, filepath): (String, String)) -> LuaResult<Value> {
+    let root_dir = PathBuf::from_str(&root_dir).context("could not convert path to string")?;
+
+    if !root_dir.exists() {
+        return Err(LuaError::external(format!(
+            "could not find project root: {}",
+            root_dir.display()
+        )));
+    }
+
+    let filepath = PathBuf::from_str(&filepath).context("could not convert path to string")?;
+
+    if !filepath.exists() {
+        return Err(LuaError::external(format!(
+            "could not find file: {}",
+            filepath.display()
+        )));
+    }
+
+    let path_entries = defold_paths::fetch_paths_for(&root_dir, &filepath)?;
+    let res = lua.to_value(&path_entries)?;
+
+    Ok(res)
 }
 
 fn data_dir(_lua: &Lua, _: ()) -> LuaResult<String> {

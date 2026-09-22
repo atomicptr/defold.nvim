@@ -1,9 +1,9 @@
----@class DefoldEditorSettings Settings for the Defold Game Engine
+---@class defold.config.Editor Settings for the Defold Game Engine
 ---@field set_default_editor?      boolean Automatically set defold.nvim as the default editor in Defold
 ---@field auto_fetch_dependencies? boolean Automatically fetch dependencies on launch
 ---@field hot_reload_enabled?      boolean Enable hot reloading when saving scripts in Neovim
 
----@class LauncherSettings Settings for the Neovim launcher run by Defold
+---@class defold.config.Launcher Settings for the Neovim launcher run by Defold
 ---@field type         "neovide"|"terminal" Neovim launcher run by Defold
 ---@field executable?  string Executable to be used by the launcher, nil means we're trying to figure this out ourselves
 ---@field socket_type? "fsock"|"netsock" Run Neovims RPC protocol over file socket or network. Nil means it will be picked automatic (fsock on Unix, network on Windows)
@@ -12,27 +12,31 @@
 ---@field appname?     string Sets `NVIM_APPNAME` to run the editor in a special configuration
 ---@field debug?       boolean Enable debug settings for the bridge cli
 
----@class DebuggerSettings Settings for the integrated debugger
+---@class defold.config.Debugger Settings for the integrated debugger
 ---@field enable?            boolean Enable the debugger
 ---@field custom_executable? string Use a custom executable for the debugger
 ---@field custom_arguments?  table<string> Custom arguments for the debugger
 
----@class QuickfixSettings Settings for the integrated Quickfix support
+---@class defold.config.Completions Settings for Defold completions
+---@field enable? boolean Enable Defold completions
+
+---@class defold.config.Quickfix Settings for the integrated Quickfix support
 ---@field enable?       boolean Enable quickfix mode (default true)
----@field min_severity? IssueSeverity Minimum severity to report Defold errors in quickfix (default "error")
+---@field min_severity? defold.sidecar.IssueSeverity Minimum severity to report Defold errors in quickfix (default "error")
 ---@field open_list?    boolean Opens the quickfix list after sending the command (default true)
 
----@class GameRunnerSettings Settings for running the game through Defold
+---@class defold.config.GameRunner Settings for running the game through Defold
 ---@field mode?        "make"|"send" Decide whenever the game will be run through `:make` or through `:DefoldSend build` (default: make)
 ---@field show_logs?   boolean Show logs when launching the game (only when `mode` is set to "make") (default: true)
 ---@field errorformat? string[] The errorformat being used by quicklist (only used on `mode` "make")
 
----@class DefoldNvimConfig Settings for defold.nvim
----@field defold?               DefoldEditorSettings Settings for the Defold Game Engine
----@field launcher?             LauncherSettings Settings for the Neovim launcher run by Defold
----@field debugger?             DebuggerSettings Settings for the integrated debugger
----@field quickfix?             QuickfixSettings Settings for the integrated Quickfix support
----@field game_runner?          GameRunnerSettings Settings for running the game through Defold
+---@class defold.Config Settings for defold.nvim
+---@field defold?               defold.config.Editor Settings for the Defold Game Engine
+---@field launcher?             defold.config.Launcher Settings for the Neovim launcher run by Defold
+---@field debugger?             defold.config.Debugger Settings for the integrated debugger
+---@field completions?          defold.config.Completions Settings for Defold completions
+---@field quickfix?             defold.config.Quickfix Settings for the integrated Quickfix support
+---@field game_runner?          defold.config.GameRunner Settings for running the game through Defold
 ---@field setup_make?           boolean Whenever or not defold.nvim sets up `:make`
 ---@field force_plugin_enabled? boolean Force the plugin to be always enabled (even if we can't find the game.project file)
 ---@field debug?                boolean Enable debug settings for the plugin
@@ -68,7 +72,7 @@ local errorformat = {
     "%-G%.%#",
 }
 
----@type DefoldNvimConfig
+---@type defold.Config
 local default_config = {
     defold = {
         set_default_editor = true,
@@ -86,6 +90,10 @@ local default_config = {
         enable = true,
         custom_executable = nil,
         custom_arguments = nil,
+    },
+
+    completions = {
+        enable = true,
     },
 
     quickfix = {
@@ -110,7 +118,7 @@ local M = {}
 ---@type boolean
 M.loaded = false
 
----@type DefoldNvimConfig
+---@type defold.Config
 M.config = default_config
 
 ---@type string[]
@@ -136,7 +144,7 @@ local function update_lua_lsp_paths()
     end
 end
 
----@param opts DefoldNvimConfig|nil
+---@param opts defold.Config|nil
 function M.setup(opts)
     if M.config.game_runner.mode == nil then
         local os = require "defold.service.os"
@@ -372,6 +380,12 @@ function M.load_plugin()
     -- integrate the debugger into dap
     if M.config.debugger.enable then
         debugger.register_nvim_dap(M.config)
+    end
+
+    -- integrate completions into blink
+    if M.config.completions.enable then
+        local cmp = require "defold.cmp.blink"
+        cmp.register()
     end
 
     -- add snippets

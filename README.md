@@ -102,6 +102,8 @@ vim.pack.add({
     "https://github.com/mfussenegger/nvim-dap",
     -- (Optional) Required when using snippets
     "https://github.com/L3MON4D3/LuaSnip",
+    -- (Optional) Required for path completions
+    "https://github.com/saghen/blink.cmp",
 
     "https://github.com/atomicptr/defold.nvim",
 })
@@ -125,6 +127,9 @@ require("defold").setup {
 
         -- (Optional) Required when using snippets
         "L3MON4D3/LuaSnip",
+
+        -- (Optional) Required for path completions
+        "saghen/blink.cmp",
     },
 
     -- This makes sure the native library downloads at installation

@@ -1,12 +1,14 @@
 pub mod bridge;
 pub mod cache;
 pub mod defold_annotations;
+pub mod defold_paths;
 pub mod editor;
 pub mod editor_commands;
 pub mod editor_config;
 pub mod focus;
 pub mod game_project;
 pub mod github;
+mod miniproto;
 pub mod mobdap;
 pub mod neovide;
 pub mod nvim_server;

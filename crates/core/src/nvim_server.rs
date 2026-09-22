@@ -52,7 +52,6 @@ pub fn netsock_port_file(root_dir: &Path) -> Result<PathBuf> {
     Ok(runtime_dir(root_dir)?.join("port"))
 }
 
-#[must_use]
 pub fn find_free_port() -> Result<u16> {
     let listener = TcpListener::bind("127.0.0.1:0")?;
     let port = listener.local_addr()?.port();

@@ -110,7 +110,7 @@ function M.check()
         end
     end
 
-    ---@type {config: DefoldNvimConfig}
+    ---@type {config: defold.Config}
     local defold = require "defold"
 
     vim.health.start "Launcher"
