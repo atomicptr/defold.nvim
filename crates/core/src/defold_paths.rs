@@ -272,7 +272,7 @@ pub fn fetch_paths_for(root_dir: &PathBuf, filepath: &Path) -> Result<Vec<PathEn
                 game_object_id: None,
                 component_id: Some(comp.id.clone()),
                 from_location: Some(format!("/{go_path}")),
-                is_component: false,
+                is_component: true,
                 same_game_object: true,
             });
         }

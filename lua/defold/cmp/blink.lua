@@ -70,7 +70,9 @@ local function completion_item_from_entry(entry)
         filterText = path,
         kind = (entry.same_game_object and blink_types.CompletionItemKind.Property)
             or (entry.is_component and blink_types.CompletionItemKind.Variable)
+            -- game object
             or blink_types.CompletionItemKind.Struct,
+        kind_icon = entry.is_component and "󰒓" or "",
         insertTextFormat = vim.lsp.protocol.InsertTextFormat.PlainText,
         sortText = string.format(
             "%s|%s:/%s#%s",
