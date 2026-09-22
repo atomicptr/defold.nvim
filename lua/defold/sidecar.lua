@@ -221,6 +221,7 @@ package.cpath = package.cpath
 ---@field install_dependencies     fun(game_root: string, force_redownload: boolean|nil)
 ---@field list_dependency_dirs     fun(game_root: string): string[]
 ---@field fetch_defold_paths_for   fun(game_root: string, filepath: string): defold.sidecar.PathEntry[]
+---@field fetch_input_bindings     fun(game_root: string): string[]
 ---@field data_dir                 fun(): string
 ---@field cache_dir                fun(): string
 

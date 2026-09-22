@@ -1,6 +1,7 @@
 use anyhow::Context;
 use defold_nvim_core::{
-    bridge, defold_paths, editor, editor_config, mobdap, nvim_server, path, project, utils,
+    bridge, defold_inputs, defold_paths, editor, editor_config, mobdap, nvim_server, path, project,
+    utils,
 };
 use defold_nvim_core::{focus, game_project::GameProject};
 use mlua::Value::{self};
@@ -111,6 +112,10 @@ fn register_exports(lua: &Lua) -> LuaResult<LuaTable> {
     exports.set(
         "fetch_defold_paths_for",
         lua.create_function(fetch_defold_paths_for)?,
+    )?;
+    exports.set(
+        "fetch_input_bindings",
+        lua.create_function(fetch_input_bindings)?,
     )?;
     exports.set("data_dir", lua.create_function(data_dir)?)?;
     exports.set("cache_dir", lua.create_function(cache_dir)?)?;
@@ -276,6 +281,22 @@ fn fetch_defold_paths_for(lua: &Lua, (root_dir, filepath): (String, String)) -> 
 
     let path_entries = defold_paths::fetch_paths_for(&root_dir, &filepath)?;
     let res = lua.to_value(&path_entries)?;
+
+    Ok(res)
+}
+
+fn fetch_input_bindings(lua: &Lua, root_dir: String) -> LuaResult<Value> {
+    let root_dir = PathBuf::from_str(&root_dir).context("could not convert path to string")?;
+
+    if !root_dir.exists() {
+        return Err(LuaError::external(format!(
+            "could not find project root: {}",
+            root_dir.display()
+        )));
+    }
+
+    let bindings = defold_inputs::fetch_input_bindings(&root_dir)?;
+    let res = lua.to_value(&bindings)?;
 
     Ok(res)
 }

@@ -8,7 +8,10 @@ use anyhow::{Context, Result};
 use serde::Serialize;
 use walkdir::{DirEntry, WalkDir};
 
-use crate::miniproto::{self, Message, Value};
+use crate::{
+    miniproto::{self, Message, Value},
+    path,
+};
 
 #[derive(Debug)]
 struct Collection {
@@ -56,7 +59,7 @@ fn load_data(root_dir: &PathBuf) -> (CollectionsMap, GameObjectsMap) {
 
     let files = WalkDir::new(root_dir)
         .into_iter()
-        .filter_entry(|e| !is_hidden(e))
+        .filter_entry(|e| !path::is_hidden(e))
         .filter_map(Result::ok)
         .map(DirEntry::into_path)
         .filter(|p| p.is_file());
@@ -116,15 +119,15 @@ fn parse_collection(message: &Message) -> Option<Collection> {
             Value::Message(msg) => Some(msg),
             _ => None,
         }) {
-            let Some(id) = first_string(go, "id") else {
+            let Some(id) = go.first_string("id") else {
                 // skip game objects without ids, invalid ids
                 continue;
             };
 
             game_objects.push(GameObjectRef {
                 id,
-                prototype_path: first_string(go, "prototype").and_then(strip_prefix_slash),
-                data: first_string(go, "data"),
+                prototype_path: go.first_string("prototype").and_then(strip_prefix_slash),
+                data: go.first_string("data"),
             });
         }
     }
@@ -140,14 +143,16 @@ fn parse_game_object(message: &Message) -> Vec<Component> {
             Value::Message(component) => Some(component),
             _ => None,
         }) {
-            let Some(id) = first_string(component, "id") else {
+            let Some(id) = component.first_string("id") else {
                 // skip components without id
                 continue;
             };
 
             components.push(Component {
                 id,
-                path: first_string(component, "component").and_then(strip_prefix_slash),
+                path: component
+                    .first_string("component")
+                    .and_then(strip_prefix_slash),
             });
         }
     }
@@ -279,20 +284,6 @@ pub fn fetch_paths_for(root_dir: &PathBuf, filepath: &Path) -> Result<Vec<PathEn
     }
 
     Ok(entries)
-}
-
-fn first_string(message: &Message, key: &str) -> Option<String> {
-    match message.get(key).first()? {
-        Value::String(s) => Some(s.clone()),
-        _ => None,
-    }
-}
-
-fn is_hidden(entry: &DirEntry) -> bool {
-    entry
-        .file_name()
-        .to_str()
-        .is_some_and(|s| s.starts_with('.'))
 }
 
 fn strip_prefix_slash(s: String) -> Option<String> {

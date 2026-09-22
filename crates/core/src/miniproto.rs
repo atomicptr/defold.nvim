@@ -25,6 +25,13 @@ impl Message {
             .cloned()
             .collect()
     }
+
+    pub fn first_string(&self, key: &str) -> Option<String> {
+        match self.get(key).first()? {
+            Value::String(s) => Some(s.clone()),
+            _ => None,
+        }
+    }
 }
 
 pub fn parse(src: &str) -> Result<Message> {

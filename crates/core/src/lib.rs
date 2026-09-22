@@ -1,6 +1,7 @@
 pub mod bridge;
 pub mod cache;
 pub mod defold_annotations;
+pub mod defold_inputs;
 pub mod defold_paths;
 pub mod editor;
 pub mod editor_commands;

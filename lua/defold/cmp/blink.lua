@@ -117,6 +117,35 @@ local function get_script_completions(filename)
     return items
 end
 
+---@return lsp.CompletionItem[]
+local function get_input_binding_completions()
+    local blink_types = require "blink.cmp.types"
+
+    local sidecar = require "defold.sidecar"
+    local log = require "defold.service.logger"
+    local project = require "defold.project"
+
+    local bindings_ok, bindings = pcall(sidecar.fetch_input_bindings, project.project_root())
+    if not bindings_ok then
+        log.error(string.format("could not fetch input bindings: %s", bindings))
+        return {}
+    end
+
+    ---@type lsp.CompletionItem[]
+    local items = {}
+
+    for _, binding in ipairs(bindings) do
+        table.insert(items, {
+            label = binding,
+            kind = blink_types.CompletionItemKind.Property,
+            kind_icon = "󱇰",
+            insertTextFormat = vim.lsp.protocol.InsertTextFormat.PlainText,
+        })
+    end
+
+    return items
+end
+
 ---@param ctx      blink.cmp.Context
 ---@param callback fun(response: blink.cmp.CompletionResponse)
 function M:get_completions(ctx, callback)
@@ -127,11 +156,12 @@ function M:get_completions(ctx, callback)
     local items = {}
 
     if ext == "script" then
-        items = get_script_completions(filename)
-        -- TODO: add input completions
+        items = vim.list_extend(items, get_script_completions(filename))
+        items = vim.list_extend(items, get_input_binding_completions())
+    elseif ext == "gui_script" then
+        -- TODO: add support for .gui_script stuff
+        items = vim.list_extend(items, get_input_binding_completions())
     end
-
-    -- TODO: add support for .gui_script
 
     callback {
         items = items,
