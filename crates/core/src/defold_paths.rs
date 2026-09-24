@@ -1,5 +1,5 @@
 use std::{
-    collections::HashMap,
+    collections::{HashMap, HashSet},
     fs::{self},
     path::{Path, PathBuf},
 };
@@ -35,7 +35,7 @@ struct Component {
 type CollectionsMap = HashMap<String, Collection>;
 type GameObjectsMap = HashMap<String, Vec<Component>>;
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Hash, PartialEq, Eq)]
 pub struct PathEntry {
     #[serde(skip_serializing_if = "Option::is_none")]
     collection_name: Option<String>,
@@ -165,7 +165,7 @@ fn references_path(components: &[Component], path: &str) -> bool {
 }
 
 fn push_components(
-    entries: &mut Vec<PathEntry>,
+    entries: &mut HashSet<PathEntry>,
     components: &[Component],
     collection_name: Option<String>,
     game_object_id: Option<String>,
@@ -173,7 +173,7 @@ fn push_components(
     same_game_object: bool,
 ) {
     for comp in components {
-        entries.push(PathEntry {
+        entries.insert(PathEntry {
             collection_name: if same_game_object {
                 None
             } else {
@@ -201,13 +201,13 @@ pub fn fetch_paths_for(root_dir: &PathBuf, filepath: &Path) -> Result<Vec<PathEn
 
     let (collections, game_objects) = load_data(root_dir);
     let has_multiple_collections = collections.len() > 1;
-    let mut entries = Vec::new();
+    let mut entries = HashSet::new();
 
     for (collection_path, collection) in &collections {
         let collection_name = has_multiple_collections.then(|| collection.name.clone());
 
         for go in &collection.game_objects {
-            entries.push(PathEntry {
+            entries.insert(PathEntry {
                 collection_name: collection_name.clone(),
                 game_object_id: Some(go.id.clone()),
                 component_id: None,
@@ -221,7 +221,7 @@ pub fn fetch_paths_for(root_dir: &PathBuf, filepath: &Path) -> Result<Vec<PathEn
                 && let Ok(parsed) = miniproto::parse(data)
             {
                 for comp in parse_game_object(&parsed) {
-                    entries.push(PathEntry {
+                    entries.insert(PathEntry {
                         collection_name: collection_name.clone(),
                         game_object_id: Some(go.id.clone()),
                         component_id: Some(comp.id.clone()),
@@ -267,12 +267,12 @@ pub fn fetch_paths_for(root_dir: &PathBuf, filepath: &Path) -> Result<Vec<PathEn
 
     // if our script affects more than one game object don't infer local components
     if attached.len() > 1 {
-        return Ok(entries);
+        return Ok(entries.into_iter().collect());
     }
 
     for (go_path, components) in attached {
         for comp in components {
-            entries.push(PathEntry {
+            entries.insert(PathEntry {
                 collection_name: None,
                 game_object_id: None,
                 component_id: Some(comp.id.clone()),
@@ -283,7 +283,7 @@ pub fn fetch_paths_for(root_dir: &PathBuf, filepath: &Path) -> Result<Vec<PathEn
         }
     }
 
-    Ok(entries)
+    Ok(entries.into_iter().collect())
 }
 
 fn strip_prefix_slash(s: String) -> Option<String> {
