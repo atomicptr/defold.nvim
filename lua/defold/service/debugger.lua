@@ -1,17 +1,17 @@
 local M = {}
 
-M.custom_executable = nil
-M.custom_arguments = nil
 M.path = nil
 
+---@param config                    defold.Config
+---@param install_when_not_present? boolean
 ---@return string|nil
-function M.mobdap_path()
+function M.mobdap_path(config, install_when_not_present)
     local os = require "defold.service.os"
     local log = require "defold.service.logger"
     local sidecar = require "defold.sidecar"
 
-    if M.custom_executable then
-        return M.custom_executable
+    if config.debugger.custom_executable then
+        return config.debugger.custom_executable
     end
 
     if os.command_exists "mobdap" then
@@ -20,6 +20,10 @@ function M.mobdap_path()
 
     if M.path then
         return M.path
+    end
+
+    if not install_when_not_present then
+        return nil
     end
 
     local ok, res = pcall(sidecar.mobdap_install)
@@ -32,13 +36,52 @@ function M.mobdap_path()
     return res
 end
 
----@param custom_executable string|nil
----@param custom_arguments table<string>|nil
-function M.setup(custom_executable, custom_arguments)
-    M.custom_executable = custom_executable
-    M.custom_arguments = custom_arguments
+local function create_game_launcher(config)
+    local editor = require "defold.editor"
+    local log = require "defold.service.logger"
+    return function(_, _)
+        log.debug "debugger: connected"
 
-    M.mobdap_path()
+        local res = editor.send_command "build"
+
+        if config.quickfix.enable then
+            editor.open_quickfix_from_command_result(res, config.quickfix.min_severity, config.quickfix.open_list)
+        end
+    end
+end
+
+---@param config defold.Config
+local function setup_adapter_mobdap(config)
+    local dap = require "dap"
+    local project = require "defold.project"
+
+    dap.adapters.defold_nvim = {
+        id = "defold_nvim",
+        type = "executable",
+        command = M.mobdap_path(config),
+        args = M.custom_arguments,
+    }
+
+    dap.configurations.lua = {
+        {
+            name = "defold.nvim: Debugger",
+            type = "defold_nvim",
+            request = "launch",
+
+            rootdir = function()
+                return project.project_root()
+            end,
+
+            sourcedirs = function()
+                return project.dependency_api_paths()
+            end,
+
+            -- TODO: read it from the collection if possible
+            port = config.debugger.custom_port or 18172,
+        },
+    }
+
+    dap.listeners.after["event_mobdap_waiting_for_connection"].defold_nvim_start_game = create_game_launcher(config)
 end
 
 ---@param config defold.Config
@@ -51,51 +94,18 @@ function M.register_nvim_dap(config)
         return
     end
 
-    local editor = require "defold.editor"
     local project = require "defold.project"
 
-    dap.adapters.defold_nvim = {
-        id = "defold_nvim",
-        type = "executable",
-        command = M.mobdap_path(),
-        args = M.custom_arguments,
-    }
-
-    dap.configurations.lua = {
-        {
-            name = "defold.nvim: Debugger",
-            type = "defold_nvim",
-            request = "launch",
-
-            rootdir = function()
-                return vim.fs.root(0, { "game.project", ".git" })
-            end,
-
-            sourcedirs = function()
-                return project.dependency_api_paths()
-            end,
-
-            -- TODO: read it from the collection if possible
-            port = config.debugger.custom_port or 18172,
-        },
-    }
-
-    dap.listeners.after.event_mobdap_waiting_for_connection.defold_nvim_start_game = function(_, _)
-        log.debug "debugger: connected"
-
-        local res = editor.send_command "build"
-
-        if config.quickfix.enable then
-            editor.open_quickfix_from_command_result(res, config.quickfix.min_severity, config.quickfix.open_list)
-        end
+    -- TODO: make default nil and try to infer from project
+    if config.debugger.integration == "mobdap" then
+        setup_adapter_mobdap(config)
     end
 
     dap.listeners.after.event_stopped.defold_nvim_switch_focus_on_stop = function(_, _)
         log.debug "debugger: event stopped"
 
         local sidecar = require "defold.sidecar"
-
-        local rootdir = vim.fs.root(0, { "game.project", ".git" })
+        local rootdir = project.project_root()
 
         local ok, err = pcall(sidecar.focus_neovim, rootdir)
         if not ok then
@@ -107,8 +117,7 @@ function M.register_nvim_dap(config)
         log.debug "debugger: continued"
 
         local sidecar = require "defold.sidecar"
-
-        local rootdir = vim.fs.root(0, { "game.project", ".git" })
+        local rootdir = project.project_root()
 
         local ok, err = pcall(sidecar.focus_game, rootdir)
         if not ok then

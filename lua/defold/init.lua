@@ -14,6 +14,7 @@
 
 ---@class defold.config.Debugger Settings for the integrated debugger
 ---@field enable?            boolean Enable the debugger
+---@field integration?       "mobdap"|"local" Set which debug integration to use (default: mobdap, local: dont setup a custom debugger and use whatever you've setup with nvim-dap)
 ---@field custom_executable? string Use a custom executable for the debugger
 ---@field custom_arguments?  table<string> Custom arguments for the debugger
 ---@field custom_port?       integer Custom port for the debugger (default: 18172)
@@ -89,6 +90,7 @@ local default_config = {
 
     debugger = {
         enable = true,
+        integration = "mobdap",
         custom_executable = nil,
         custom_arguments = nil,
         custom_port = nil,
@@ -231,8 +233,8 @@ function M.setup(opts)
             M.setup_default_editor()
         end
 
-        if M.config.debugger.enable then
-            M.setup_debugger()
+        if M.config.debugger.integration == "mobdap" then
+            require("defold.service.debugger").mobdap_path(M.config, true)
         end
 
         if not M.config.force_plugin_enabled and not project.is_defold_project() then
@@ -280,9 +282,10 @@ function M.load_plugin()
         log.debug("Bridge Path: " .. bridge_path)
     end
 
-    if debugger.mobdap_path() then
-        log.debug("Mobdap Path: " .. debugger.mobdap_path())
+    if M.config.debugger.enable then
+        log.debug("Debugger Integration: " .. M.config.debugger.integration)
     end
+
     log.debug("Config: " .. vim.inspect(M.config))
 
     -- register hot reload when saving lua files
@@ -419,12 +422,6 @@ function M.setup_default_editor()
     if not ok then
         log.error(string.format("Could not set default editor because: %s", err))
     end
-end
-
----Sets up MobDap as the debugger
-function M.setup_debugger()
-    local debugger = require "defold.service.debugger"
-    debugger.setup(M.config.debugger.custom_executable, M.config.debugger.custom_arguments)
 end
 
 return M

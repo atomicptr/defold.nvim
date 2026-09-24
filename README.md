@@ -192,11 +192,19 @@ local config = {
         -- Enable the debugger (default: true)
         enable = true,
 
-        -- Use a custom executable for the debugger (default: nil)
+        -- Which debugger integration to use (default: mobdap)
+        --   "mobdap": Downloads mobdap automatically and replaces your dap runner configurations with it
+        --   "local":  Don't setup a custom debugger and just use what you've already set-up plus some extra dap listeners for switching focus
+        integration = "mobdap",
+
+        -- (mobdap only) Use a custom executable for the debugger (default: nil)
         custom_executable = nil,
 
-        -- Add custom arguments to the debugger (default: nil)
+        -- (mobdap only) Add custom arguments to the debugger (default: nil)
         custom_arguments = nil,
+
+        -- (mobdap only) Add custom port for the debugger (default: 18172)
+        custom_port = 18172,
     },
 
     quickfix = {
@@ -249,11 +257,11 @@ If you have the auto setup for the Defold external editor disabled and/or you wa
 
 `:lua require("defold").setup_default_editor()`
 
-Similarly the Debugger can be initialized using
-
-`:lua require("defold").setup_debugger()`
-
 ### Setup Debugging
+
+Depending on which debugger integration you've picked this path might be slightly different (see configuration above for an explanation)
+
+#### Integration: mobdap (default)
 
 For debugging we're using [mobdap](https://github.com/atomicptr/mobdap) which is running on top of [MobDebug](https://github.com/pkulchenko/MobDebug) so you need to have that available
 in your project. This plugin is handling the installation of mobdap automatically, but you still need to add MobDebug in
@@ -262,6 +270,10 @@ your project. The easiest way is using [defold-mobdebug](https://github.com/atom
 [(Read this)](https://github.com/atomicptr/defold-mobdebug?tab=readme-ov-file#installation)
 
 And then you run use ``:DapNew`` and the game should be running
+
+#### Integration: local
+
+With this you're on your own, the only thing we do is register some dap listeners.
 
 ### Setup Snippets
 

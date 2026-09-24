@@ -49,17 +49,6 @@ function M.check()
         vim.health.error(string.format("Bridge Not Found: %s", bridge_path))
     end
 
-    vim.health.start "mobdap"
-
-    local debugger = require "defold.service.debugger"
-    local mobdap_path = debugger.mobdap_path()
-
-    if mobdap_path ~= nil then
-        vim.health.ok(string.format("mobdap Path: %s", mobdap_path))
-    else
-        vim.health.warn(string.format("mobdap not available: %s, debugger disabled", mobdap_path))
-    end
-
     vim.health.start "Defold"
 
     local project = require "defold.project"
@@ -111,7 +100,36 @@ function M.check()
     end
 
     ---@type {config: defold.Config}
-    local defold = require "defold"
+    local defold = require "defold" -- TODO: this is apparently isolated from the actual user applied configuration
+
+    vim.health.start "Debugger"
+
+    if defold.config.debugger.enable then
+        vim.health.ok "Debugger is enabled"
+        vim.health.info(string.format("Integration: %s", defold.config.debugger.integration))
+
+        if defold.config.debugger.integration == "mobdap" then
+            vim.health.info(
+                string.format("Mobdap Path: %s", require("defold.service.debugger").mobdap_path(defold.config))
+            )
+
+            if defold.config.debugger.custom_executable then
+                vim.health.info(string.format("Custom Executable: %s", defold.config.debugger.custom_executable))
+            end
+
+            if defold.config.debugger.custom_arguments then
+                vim.health.info(
+                    string.format("Custom Arguments: %s", table.concat(defold.config.debugger.custom_arguments, " "))
+                )
+            end
+
+            if defold.config.debugger.custom_port then
+                vim.health.info(string.format("Custom Port: %s", defold.config.debugger.custom_port))
+            end
+        end
+    else
+        vim.health.warn "Debugger is disabled"
+    end
 
     vim.health.start "Launcher"
 
