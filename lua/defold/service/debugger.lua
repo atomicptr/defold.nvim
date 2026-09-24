@@ -99,6 +99,13 @@ function M.register_nvim_dap(config)
     -- TODO: make default nil and try to infer from project
     if config.debugger.integration == "mobdap" then
         setup_adapter_mobdap(config)
+    elseif config.debugger.integration == "local" then
+        local launcher = create_game_launcher(config)
+        local dap_run = dap.run
+        rawset(dap, "run", function(cfg, opts)
+            launcher()
+            dap_run(cfg, opts)
+        end)
     end
 
     dap.listeners.after.event_stopped.defold_nvim_switch_focus_on_stop = function(_, _)

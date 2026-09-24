@@ -273,7 +273,7 @@ And then you run use ``:DapNew`` and the game should be running
 
 #### Integration: local
 
-With this you're on your own, the only thing we do is register some dap listeners.
+With this you're on your own, the only thing we do is register some dap listeners and run the game for you (by overwriting dap.run)
 
 ### Setup Snippets
 
