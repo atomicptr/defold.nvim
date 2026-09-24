@@ -75,8 +75,8 @@ function M.register_nvim_dap(config)
                 return project.dependency_api_paths()
             end,
 
-            -- TODO: make this configurable or better read it from the collection if possible
-            port = 18172,
+            -- TODO: read it from the collection if possible
+            port = config.debugger.custom_port or 18172,
         },
     }
 

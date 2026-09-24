@@ -16,6 +16,7 @@
 ---@field enable?            boolean Enable the debugger
 ---@field custom_executable? string Use a custom executable for the debugger
 ---@field custom_arguments?  table<string> Custom arguments for the debugger
+---@field custom_port?       integer Custom port for the debugger (default: 18172)
 
 ---@class defold.config.Completions Settings for Defold completions
 ---@field enable? boolean Enable Defold completions
@@ -90,6 +91,7 @@ local default_config = {
         enable = true,
         custom_executable = nil,
         custom_arguments = nil,
+        custom_port = nil,
     },
 
     completions = {
