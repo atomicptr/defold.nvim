@@ -177,13 +177,9 @@ fn nvim_open_file_remote(nvim: &str, server: &str, file: &str, line: Option<usiz
     cmd.arg("--headless")
         .arg("--server")
         .arg(server)
-        .arg("--remote");
+        .arg("--remote-send");
 
-    if let Some(line) = line {
-        cmd.arg(format!("+{line}"));
-    }
-
-    cmd.arg(file);
+    cmd.arg(format!("<cmd>e {remote_cmd}<CR>"));
 
     tracing::debug!("open remote file command: {cmd:?}");
 
