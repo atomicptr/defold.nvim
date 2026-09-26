@@ -11,6 +11,10 @@ function M.fetch_release(owner, repository, tag)
     local url = string.format("https://api.github.com/repos/%s/%s/releases/latest", owner, repository)
 
     if tag then
+        if not tag:find "^v" then
+            tag = "v" .. tag
+        end
+
         url = string.format("https://api.github.com/repos/%s/%s/releases/tags/%s", owner, repository, tag)
     end
 

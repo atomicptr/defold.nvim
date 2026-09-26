@@ -63,7 +63,7 @@ local function version()
     return data
 end
 
----@return string|nil
+---@return string
 local function plugin_version()
     local ok, plugin_ver = pcall(require, "defold.version")
     if not ok then
@@ -139,8 +139,10 @@ local function find_rust_lib_rootdir()
             return download_release(plugin_version())
         end
 
-        if curr_version ~= version then
-            log.info(string.format("Sidecar version (current: %s) outdated, updating to %s", curr_version, version))
+        if vim.version.cmp(curr_version, plugin_version()) ~= 0 then
+            log.info(
+                string.format("Sidecar version (current: %s) outdated, updating to %s", curr_version, plugin_version())
+            )
 
             return download_release(plugin_version())
         end
