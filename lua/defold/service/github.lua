@@ -1,13 +1,19 @@
 local M = {}
 
 ---Fetch the latest github release of owner/repository
----@param owner string
+---@param owner      string
 ---@param repository string
+---@param tag?       string
 ---@return table|nil
-function M.fetch_release(owner, repository)
+function M.fetch_release(owner, repository, tag)
     local os = require "defold.service.os"
     local log = require "defold.service.logger"
     local url = string.format("https://api.github.com/repos/%s/%s/releases/latest", owner, repository)
+
+    if tag then
+        url = string.format("https://api.github.com/repos/%s/%s/releases/tags/%s", owner, repository, tag)
+    end
+
     local release = os.fetch_json(url)
 
     if not release then
@@ -20,18 +26,27 @@ function M.fetch_release(owner, repository)
 end
 
 ---Fetch latest github release and download asset with `name`. Returns path to file or nil on error
----@param owner string
+---@param owner      string
 ---@param repository string
----@param name string
+---@param name       string
+---@param tag?       string
 ---@return string|nil
 ---@return table|nil
-function M.download_release(owner, repository, name)
+function M.download_release(owner, repository, name, tag)
     local osm = require "defold.service.os"
     local log = require "defold.service.logger"
-    local release = M.fetch_release(owner, repository)
+    local release = M.fetch_release(owner, repository, tag)
 
     if not release then
-        log.error(string.format("Unable to download github release %s/%s file: %s", owner, repository, name))
+        log.error(
+            string.format(
+                "Unable to download github release %s/%s (%s) file: %s",
+                owner,
+                repository,
+                tag or "latest",
+                name
+            )
+        )
         return nil, nil
     end
 
@@ -43,7 +58,9 @@ function M.download_release(owner, repository, name)
         end
     end
 
-    log.error(string.format("Unable to find github release %s/%s file: %s", owner, repository, name))
+    log.error(
+        string.format("Unable to find github release %s/%s (%s) file: %s", owner, repository, tag or "latest", name)
+    )
     return nil, nil
 end
 
