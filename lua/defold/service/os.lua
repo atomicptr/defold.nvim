@@ -79,7 +79,7 @@ function M.download(url, to_path)
     if M.is_windows() then
         M.exec(
             string.format(
-                'powershell -Command "Invoke-WebRequest -Uri \\"%s\\" -UserAgent \\"%s\\" -OutFile \\"%s\\""',
+                'powershell -Command "Invoke-WebRequest -Uri \'%s\' -UserAgent \'%s\' -OutFile \'%s\'"',
                 url,
                 user_agent,
                 to_path
@@ -133,7 +133,7 @@ function M.move(from_path, to_path)
     if M.is_windows() then
         M.exec(
             string.format(
-                'powershell.exe -Command "Move-Item -Path \\"%s\\" -Destination \\"%s\\""',
+                'powershell.exe -Command "Move-Item -Path \'%s\' -Destination \'%s\'"',
                 from_path,
                 to_path
             )
