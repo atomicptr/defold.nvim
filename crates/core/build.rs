@@ -12,8 +12,6 @@ fn main() {
         .join("defold")
         .join("version.lua");
 
-    println!("cargo:rerun-if-changed=Cargo.toml");
-
     fs::write(
         &dest_path,
         format!("-- Automatically generated don't edit\nreturn \"{version}\""),

@@ -488,7 +488,7 @@ checksum = "ac6b926516df9c60bfa16e107b21086399f8285a44ca9711344b9e553c5146e2"
 
 [[package]]
 name = "defold-nvim-bridge"
-version = "0.9.4"
+version = "0.9.5"
 dependencies = [
  "anyhow",
  "clap",
@@ -506,7 +506,7 @@ dependencies = [
 
 [[package]]
 name = "defold-nvim-core"
-version = "0.9.4"
+version = "0.9.5"
 dependencies = [
  "anyhow",
  "chumsky",
@@ -535,7 +535,7 @@ dependencies = [
 
 [[package]]
 name = "defold-nvim-sidecar"
-version = "0.9.4"
+version = "0.9.5"
 dependencies = [
  "anyhow",
  "defold-nvim-core",
@@ -2579,9 +2579,9 @@ dependencies = [
 
 [[package]]
 name = "tokio-rustls"
-version = "0.26.5"
+version = "0.26.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b0c85f2c3ef0b1cd58b36682f4b17aaa995f0e5db534d85692b4903abce21f67"
+checksum = "c9cc2678c2cdd569ef8215e2afd7954ada2ae20b4fdd2c5fe6139a3b02d105db"
 dependencies = [
  "rustls",
  "tokio",
