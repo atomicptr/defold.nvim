@@ -70,7 +70,7 @@ end
 ---@param severity defold.sidecar.IssueSeverity
 ---@return integer
 local function issue_severity_value(severity)
-    if severity == "info" then
+    if severity == "information" then
         return 1
     elseif severity == "warning" then
         return 2
