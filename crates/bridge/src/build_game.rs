@@ -12,7 +12,7 @@ use sysinfo::System;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, ValueEnum)]
 pub enum Severity {
-    #[value(name = "info", alias = "I")]
+    #[value(name = "information", alias = "I")]
     Info,
     #[value(name = "warning", alias = "W")]
     Warning,
@@ -31,10 +31,7 @@ pub fn build_game(port: u16, min_severity: Severity, enable_logs: bool) -> Resul
         .issues
         .iter()
         .filter(|i| {
-            let severity =
-                Severity::from_str(&i.severity, true).expect("severity must deserialize");
-
-            severity >= min_severity
+            Severity::from_str(&i.severity, true).unwrap_or(Severity::Error) >= min_severity
         })
         .collect();
 
