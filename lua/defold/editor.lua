@@ -125,10 +125,18 @@ function M.open_quickfix_from_command_result(result, min_severity, open_quickfix
     for _, issue in ipairs(issues) do
         local filepath = issue.resource:sub(1, 1) == "/" and issue.resource:sub(2) or issue.resource
 
+        local lnum = 1
+        local col = 1
+
+        if issue.range then
+            lnum = issue.range.start.line + 1
+            col = issue.range.start.character + 1
+        end
+
         table.insert(items, {
             filename = filepath,
-            lnum = issue.range.start.line + 1,
-            col = issue.range.start.character + 1,
+            lnum = lnum,
+            col = col,
             text = issue.message,
             type = severity_map[issue.severity] or "E",
         })

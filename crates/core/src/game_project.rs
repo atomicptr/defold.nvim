@@ -13,6 +13,8 @@ pub struct Library {
 pub struct GameProject {
     pub title: String,
     pub dependencies: Vec<String>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub library: Option<Library>,
 }
 

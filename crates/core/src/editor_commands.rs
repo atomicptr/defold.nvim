@@ -12,7 +12,11 @@ pub struct CommandResult {
 pub struct Issue {
     pub message: String,
     pub severity: String,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub resource: Option<String>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub range: Option<Range>,
 }
 
