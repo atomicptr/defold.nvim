@@ -38,7 +38,7 @@ end
 ---@param config                    defold.Config
 ---@param install_when_not_present? boolean
 ---@return string|nil
-local function mobdap_path(config, install_when_not_present)
+function M.get_mobdap_path(config, install_when_not_present)
     local os = require "defold.service.os"
     local log = require "defold.service.logger"
     local sidecar = require "defold.sidecar"
@@ -75,7 +75,7 @@ function M.setup(config)
 
     if variant == "mobdebug" then
         -- make sure mobdap is available
-        mobdap_path(config, true)
+        M.get_mobdap_path(config, true)
     end
 end
 
@@ -130,7 +130,7 @@ local function register_mobdebug_debugger(config)
     dap.adapters.defold_nvim_mobdebug = {
         id = "defold_nvim_mobdebug",
         type = "executable",
-        command = mobdap_path(config),
+        command = M.get_mobdap_path(config),
         args = config.debugger.mobdebug.mobdap_arguments,
     }
 

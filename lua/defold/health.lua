@@ -105,26 +105,36 @@ function M.check()
     vim.health.start "Debugger"
 
     if defold.config.debugger.enable then
+        local debugger = require "defold.debugger"
+        local variant = debugger.variant()
+
         vim.health.ok "Debugger is enabled"
-        vim.health.info(string.format("Integration: %s", defold.config.debugger.integration))
+        vim.health.info(string.format("Variant: %s", variant))
 
-        if defold.config.debugger.integration == "mobdap" then
-            vim.health.info(
-                string.format("Mobdap Path: %s", require("defold.service.debugger").mobdap_path(defold.config))
-            )
-
-            if defold.config.debugger.custom_executable then
-                vim.health.info(string.format("Custom Executable: %s", defold.config.debugger.custom_executable))
+        if variant == "moonbug" then
+            if defold.config.debugger.moonbug.port then
+                vim.health.info(string.format("Moonbug Port: %d", defold.config.debugger.moonbug.port))
             end
+        elseif variant == "mobdebug" then
+            vim.health.info(string.format("Mobdap Path: %s", debugger.get_mobdap_path(defold.config)))
 
-            if defold.config.debugger.custom_arguments then
+            if defold.config.debugger.mobdebug.mobdap_executable then
                 vim.health.info(
-                    string.format("Custom Arguments: %s", table.concat(defold.config.debugger.custom_arguments, " "))
+                    string.format("Mobdap Custom Executable: %s", defold.config.debugger.mobdebug.mobdap_executable)
                 )
             end
 
-            if defold.config.debugger.custom_port then
-                vim.health.info(string.format("Custom Port: %s", defold.config.debugger.custom_port))
+            if defold.config.debugger.mobdebug.mobdap_arguments then
+                vim.health.info(
+                    string.format(
+                        "Mobdap Custom Arguments: %s",
+                        table.concat(defold.config.debugger.mobdebug.mobdap_arguments, " ")
+                    )
+                )
+            end
+
+            if defold.config.debugger.mobdebug.port then
+                vim.health.info(string.format("Port: %s", defold.config.debugger.mobdebug.port))
             end
         end
     else
