@@ -108,9 +108,16 @@ local function register_moonbug_debugger(config)
         {
             type = "defold_nvim_moonbug",
             request = "attach",
-            name = "[defold.nvim] Launch Game",
+            name = "defold.nvim: Launch Game & Attach",
             project_root_dir = "${workspaceFolder}",
             before = create_game_launcher(config),
+            -- TODO: offer this only when no game is running
+        },
+        {
+            type = "defold_nvim_moonbug",
+            request = "attach",
+            name = "defold.nvim: Attach",
+            project_root_dir = "${workspaceFolder}",
         },
     }
 end
