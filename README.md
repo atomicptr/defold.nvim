@@ -192,19 +192,22 @@ local config = {
         -- Enable the debugger (default: true)
         enable = true,
 
-        -- Which debugger integration to use (default: mobdap)
-        --   "mobdap": Downloads mobdap automatically and replaces your dap runner configurations with it
-        --   "local":  Don't setup a custom debugger and just use what you've already set-up plus some extra dap listeners for switching focus
-        integration = "mobdap",
+        -- When using moonbug (recommended), you need to install the `defold-moonbug` Defold extension
+        moonbug = {
+            port = 8888,
+        },
 
-        -- (mobdap only) Use a custom executable for the debugger (default: nil)
-        custom_executable = nil,
+        -- When using mobdebug, you need to install the `defold-mobdebug` Defold extension
+        mobdebug = {
+            -- Use a custom executable for the debugger (default: nil)
+            custom_executable = nil,
 
-        -- (mobdap only) Add custom arguments to the debugger (default: nil)
-        custom_arguments = nil,
+            -- Add custom arguments to the debugger (default: nil)
+            custom_arguments = nil,
 
-        -- (mobdap only) Add custom port for the debugger (default: 18172)
-        custom_port = 18172,
+            -- Add custom port for the debugger (default: 18172)
+            custom_port = 18172,
+        },
     },
 
     quickfix = {
@@ -261,9 +264,21 @@ If you have the auto setup for the Defold external editor disabled and/or you wa
 
 Depending on which debugger integration you've picked this path might be slightly different (see configuration above for an explanation)
 
-#### Integration: mobdap (default)
+Be sure that you have the debugger mode enabled via: `debugger.enable = true`
 
-For debugging we're using [mobdap](https://github.com/atomicptr/mobdap) which is running on top of [MobDebug](https://github.com/pkulchenko/MobDebug) so you need to have that available
+#### Integration: moonbug (recommended)
+
+For debugging, I'm highly recommending using [moonbug](https://github.com/atomicptr/moonbug) as it was purpose built for the Debug Adapter Protocol and also with Defold in mind.
+
+- Add the [defold-moonbug](https://github.com/atomicptr/defold-moonbug) extension to your Defold project
+- Fetch/Update the dependencies
+- [Follow the instructions (add the debugger game object)](https://github.com/atomicptr/defold-moonbug#installation)
+- Restart Neovim
+- You're good to go, just use `:DapNew`
+
+#### Integration: mobdap (deprecated)
+
+The legacy approach is using [mobdap](https://github.com/atomicptr/mobdap) which is running on top of [MobDebug](https://github.com/pkulchenko/MobDebug) so you need to have that available
 in your project. This plugin is handling the installation of mobdap automatically, but you still need to add MobDebug in
 your project. The easiest way is using [defold-mobdebug](https://github.com/atomicptr/defold-mobdebug) in your project.
 
@@ -273,7 +288,7 @@ And then you run use ``:DapNew`` and the game should be running
 
 #### Integration: local
 
-With this you're on your own, the only thing we do is register some dap listeners and run the game for you (by overwriting dap.run)
+If you have neither the `defold-moonbug` nor the `defold-mobdebug` extension installed we'll fallback to `local` mode which just means defold.nvim will use whatever you've set up yourself.
 
 ### Setup Snippets
 
