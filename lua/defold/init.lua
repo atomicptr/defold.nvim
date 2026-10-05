@@ -13,9 +13,10 @@
 ---@field debug?       boolean Enable debug settings for the bridge cli
 
 ---@class defold.config.Debugger Settings for the integrated debugger
----@field enable?   boolean Enable the debugger
----@field moonbug?  defold.config.debugger.MoonbugConfig
----@field mobdebug? defold.config.debugger.MobdebugConfig
+---@field enable?        boolean Enable the debugger
+---@field moonbug?       defold.config.debugger.MoonbugConfig
+---@field mobdebug?      defold.config.debugger.MobdebugConfig
+---@field force_variant? defold.debugger.Variant Load variant no matter what is inferred from project
 
 ---@class defold.config.debugger.MoonbugConfig
 ---@field port? integer The port to run moonbug at
@@ -106,6 +107,8 @@ local default_config = {
             mobdap_arguments = nil,
             port = nil,
         },
+
+        force_variant = nil,
     },
 
     completions = {
@@ -300,7 +303,7 @@ function M.load_plugin()
     end
 
     if M.config.debugger.enable then
-        log.debug("Debugger Variant: " .. debugger.variant())
+        log.debug("Debugger Variant: " .. (M.config.debugger.force_variant or debugger.infer_variant()))
     end
 
     log.debug("Config: " .. vim.inspect(M.config))

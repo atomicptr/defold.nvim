@@ -6,7 +6,7 @@ local M = {}
 ---| "local"
 
 ---@return defold.debugger.Variant
-function M.variant()
+function M.infer_variant()
     local project = require "defold.project"
     local sidecar = require "defold.sidecar"
     local log = require "defold.service.logger"
@@ -71,7 +71,7 @@ end
 
 ---@param config defold.Config
 function M.setup(config)
-    local variant = M.variant()
+    local variant = config.debugger.force_variant or M.infer_variant()
 
     if variant == "mobdebug" then
         -- make sure mobdap is available
@@ -170,7 +170,7 @@ function M.register_nvim_dap(config)
         return
     end
 
-    local variant = M.variant()
+    local variant = config.debugger.force_variant or M.infer_variant()
 
     if variant == "moonbug" then
         register_moonbug_debugger(config)

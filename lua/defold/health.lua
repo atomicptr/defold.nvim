@@ -106,7 +106,7 @@ function M.check()
 
     if defold.config.debugger.enable then
         local debugger = require "defold.debugger"
-        local variant = debugger.variant()
+        local variant = defold.config.debugger.force_variant or debugger.infer_variant()
 
         vim.health.ok "Debugger is enabled"
         vim.health.info(string.format("Variant: %s", variant))
