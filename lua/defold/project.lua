@@ -28,7 +28,7 @@ function M.is_defold_project()
         return false
     end
 
-    return vim.fn.filereadable(root_dir .. "/game.project") == 1
+    return require("defold.service.os").file_exists(vim.fs.joinpath(root_dir, "game.project"))
 end
 
 ---@return boolean

@@ -172,10 +172,10 @@ package.cpath = package.cpath
 ---@field status  integer
 
 ---@class defold.sidecar.Issue
----@field message  string
----@field severity defold.sidecar.IssueSeverity
----@field resource string|nil
----@field range    defold.sidecar.Range|nil
+---@field message   string
+---@field severity  defold.sidecar.IssueSeverity
+---@field resource? string
+---@field range?    defold.sidecar.Range
 
 ---@alias defold.sidecar.IssueSeverity "error"|"warning"|"info"
 

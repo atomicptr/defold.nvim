@@ -13,11 +13,17 @@
 ---@field debug?       boolean Enable debug settings for the bridge cli
 
 ---@class defold.config.Debugger Settings for the integrated debugger
----@field enable?            boolean Enable the debugger
----@field integration?       "mobdap"|"local" Set which debug integration to use (default: mobdap, local: dont setup a custom debugger and use whatever you've setup with nvim-dap)
----@field custom_executable? string Use a custom executable for the debugger
----@field custom_arguments?  table<string> Custom arguments for the debugger
----@field custom_port?       integer Custom port for the debugger (default: 18172)
+---@field enable?   boolean Enable the debugger
+---@field moonbug?  defold.config.debugger.MoonbugConfig
+---@field mobdebug? defold.config.debugger.MobdebugConfig
+
+---@class defold.config.debugger.MoonbugConfig
+---@field port? integer The port to run moonbug at
+
+---@class defold.config.debugger.MobdebugConfig
+---@field mobdap_executable? string   Use a custom executable for mobdap
+---@field mobdap_arguments?  string[] Custom arguments for mobdap
+---@field port?              integer  Custom port for the debugger (default: 18172)
 
 ---@class defold.config.Completions Settings for Defold completions
 ---@field enable? boolean Enable Defold completions
@@ -90,10 +96,16 @@ local default_config = {
 
     debugger = {
         enable = true,
-        integration = "mobdap",
-        custom_executable = nil,
-        custom_arguments = nil,
-        custom_port = nil,
+
+        moonbug = {
+            port = nil,
+        },
+
+        mobdebug = {
+            mobdap_executable = nil,
+            mobdap_arguments = nil,
+            port = nil,
+        },
     },
 
     completions = {
@@ -227,14 +239,14 @@ function M.setup(opts)
 
         if project.is_defold_project() then
             project.ensure_nvim_server(M.config.launcher.socket_type)
+
+            if M.config.debugger.enable then
+                require("defold.debugger").setup(M.config)
+            end
         end
 
         if M.config.defold.set_default_editor then
             M.setup_default_editor()
-        end
-
-        if M.config.debugger.integration == "mobdap" then
-            require("defold.service.debugger").mobdap_path(M.config, true)
         end
 
         if not M.config.force_plugin_enabled and not project.is_defold_project() then
@@ -269,12 +281,17 @@ function M.load_plugin()
     vim.filetype.add(require("defold.config.filetype").full)
 
     local sidecar = require "defold.sidecar"
-    local debugger = require "defold.service.debugger"
+    local debugger = require "defold.debugger"
     local editor = require "defold.editor"
     local log = require "defold.service.logger"
     local project = require "defold.project"
 
     log.debug "============= defold.nvim: Loaded plugin"
+
+    local project_root = project.project_root(false)
+
+    log.debug("Project Root: " .. project_root)
+    log.debug("Plugin Version: " .. require "defold.version")
     log.debug("Sidecar Version: " .. sidecar.version)
 
     local bridge_ok, bridge_path = pcall(sidecar.find_bridge_path, M.plugin_root())
@@ -283,7 +300,7 @@ function M.load_plugin()
     end
 
     if M.config.debugger.enable then
-        log.debug("Debugger Integration: " .. M.config.debugger.integration)
+        log.debug("Debugger Variant: " .. debugger.variant())
     end
 
     log.debug("Config: " .. vim.inspect(M.config))
