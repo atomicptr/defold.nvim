@@ -1,7 +1,7 @@
 use anyhow::Context;
 use defold_nvim_core::{
-    bridge, defold_annotations, defold_inputs, defold_paths, editor, editor_config, mobdap,
-    nvim_server, path, project, utils,
+    bridge, defold_annotations, defold_gui, defold_inputs, defold_paths, editor, editor_config,
+    mobdap, nvim_server, path, project, utils,
 };
 use defold_nvim_core::{focus, game_project::GameProject};
 use mlua::Value::{self};
@@ -112,6 +112,10 @@ fn register_exports(lua: &Lua) -> LuaResult<LuaTable> {
     exports.set(
         "fetch_defold_paths_for",
         lua.create_function(fetch_defold_paths_for)?,
+    )?;
+    exports.set(
+        "fetch_gui_nodes_for",
+        lua.create_function(fetch_gui_nodes_for)?,
     )?;
     exports.set(
         "fetch_input_bindings",
@@ -308,6 +312,12 @@ fn fetch_defold_paths_for(lua: &Lua, (root_dir, filepath): (String, String)) -> 
     let res = lua.to_value(&path_entries)?;
 
     Ok(res)
+}
+
+#[instrument(level = "debug", err(Debug), skip_all)]
+fn fetch_gui_nodes_for(lua: &Lua, (root_dir, filepath): (String, String)) -> LuaResult<Value> {
+    let nodes = defold_gui::fetch_nodes_for(&PathBuf::from(root_dir), &PathBuf::from(filepath))?;
+    lua.to_value(&nodes)
 }
 
 fn fetch_input_bindings(lua: &Lua, root_dir: String) -> LuaResult<Value> {

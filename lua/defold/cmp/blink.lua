@@ -117,6 +117,38 @@ local function get_script_completions(filename)
     return items
 end
 
+---@param filename string
+---@return lsp.CompletionItem[]
+local function get_gui_completions(filename)
+    local blink_types = require "blink.cmp.types"
+    local sidecar = require "defold.sidecar"
+    local log = require "defold.service.logger"
+    local project = require "defold.project"
+
+    local nodes_ok, nodes = pcall(sidecar.fetch_gui_nodes_for, project.project_root(), filename)
+    if not nodes_ok then
+        log.error(string.format("could not fetch GUI nodes: %s", nodes))
+        return {}
+    end
+
+    ---@type lsp.CompletionItem[]
+    local items = {}
+
+    ---@cast nodes defold.sidecar.GuiNodeEntry[]
+    for _, node in ipairs(nodes) do
+        table.insert(items, {
+            label = node.id .. " (" .. node.from_location .. ")",
+            insertText = node.id,
+            filterText = node.id,
+            kind = blink_types.CompletionItemKind.Property,
+            kind_icon = "",
+            insertTextFormat = vim.lsp.protocol.InsertTextFormat.PlainText,
+        })
+    end
+
+    return items
+end
+
 ---@return lsp.CompletionItem[]
 local function get_input_binding_completions()
     local blink_types = require "blink.cmp.types"
@@ -159,7 +191,7 @@ function M:get_completions(ctx, callback)
         items = vim.list_extend(items, get_script_completions(filename))
         items = vim.list_extend(items, get_input_binding_completions())
     elseif ext == "gui_script" then
-        -- TODO: add support for .gui_script stuff
+        items = vim.list_extend(items, get_gui_completions(filename))
         items = vim.list_extend(items, get_input_binding_completions())
     end
 
