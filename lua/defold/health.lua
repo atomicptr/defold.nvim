@@ -15,7 +15,12 @@ function M.check()
     vim.health.start "Sidecar"
 
     local sidecar_ok, sidecar = pcall(require, "defold.sidecar")
-    ---@cast sidecar Sidecar
+    ---@cast sidecar defold.Sidecar
+    if sidecar_ok and not require("defold.download").is_ready() then
+        vim.health.warn "Rust modules are not ready yet; retry after installation finishes"
+        return
+    end
+
     if sidecar_ok then
         vim.health.ok(string.format("Sidecar Loaded Version: %s", sidecar.version))
 
@@ -34,7 +39,10 @@ function M.check()
 
     vim.health.start "Bridge"
 
-    local bridge_path_ok, bridge_path = pcall(sidecar_ok and sidecar.find_bridge_path, os.plugin_root())
+    local bridge_path_ok, bridge_path = pcall(function()
+        assert(sidecar_ok, "Sidecar not available")
+        return sidecar.find_bridge_path(os.plugin_root())
+    end)
     if bridge_path_ok then
         vim.health.ok(string.format("Bridge Path: %s", bridge_path))
 

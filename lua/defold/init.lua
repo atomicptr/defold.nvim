@@ -53,6 +53,15 @@ function M.setup(opts)
         return
     end
 
+    -- do filetype detection before the download
+    vim.filetype.add(require("defold.config.filetype").minimal)
+
+    local download = require "defold.download"
+    if not download.is_ready() then
+        download.download(M.setup)
+        return
+    end
+
     local log = require "defold.service.logger"
 
     if config.state.debug then
@@ -62,9 +71,6 @@ function M.setup(opts)
             log.error(string.format("Could not setup sidecar: %s", err))
         end
     end
-
-    -- register some filetypes
-    vim.filetype.add(require("defold.config.filetype").minimal)
 
     -- attach to lsp
     vim.api.nvim_create_autocmd("LspAttach", {
@@ -128,14 +134,9 @@ function M.setup(opts)
 end
 
 ---Makes sure the native library `sidecar` gets loaded
-function M.download()
-    local log = require "defold.service.logger"
-    local sidecar = require "defold.sidecar"
-
-    local ok, err = pcall(sidecar.find_bridge_path, M.plugin_root())
-    if not ok then
-        log.error(string.format("Could not setup bridge: %s", err))
-    end
+---@param callback? fun() Callback called after Rust modules are ready
+function M.download(callback)
+    require("defold.download").download(callback)
 end
 
 function M.load_plugin()

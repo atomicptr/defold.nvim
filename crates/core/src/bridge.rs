@@ -1,11 +1,9 @@
+use crate::{github, path, release_downloader, utils};
 use anyhow::Result;
 use std::{
     fs::{self},
     path::{Path, PathBuf},
 };
-use version_compare::Version;
-
-use crate::{path, release_downloader, utils};
 
 const EXECUTABLE_NAME: &str = "defold-nvim-bridge";
 const OWNER: &str = "atomicptr";
@@ -58,40 +56,53 @@ fn local_path() -> Result<PathBuf> {
     Ok(dir.join(exe_name()))
 }
 
+fn matches_version(installed: &str, required: &str) -> bool {
+    installed.trim().trim_start_matches('v') == required
+}
+
 fn install() -> Result<PathBuf> {
-    let min_version = utils::version();
-    let min_version = Version::from(&min_version);
-    let curr_version = release_downloader::version(EXECUTABLE_NAME);
-    let curr_version = curr_version
-        .as_ref()
-        .map(|v| Version::from(v))
-        .ok()
-        .flatten();
+    let path = local_path()?;
+    let version = utils::version();
 
-    release_downloader::install_with(
-        OWNER,
-        REPOSITORY,
-        ASSET_NAME,
-        EXECUTABLE_NAME,
-        |downloaded_file| {
-            let path = local_path()?;
+    if path.is_file()
+        && release_downloader::version(EXECUTABLE_NAME)
+            .is_ok_and(|installed| matches_version(&installed, &version))
+    {
+        return Ok(path);
+    }
 
-            utils::move_file(downloaded_file, &path)?;
+    let tag = format!("v{version}");
+    let (downloaded_file, release) =
+        github::download_release(OWNER, REPOSITORY, ASSET_NAME, Some(&tag))?;
 
-            #[cfg(any(target_os = "linux", target_os = "macos"))]
-            {
-                use std::{fs::Permissions, os::unix::fs::PermissionsExt};
-                fs::set_permissions(&path, Permissions::from_mode(0o700))?;
-            }
+    utils::move_file(&downloaded_file, &path)?;
 
-            Ok(())
-        },
-        local_path,
-        match (min_version, curr_version) {
-            (Some(mv), Some(cv)) => mv > cv,
-            _ => false,
-        },
+    #[cfg(any(target_os = "linux", target_os = "macos"))]
+    {
+        use std::{fs::Permissions, os::unix::fs::PermissionsExt};
+        fs::set_permissions(&path, Permissions::from_mode(0o700))?;
+    }
+
+    fs::write(
+        release_downloader::version_path(EXECUTABLE_NAME)?,
+        &release.tag_name,
     )?;
 
-    local_path()
+    github::clear_downloads(OWNER, REPOSITORY, &release.tag_name)?;
+
+    Ok(path)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::matches_version;
+
+    #[test]
+    fn requires_exact_release_including_downgrades() {
+        assert!(matches_version("v0.11.0\n", "0.11.0"));
+        assert!(matches_version("0.11.0", "0.11.0"));
+        assert!(!matches_version("0.10.0", "0.11.0"));
+        assert!(!matches_version("0.12.0", "0.11.0"));
+        assert!(!matches_version("", "0.11.0"));
+    }
 }

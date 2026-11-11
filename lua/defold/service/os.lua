@@ -68,62 +68,72 @@ function M.architecture()
     end
 end
 
----Download file at url and download it to to_path
+---Download file asynchronously at url and download it to to_path
 ---@param url string
 ---@param to_path string
-function M.download(url, to_path)
-    local log = require "defold.service.logger"
-
-    log.debug(string.format("Downloading '%s' to '%s'", url, to_path))
+---@param callback fun(err?: string)
+function M.download(url, to_path, callback)
+    local command
 
     if M.is_windows() then
-        M.exec(
-            string.format(
-                'powershell -Command "Invoke-WebRequest -Uri \'%s\' -UserAgent \'%s\' -OutFile \'%s\'"',
-                url,
-                user_agent,
-                to_path
+        ---@param value string
+        ---@return string
+        local function quote(value)
+            return "'" .. value:gsub("'", "''") .. "'"
+        end
+
+        command = {
+            "powershell",
+            "-NoProfile",
+            "-NonInteractive",
+            "-Command",
+            "$ErrorActionPreference = 'Stop'; Invoke-WebRequest -Uri " .. quote(url) .. " -UserAgent " .. quote(
+                user_agent
+            ) .. " -OutFile " .. quote(to_path),
+        }
+    elseif M.command_exists "curl" then
+        command = { "curl", "-fLsS", "--user-agent", user_agent, "-o", to_path, url }
+    elseif M.command_exists "wget" then
+        command = { "wget", "-q", "--user-agent", user_agent, "-O", to_path, url }
+    else
+        callback "Could not find curl, wget or PowerShell"
+        return
+    end
+
+    local ok, err = pcall(
+        vim.system,
+        command,
+        { text = true },
+        vim.schedule_wrap(function(result)
+            callback(
+                result.code ~= 0 and ("Download failed: " .. (result.stderr or "") .. " (exit " .. result.code .. ")")
+                    or nil
             )
-        )
-        return
+        end)
+    )
+    if not ok then
+        callback(tostring(err))
     end
-
-    if M.command_exists "curl" then
-        M.exec(string.format("curl -L -s --user-agent '%s' -o '%s' %s", user_agent, to_path, url))
-        return
-    end
-
-    if M.command_exists "wget" then
-        M.exec(string.format("wget -q --user-agent '%s' -O '%s' %s", user_agent, to_path, url))
-        return
-    end
-
-    log.error "Could not find a command to download something like 'curl', 'wget' or 'powershell'"
 end
 
----Fetch json via url and return it as a lua table. Returns nil on error
+---Fetch JSON asynchronously.
 ---@param url string
----@return table|nil
-function M.fetch_json(url)
-    local log = require "defold.service.logger"
+---@param callback fun(data: any, err?: string)
+function M.fetch_json(url, callback)
+    local tmp_path = vim.fn.tempname()
+    M.download(url, tmp_path, function(err)
+        if err then
+            os.remove(tmp_path)
+            callback(nil, err)
+            return
+        end
 
-    log.debug(string.format("Fetching JSON from '%s'", url))
-
-    local tmp_path = os.tmpname()
-    M.download(url, tmp_path)
-
-    local file = io.open(tmp_path, "r")
-    if not file then
-        log.error "Failed to open downloaded json file"
+        local ok, data = pcall(function()
+            return vim.json.decode(table.concat(vim.fn.readfile(tmp_path), "\n"))
+        end)
         os.remove(tmp_path)
-        return nil
-    end
-
-    local data = file:read "*a"
-    file:close()
-    os.remove(tmp_path)
-
-    return vim.json.decode(data)
+        callback(ok and data or nil, not ok and tostring(data) or nil)
+    end)
 end
 
 ---Move file from location a to b
@@ -131,13 +141,7 @@ end
 ---@param to_path string
 function M.move(from_path, to_path)
     if M.is_windows() then
-        M.exec(
-            string.format(
-                'powershell.exe -Command "Move-Item -Path \'%s\' -Destination \'%s\'"',
-                from_path,
-                to_path
-            )
-        )
+        M.exec(string.format("powershell.exe -Command \"Move-Item -Path '%s' -Destination '%s'\"", from_path, to_path))
         return
     end
 
