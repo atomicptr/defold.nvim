@@ -83,12 +83,12 @@ function M.register_nvim_dap()
 
         local ok, err = pcall(sidecar.focus_neovim, rootdir)
         if not ok then
-            log.error(string.format("Could not focus neovim: %s", err))
+            log.debug(string.format("Could not focus neovim: %s", err))
         end
     end
 
     ---@param session dap.Session
-    dap.listeners.after.event_continued.defold_nvim_switch_focus_on_continue = function(session)
+    dap.listeners.after.continue.defold_nvim_switch_focus_on_continue = function(session)
         if not (session.config.type or ""):match "^defold_nvim_" then
             return
         end
@@ -100,7 +100,7 @@ function M.register_nvim_dap()
 
         local ok, err = pcall(sidecar.focus_game, rootdir)
         if not ok then
-            log.error(string.format("Could not focus game: %s", err))
+            log.debug(string.format("Could not focus game: %s", err))
         end
     end
 end

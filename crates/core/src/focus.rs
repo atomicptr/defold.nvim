@@ -131,7 +131,7 @@ fn switch(switcher_type: SwitcherType) -> Result<()> {
             run_switch_cmd(Command::new(switcher.path().unwrap())
                 .arg("-e")
                 .arg(match switcher_type {
-                    SwitcherType::AppName(app_name) => format!("'tell application \"System Events\" to tell process \"{app_name}\" to set frontmost to true'"),
+                    SwitcherType::AppName(app_name) => format!("tell application \"System Events\" to tell process \"{app_name}\" to set frontmost to true"),
                     _ => bail!("Unsupported switcher type {switcher_type:?} for {switcher:?}"),
                 }), None)
         }

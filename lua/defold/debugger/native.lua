@@ -58,11 +58,15 @@ local function launch(callback)
     local editor = require "defold.editor"
 
     local base = "http://127.0.0.1:" .. editor_port
+    local started = false
     launching = true
 
     ---@param err string
     local function fail(err)
         launching = false
+        if started then
+            editor.send_command("debugger-detach", true)
+        end
         log.error("Native debug launch failed: " .. err)
     end
 
@@ -81,6 +85,8 @@ local function launch(callback)
             fail "Defold could not start its debugger"
             return
         end
+
+        started = true
 
         local deadline = vim.uv.hrtime() + 5e9
 
