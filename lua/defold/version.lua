@@ -1,2 +1,2 @@
 -- Automatically generated don't edit
-return "0.10.2"
+return "0.11.0"

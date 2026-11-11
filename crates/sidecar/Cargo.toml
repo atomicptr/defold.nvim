@@ -1,6 +1,6 @@
 [package]
 name = "defold-nvim-sidecar"
-version = "0.10.2"
+version = "0.11.0"
 edition = "2024"
 
 [lib]
@@ -10,8 +10,8 @@ crate-type = ["cdylib"]
 [dependencies]
 anyhow = { version = "1.0.104", features = ["backtrace"] }
 defold-nvim-core = { path = "../core" }
-dirs = "6.0.0"
-mlua = { version = "0.11.6", features = [
+dirs = "7.0.0"
+mlua = { version = "0.12.2", features = [
     "module",
     "luajit",
     "serde",

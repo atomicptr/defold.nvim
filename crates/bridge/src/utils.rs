@@ -24,7 +24,14 @@ pub fn is_port_in_use(port: u16) -> bool {
 }
 
 pub fn search_and_kill_process(search_string: &str) {
-    let mut sys = System::new_all();
+    let mut sys = match System::new_all() {
+        Ok(sys) => sys,
+        Err(err) => {
+            tracing::warn!("Could not initialize process cleanup: {err}");
+            return;
+        }
+    };
+
     sys.refresh_all();
 
     for (pid, process) in sys.processes() {

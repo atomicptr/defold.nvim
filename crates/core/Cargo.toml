@@ -1,15 +1,15 @@
 [package]
 name = "defold-nvim-core"
-version = "0.10.2"
+version = "0.11.0"
 edition = "2024"
 
 [dependencies]
 anyhow = { version = "1.0.104", features = ["backtrace"] }
 tar = "0.4.46"
 version-compare = "0.2.1"
-flate2 = "1.1.10"
-zip = "8.6.0"
-dirs = "6.0.0"
+flate2 = "1.1.11"
+zip = "9.5.1"
+dirs = "7.0.0"
 reqwest = { version = "0.13.5", default-features = false, features = [
     "rustls",
     "blocking",
@@ -17,8 +17,8 @@ reqwest = { version = "0.13.5", default-features = false, features = [
 ] }
 rust-ini = "0.21.3"
 serde = { version = "1.0.229", features = ["derive"] }
-serde_json = "1.0.151"
-sha3 = "0.11.0"
+serde_json = "1.0.154"
+sha3 = "0.12.0"
 strum = { version = "0.28.0", features = ["derive"] }
 tracing = "0.1.44"
 which = "8.0.6"

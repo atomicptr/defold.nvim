@@ -5,7 +5,7 @@ use std::{
     time::{Duration, Instant},
 };
 
-use anyhow::Result;
+use anyhow::{Context, Result};
 use clap::ValueEnum;
 use defold_nvim_core::{editor, editor_commands::Issue};
 use sysinfo::System;
@@ -21,7 +21,8 @@ pub enum Severity {
 }
 
 pub fn build_game(port: u16, min_severity: Severity, enable_logs: bool) -> Result<()> {
-    let mut sys = System::new();
+    let mut sys =
+        System::new().context("could not initialize process monitoring for game build")?;
 
     let before = find_running_dmengine_processes(&mut sys);
 
