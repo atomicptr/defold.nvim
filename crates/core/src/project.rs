@@ -5,20 +5,13 @@ use std::{
 };
 
 use crate::{
-    defold_annotations,
     game_project::GameProject,
     path, script_api,
-    utils::{self, sha3},
+    utils::{self, project_id as ident},
 };
 use anyhow::{Context, Result, bail};
 use walkdir::WalkDir;
 use zip::ZipArchive;
-
-fn ident(string: &str) -> Result<String> {
-    let hash = sha3(string);
-    let ident_str = hash.get(..8).context("could not create hash")?;
-    Ok(ident_str.to_string())
-}
 
 pub fn deps_root() -> Result<PathBuf> {
     let dir = path::data_dir()?.join("deps");
@@ -36,12 +29,6 @@ fn deps_dir(game_root: &Path) -> Result<PathBuf> {
 
 pub fn list_dependency_dirs(game_root: &Path) -> Result<Vec<PathBuf>> {
     let mut deps = Vec::new();
-
-    if let Ok(annotations) = defold_annotations::dir()
-        && annotations.exists()
-    {
-        deps.push(annotations);
-    }
 
     if let Ok(dep_dirs) = deps_dir(game_root) {
         for entry in fs::read_dir(dep_dirs)? {
@@ -68,12 +55,11 @@ pub fn install_dependencies(game_root: &Path, force_redownload: bool) -> Result<
         );
     }
 
-    defold_annotations::install()?;
-
     let proj_deps_dir = deps_dir(game_root)?;
 
     if force_redownload {
         fs::remove_dir_all(&proj_deps_dir)?;
+        fs::create_dir_all(&proj_deps_dir)?;
     }
 
     let game_project = GameProject::load_from_path(&game_project_path)?;

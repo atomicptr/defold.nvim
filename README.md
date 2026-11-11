@@ -315,7 +315,7 @@ Here's how you can interact with Defold directly from Neovim:
     This commands runs your game through the editor.
 
 * **:DefoldFetch**
-    This command fetches all Defold dependencies and creates annotations for the Lua LSP. Run with bang to force re-downloading the annotations.
+    Fetch project dependencies and annotations for the Lua LSP. Run with bang to re-download project dependencies.
 
 ## Troubleshooting
 
@@ -326,10 +326,6 @@ There are also logs available, you can find the paths inside `:checkhealth defol
 
 - **System > Cache Dir**: The location of the plugin logs
 - **Sidecar > Sidecar Cache Dir**: The location of the sidecar (Neovim native extension) and bridge (Tool that calls Neovim instances)
-
-## Special Thanks
-
-- [astrochili/defold-annotations](https://github.com/astrochili/defold-annotations)
 
 ## License
 

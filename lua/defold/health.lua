@@ -4,6 +4,8 @@ function M.check()
     vim.health.start "System"
 
     local os = require "defold.service.os"
+    local project = require "defold.project"
+    local defold = require "defold"
 
     vim.health.info(string.format("OS: %s / %s", os.name(), os.architecture()))
     vim.health.info(string.format("Plugin Root: %s", os.plugin_root()))
@@ -32,7 +34,7 @@ function M.check()
 
     vim.health.start "Bridge"
 
-    local bridge_path_ok, bridge_path = pcall(sidecar.find_bridge_path, require("defold").plugin_root())
+    local bridge_path_ok, bridge_path = pcall(sidecar_ok and sidecar.find_bridge_path, defold.plugin_root())
     if bridge_path_ok then
         vim.health.ok(string.format("Bridge Path: %s", bridge_path))
 
@@ -50,57 +52,48 @@ function M.check()
     end
 
     vim.health.start "Defold"
-
-    local project = require "defold.project"
-
-    if project.is_defold_project() then
-        vim.health.ok "Current project is Defold project"
-
-        local project_root = project.project_root(false)
-
-        if project_root then
-            vim.health.ok(string.format("Project Root: %s", project_root))
-        end
+    local root = project.project_root()
+    if not root then
+        vim.health.warn "Could not find a Defold project"
     else
-        vim.health.warn "Current project is NOT a Defold project"
-    end
+        vim.health.start("Defold: " .. root)
+        vim.health.ok("Project Root: " .. root)
 
-    local editor_port = project.editor_port()
-
-    if editor_port ~= nil then
-        vim.health.ok(string.format("Editor Port found at: %d", editor_port))
-    else
-        vim.health.warn "Could not find editor port, is the editor running?"
-    end
-
-    if project.is_defold_project() then
-        vim.health.start "Defold - Dependencies"
-
-        local project_root = project.project_root(false)
-
-        local ok, deps = pcall(sidecar.list_dependency_dirs, project_root)
-        if not ok then
-            vim.health.warn "Could not find dependencies"
-        else
-            for _, dep in ipairs(deps) do
-                local dirname = vim.fs.basename(dep)
-
-                -- annotations
-                if dirname == "defold" then
-                    vim.health.ok(string.format("Defold: %s", dep))
+        if sidecar_ok then
+            local port = project.editor_port()
+            if port then
+                vim.health.ok(string.format("Editor Port found at: %d", port))
+                local ok, version = pcall(sidecar.editor_version, root)
+                if ok then
+                    vim.health.ok("Editor Version: " .. version)
                 else
-                    local libs = vim.fn.readdir(dep)
+                    vim.health.warn("Could not query editor version: " .. tostring(version))
+                end
+            else
+                vim.health.warn "Could not find editor port, is the editor running?"
+            end
 
-                    for _, lib in ipairs(libs) do
-                        vim.health.ok(string.format("Ext %s: %s", lib, vim.fs.joinpath(dep, lib)))
+            local ok, deps = pcall(function()
+                project.refresh_annotations()
+                return project.dependency_api_paths()
+            end)
+            if not ok then
+                vim.health.warn("Could not find dependencies: " .. tostring(deps))
+            else
+                for _, dep in ipairs(deps) do
+                    local dirname = vim.fs.basename(dep)
+
+                    if vim.fs.basename(vim.fs.dirname(dep)) == "defold" then
+                        vim.health.ok(string.format("Defold %s: %s", dirname, dep))
+                    else
+                        for _, lib in ipairs(vim.fn.readdir(dep)) do
+                            vim.health.ok(string.format("Ext %s: %s", lib, vim.fs.joinpath(dep, lib)))
+                        end
                     end
                 end
             end
         end
     end
-
-    ---@type {config: defold.Config}
-    local defold = require "defold" -- TODO: this is apparently isolated from the actual user applied configuration
 
     vim.health.start "Debugger"
 
@@ -146,13 +139,12 @@ function M.check()
     vim.health.info(string.format("Launcher Type: %s", defold.config.launcher.type))
     vim.health.info(string.format("Socket Type: %s", defold.config.launcher.socket_type))
 
-    if sidecar_ok then
-        local server_addr_ok, server_addr =
-            pcall(sidecar.resolve_nvim_server_addr, project.project_root(), defold.config.launcher.socket_type)
-        if server_addr_ok then
-            vim.health.ok(string.format("Server Address: %s", server_addr))
+    if sidecar_ok and root then
+        local ok, address = pcall(sidecar.resolve_nvim_server_addr, root, defold.config.launcher.socket_type)
+        if ok then
+            vim.health.ok("Server Address: " .. address)
         else
-            vim.health.error(string.format "Could not determine server address")
+            vim.health.error "Could not determine server address"
         end
     end
 end

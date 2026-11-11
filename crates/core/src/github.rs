@@ -24,11 +24,23 @@ pub struct Release {
 }
 
 pub fn fetch_release(owner: &str, repo: &str) -> Result<Release> {
-    let url = format!("https://api.github.com/repos/{owner}/{repo}/releases/latest");
+    fetch_release_version(owner, repo, None)
+}
+
+pub fn fetch_release_version(owner: &str, repo: &str, version: Option<&str>) -> Result<Release> {
+    let url = match version {
+        Some(version) => url::Url::parse(&format!(
+            "https://api.github.com/repos/{owner}/{repo}/releases/tags/{version}"
+        ))?,
+        None => url::Url::parse(&format!(
+            "https://api.github.com/repos/{owner}/{repo}/releases/latest"
+        ))?,
+    };
+    let url = url.as_str();
 
     tracing::debug!("Github: Fetching release {owner}/{repo}");
 
-    if let Some(str) = cache::get(&url)
+    if let Some(str) = cache::get(url)
         && let Ok(res) = serde_json::from_str::<Release>(&str)
     {
         tracing::debug!("Github: Found {}, serving from cache", res.tag_name);
@@ -36,23 +48,32 @@ pub fn fetch_release(owner: &str, repo: &str) -> Result<Release> {
     }
 
     let client = reqwest::blocking::Client::new();
-    let res = client.get(&url).header("User-Agent", USER_AGENT).send()?;
+    let res = client
+        .get(url)
+        .header("User-Agent", USER_AGENT)
+        .send()?
+        .error_for_status()?;
 
     let release: Release = res.json()?;
 
     tracing::debug!("Github: Found {}", release.tag_name);
 
-    cache::set(&url, &serde_json::to_string(&release)?)?;
+    cache::set(url, &serde_json::to_string(&release)?)?;
 
     Ok(release)
 }
 
-pub fn clear_downloads(owner: &str, repo: &str) -> Result<()> {
-    let temp = temp_dir()
+fn download_dir(owner: &str, repo: &str, version: &str) -> PathBuf {
+    temp_dir()
         .join("defold.nvim")
         .join("download")
         .join(owner)
-        .join(repo);
+        .join(repo)
+        .join(utils::sha3(version))
+}
+
+pub fn clear_downloads(owner: &str, repo: &str, version: &str) -> Result<()> {
+    let temp = download_dir(owner, repo, version);
 
     tracing::debug!("Deleting {}...", &temp.display());
 
@@ -64,19 +85,15 @@ pub fn clear_downloads(owner: &str, repo: &str) -> Result<()> {
 pub fn download_release_matching<F>(
     owner: &str,
     repo: &str,
+    version: Option<&str>,
     matching: F,
 ) -> Result<(PathBuf, Release)>
 where
     F: Fn(&Asset) -> bool,
 {
-    let temp = temp_dir()
-        .join("defold.nvim")
-        .join("download")
-        .join(owner)
-        .join(repo);
+    let release = fetch_release_version(owner, repo, version)?;
+    let temp = download_dir(owner, repo, &release.tag_name);
     fs::create_dir_all(&temp)?;
-
-    let release = fetch_release(owner, repo)?;
 
     let Some(asset) = release.assets.iter().find(|asset| matching(asset)) else {
         bail!("Could not find asset for {owner}/{repo}");
@@ -88,13 +105,22 @@ where
         return Ok((download_file, release));
     }
 
-    utils::download_to(&asset.browser_download_url, &download_file)?;
+    let result = utils::download_to(&asset.browser_download_url, &download_file);
+    if result.is_err() && download_file.exists() {
+        fs::remove_file(&download_file)?;
+    }
+    result?;
 
     Ok((download_file, release))
 }
 
-pub fn download_release(owner: &str, repo: &str, name: &str) -> Result<(PathBuf, Release)> {
-    download_release_matching(owner, repo, |asset| asset.name == name).map_err(|err| {
+pub fn download_release(
+    owner: &str,
+    repo: &str,
+    name: &str,
+    version: Option<&str>,
+) -> Result<(PathBuf, Release)> {
+    download_release_matching(owner, repo, version, |asset| asset.name == name).map_err(|err| {
         anyhow::anyhow!("Could not find asset {name} for {owner}/{repo} because: {err:?}")
     })
 }

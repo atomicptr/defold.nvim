@@ -1,7 +1,7 @@
 use anyhow::Context;
 use defold_nvim_core::{
-    bridge, defold_inputs, defold_paths, editor, editor_config, mobdap, nvim_server, path, project,
-    utils,
+    bridge, defold_annotations, defold_inputs, defold_paths, editor, editor_config, mobdap,
+    nvim_server, path, project, utils,
 };
 use defold_nvim_core::{focus, game_project::GameProject};
 use mlua::Value::{self};
@@ -117,6 +117,9 @@ fn register_exports(lua: &Lua) -> LuaResult<LuaTable> {
         "fetch_input_bindings",
         lua.create_function(fetch_input_bindings)?,
     )?;
+    exports.set("annotation_dir", lua.create_function(annotation_dir)?)?;
+    exports.set("editor_version", lua.create_function(editor_version)?)?;
+    exports.set("project_id", lua.create_function(project_id)?)?;
     exports.set("data_dir", lua.create_function(data_dir)?)?;
     exports.set("cache_dir", lua.create_function(cache_dir)?)?;
 
@@ -243,6 +246,28 @@ fn install_dependencies(
 ) -> LuaResult<()> {
     project::install_dependencies(&absolute(game_root)?, force_redownload.unwrap_or_default())?;
     Ok(())
+}
+
+#[instrument(level = "debug", err(Debug), skip_all)]
+fn annotation_dir(
+    _lua: &Lua,
+    (_game_root, version): (String, Option<String>),
+) -> LuaResult<String> {
+    Ok(defold_annotations::ensure(version.as_deref())?
+        .to_str()
+        .context("could not convert annotation path to string")?
+        .to_owned())
+}
+
+#[instrument(level = "debug", err(Debug), skip_all)]
+fn editor_version(_lua: &Lua, game_root: String) -> LuaResult<String> {
+    Ok(editor::version(&absolute(game_root)?)?)
+}
+
+#[instrument(level = "debug", err(Debug), skip_all)]
+fn project_id(_lua: &Lua, game_root: String) -> LuaResult<String> {
+    let game_root = absolute(game_root)?;
+    Ok(utils::project_id(&game_root.display().to_string())?)
 }
 
 #[instrument(level = "debug", err(Debug), skip_all)]

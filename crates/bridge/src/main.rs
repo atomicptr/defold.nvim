@@ -6,7 +6,7 @@ use std::{
 use anyhow::Result;
 use clap::{ArgAction, Parser, Subcommand};
 use defold_nvim_core::{
-    editor,
+    defold_annotations, editor,
     focus::{focus_game, focus_neovim},
     mobdap, neovide, path, project, script_api,
 };
@@ -202,11 +202,22 @@ fn main() -> Result<()> {
         } => {
             let root_dir = absolute(&game_root_dir)?;
 
+            let version = editor::version(&root_dir).ok();
+            if let Err(err) = defold_annotations::ensure(version.as_deref()) {
+                tracing::warn!("Could not update Defold annotations: {err:#}");
+            }
+
             project::install_dependencies(&root_dir, force_redownload)?;
             println!("Finished installing dependencies for {game_root_dir}");
         }
         Commands::ListDependencies { game_root_dir } => {
             let root_dir = absolute(&game_root_dir)?;
+
+            if let Ok(dir) = defold_annotations::cached_dir()
+                && dir.is_dir()
+            {
+                tracing::info!("{}", dir.display());
+            }
 
             for dir in project::list_dependency_dirs(&root_dir)? {
                 tracing::info!("{}", dir.display());

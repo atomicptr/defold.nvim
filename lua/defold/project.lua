@@ -1,9 +1,27 @@
 local M = {}
 
+---@class defold.project.AnnotationState
+---@field version? string
+---@field path? string
+---@field on_change? fun()
+
+---@type defold.project.AnnotationState?
+M._annotations_state = nil
+
+---@type string?
+M._project_root = nil
+
+---@type integer?
+M._editor_port = nil
+
 ---Returns the game project root (or nil if we can't find it)
 ---@param report_error boolean?
 ---@return string?
 function M.project_root(report_error)
+    if M._project_root then
+        return M._project_root
+    end
+
     local root = vim.fs.root(0, { "game.project" })
 
     if not root then
@@ -16,6 +34,7 @@ function M.project_root(report_error)
         return nil
     end
 
+    M._project_root = root
     return root
 end
 
@@ -82,24 +101,21 @@ function M.ensure_nvim_server(socket_type)
     return nil
 end
 
-M._editor_port = nil
-
----Find defold editor port for current project
+---Find the Defold editor port for the current project
 ---@return integer|nil
 function M.editor_port()
     local sidecar = require "defold.sidecar"
+    local os = require "defold.service.os"
+
+    local root = M.project_root()
+    if not root then
+        return nil
+    end
 
     if M._editor_port and sidecar.is_editor_port(M._editor_port) then
         return M._editor_port
     end
 
-    if not M.is_defold_project() then
-        return nil
-    end
-
-    local os = require "defold.service.os"
-
-    local root = M.project_root()
     local editor_port_file = vim.fs.joinpath(root, ".internal", "editor.port")
 
     -- no editor available
@@ -114,16 +130,80 @@ function M.editor_port()
 
     local log = require "defold.service.logger"
 
-    local editor_port = tonumber(port_string)
-    log.debug(string.format("Found editor port at: %s", editor_port))
+    M._editor_port = tonumber(port_string)
+    log.debug(string.format("Found editor port at: %s", M._editor_port))
 
-    if not sidecar.is_editor_port(editor_port) then
-        log.error(string.format("Found editor port %s but the editor doesn't respond", editor_port))
+    if not M._editor_port or not sidecar.is_editor_port(M._editor_port) then
+        log.error(string.format("Found editor port %s but the editor doesn't respond", M._editor_port))
         return nil
     end
 
-    M._editor_port = editor_port
-    return editor_port
+    return M._editor_port
+end
+
+---@param on_change? fun()
+---@return boolean changed
+function M.refresh_annotations(on_change)
+    local sidecar = require "defold.sidecar"
+    local log = require "defold.service.logger"
+    local os = require "defold.service.os"
+
+    local root = M.project_root()
+    if not root then
+        return false
+    end
+
+    if M._annotations_state then
+        M._annotations_state.on_change = on_change or M._annotations_state.on_change
+        return false
+    end
+
+    local dir = vim.fs.joinpath(os.data_dir(), sidecar.project_id(root))
+    vim.fn.mkdir(dir, "p")
+    local file = vim.fs.joinpath(dir, "editor_version")
+    M._annotations_state = { on_change = on_change }
+
+    local function refresh()
+        local version = M._annotations_state.version
+        if not version then
+            local ok, detected = pcall(sidecar.editor_version, root)
+            if ok then
+                version = detected
+                M._annotations_state.version = version
+                local saved, err = pcall(vim.fn.writefile, { version }, file)
+                if not saved or err ~= 0 then
+                    log.error("Could not save Defold editor version: " .. tostring(err))
+                end
+            else
+                local read, lines = pcall(vim.fn.readfile, file)
+                version = read and lines[1] or nil
+                if version and not version:match "^%d+%.%d+%.%d+$" then
+                    version = nil
+                end
+            end
+        end
+
+        local changed = false
+        local ok, path = pcall(sidecar.annotation_dir, root, version)
+        if ok then
+            changed = M._annotations_state.path ~= path
+            M._annotations_state.path = path
+        else
+            log.error("Could not update Defold annotations: " .. tostring(path))
+        end
+
+        if not M._annotations_state.version or not ok then
+            vim.defer_fn(function()
+                if refresh() and M._annotations_state.on_change then
+                    M._annotations_state.on_change()
+                end
+            end, 5000)
+        end
+
+        return changed
+    end
+
+    return refresh()
 end
 
 function M.dependency_api_paths()
@@ -139,7 +219,11 @@ function M.dependency_api_paths()
     local ok, res = pcall(sidecar.list_dependency_dirs, root_dir)
     if not ok then
         log.error(string.format("Could not get dependency paths because: %s", res))
-        return {}
+        res = {}
+    end
+
+    if M._annotations_state and M._annotations_state.path then
+        table.insert(res, 1, M._annotations_state.path)
     end
 
     return res
@@ -155,6 +239,8 @@ function M.install_dependencies(force_redownload)
     if not root_dir then
         return {}
     end
+
+    M.refresh_annotations()
 
     local ok, res = pcall(sidecar.install_dependencies, root_dir, force_redownload or false)
     if not ok then

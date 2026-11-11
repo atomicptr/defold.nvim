@@ -105,15 +105,15 @@ where
         return path_fn();
     }
 
-    let (downloaded_file, release) = github::download_release(owner, repository, asset_name)?;
+    let (downloaded_file, release) = github::download_release(owner, repository, asset_name, None)?;
 
     tracing::debug!("New {executable_name} version found {}", release.tag_name);
 
     install_fn(&downloaded_file)?;
 
-    fs::write(version_path(executable_name)?, release.tag_name)?;
+    fs::write(version_path(executable_name)?, &release.tag_name)?;
 
-    github::clear_downloads(owner, repository)?;
+    github::clear_downloads(owner, repository, &release.tag_name)?;
 
     path_fn()
 }

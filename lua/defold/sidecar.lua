@@ -208,6 +208,9 @@ package.cpath = package.cpath
 ---@field focus_neovim             fun(game_root: string)
 ---@field focus_game               fun(game_root: string)
 ---@field mobdap_install           fun(): string
+---@field annotation_dir           fun(game_root: string, version: string|nil): string
+---@field editor_version           fun(game_root: string): string
+---@field project_id               fun(game_root: string): string
 ---@field install_dependencies     fun(game_root: string, force_redownload: boolean|nil)
 ---@field list_dependency_dirs     fun(game_root: string): string[]
 ---@field fetch_defold_paths_for   fun(game_root: string, filepath: string): defold.sidecar.PathEntry[]
