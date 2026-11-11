@@ -1,0 +1,10 @@
+{
+    "class": {
+        "prefix": "class",
+        "description": "Defold: declare the current file's class",
+        "body": [
+            "---@class ${DEFOLD_CLASS_NAME:${TM_FILENAME_BASE}}",
+            "${0}"
+        ]
+    }
+}

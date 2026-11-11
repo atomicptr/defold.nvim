@@ -210,6 +210,20 @@ local config = {
         },
     },
 
+    snippets = {
+        -- Enable Defold snippets (default: true, requires LuaSnip)
+        enable = true,
+
+        -- Class name style: "preserve", "snake_case", "Ada_Case" or "PascalCase" (default)
+        class_naming_style = "PascalCase",
+
+        -- Directory name style, same choices as above (default: "preserve")
+        namespace_naming_style = "preserve",
+
+        -- Include directories in class names: main/player.script -> main.Player (default: true)
+        use_namespaces = true,
+    },
+
     quickfix = {
         -- Enable support for quickfix (default: true)
         enable = true,
@@ -292,7 +306,9 @@ If you have neither the `defold-moonbug` nor the `defold-mobdebug` extension ins
 
 ### Setup Snippets
 
-In order to use snippets you need to either have [LuaSnip](https://github.com/L3MON4D3/LuaSnip) installed or use any other VSCode Snippet compatible plugin and set it up yourself
+Install [LuaSnip](https://github.com/L3MON4D3/LuaSnip) and snippets will be set up automatically for each script type in your Defold project.
+
+Use `class` to insert a class annotation. Callback snippets use the same name for `self`, e.g. `main/world/world_manager.script` becomes `main.world.WorldManager`. You can change this with the `snippets` settings above; directories are relative to `game.project`.
 
 You can retrieve the plugin root via:
 

@@ -1,0 +1,54 @@
+{
+    "class": {
+        "prefix": "class",
+        "description": "Defold: declare the current file's class",
+        "body": [
+            "---@class ${DEFOLD_CLASS_NAME:${TM_FILENAME_BASE}}",
+            "${0}"
+        ]
+    },
+    "init": {
+        "prefix": "function init(self)",
+        "description": "Defold: initialize the script instance",
+        "body": [
+            "---@param self ${DEFOLD_CLASS_NAME:${TM_FILENAME_BASE}}",
+            "function init(self)",
+            "    ${0}",
+            "end"
+        ]
+    },
+    "update": {
+        "prefix": "function update(self, dt)",
+        "description": "Defold: update once per frame",
+        "body": [
+            "---@param self ${DEFOLD_CLASS_NAME:${TM_FILENAME_BASE}}",
+            "---@param dt number",
+            "function update(self, dt)",
+            "    ${0}",
+            "end"
+        ]
+    },
+    "on_message": {
+        "prefix": "function on_message(self, message_id, message, sender)",
+        "description": "Defold: handle a message",
+        "body": [
+            "---@param self ${DEFOLD_CLASS_NAME:${TM_FILENAME_BASE}}",
+            "---@param message_id hash",
+            "---@param message table",
+            "---@param sender url",
+            "function on_message(self, message_id, message, sender)",
+            "    ${0}",
+            "end"
+        ]
+    },
+    "on_reload": {
+        "prefix": "function on_reload(self)",
+        "description": "Defold: handle script hot reload",
+        "body": [
+            "---@param self ${DEFOLD_CLASS_NAME:${TM_FILENAME_BASE}}",
+            "function on_reload(self)",
+            "    ${0}",
+            "end"
+        ]
+    }
+}

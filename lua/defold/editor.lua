@@ -87,32 +87,19 @@ end
 ---@param min_severity? defold.sidecar.IssueSeverity
 ---@param open_quickfix? boolean
 function M.open_quickfix_from_command_result(result, min_severity, open_quickfix)
+    local config = require "defold.config"
+
     -- nothing to do
     if result == nil then
         return
     end
 
-    -- default to true
+    -- Use configured defaults unless the caller provides an override.
     if open_quickfix == nil then
-        open_quickfix = true
+        open_quickfix = config.state.quickfix.open_list
     end
 
-    ---@type defold.sidecar.Issue[]
-    local issues = {}
-
-    local min_severity_value = issue_severity_value(min_severity or "error")
-
-    for _, issue in ipairs(result.issues) do
-        if issue_severity_value(issue.severity) >= min_severity_value then
-            table.insert(issues, issue)
-        end
-    end
-
-    -- nothing to do
-    if #issues == 0 then
-        return
-    end
-
+    local min_severity_value = issue_severity_value(min_severity or config.state.quickfix.min_severity)
     local items = {}
 
     ---@type table<defold.sidecar.IssueSeverity, string>
@@ -122,24 +109,30 @@ function M.open_quickfix_from_command_result(result, min_severity, open_quickfix
         info = "I",
     }
 
-    for _, issue in ipairs(issues) do
-        local filepath = issue.resource:sub(1, 1) == "/" and issue.resource:sub(2) or issue.resource
+    for _, issue in ipairs(result.issues) do
+        if issue_severity_value(issue.severity) >= min_severity_value then
+            local filepath = issue.resource:sub(1, 1) == "/" and issue.resource:sub(2) or issue.resource
 
-        local lnum = 1
-        local col = 1
+            local lnum = 1
+            local col = 1
 
-        if issue.range then
-            lnum = issue.range.start.line + 1
-            col = issue.range.start.character + 1
+            if issue.range then
+                lnum = issue.range.start.line + 1
+                col = issue.range.start.character + 1
+            end
+
+            table.insert(items, {
+                filename = filepath,
+                lnum = lnum,
+                col = col,
+                text = issue.message,
+                type = severity_map[issue.severity] or "E",
+            })
         end
+    end
 
-        table.insert(items, {
-            filename = filepath,
-            lnum = lnum,
-            col = col,
-            text = issue.message,
-            type = severity_map[issue.severity] or "E",
-        })
+    if #items == 0 then
+        return
     end
 
     vim.fn.setqflist({}, "r", {
@@ -153,10 +146,11 @@ function M.open_quickfix_from_command_result(result, min_severity, open_quickfix
 end
 
 ---Runs the game through Defold
----@param config defold.Config
----@param mode? "make"|"send"|nil
-function M.run_game(config, mode)
-    mode = mode or config.game_runner.mode
+---@param mode? "make"|"send"
+function M.run_game(mode)
+    local config = require "defold.config"
+
+    mode = mode or config.state.game_runner.mode
 
     if mode == "make" then
         vim.cmd "make"
@@ -165,8 +159,8 @@ function M.run_game(config, mode)
 
     local res = M.send_command "build"
 
-    if config.quickfix.enable then
-        M.open_quickfix_from_command_result(res, config.quickfix.min_severity, config.quickfix.open_list)
+    if config.state.quickfix.enable then
+        M.open_quickfix_from_command_result(res)
     end
 end
 

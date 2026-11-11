@@ -1,0 +1,27 @@
+{
+    "class": {
+        "prefix": "class",
+        "description": "Defold: declare the current file's class",
+        "body": [
+            "---@class ${DEFOLD_CLASS_NAME:${TM_FILENAME_BASE}}",
+            "${0}"
+        ]
+    },
+    "get_commands": {
+        "prefix": "function M.get_commands()",
+        "description": "Defold: register an editor command inside an editor script module",
+        "body": [
+            "function M.get_commands()",
+            "    return {",
+            "        {",
+            "            label = \"${1:My Command}\",",
+            "            locations = { \"Edit\" },",
+            "            run = function(opts)",
+            "                ${0}",
+            "            end,",
+            "        },",
+            "    }",
+            "end"
+        ]
+    }
+}

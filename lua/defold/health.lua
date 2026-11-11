@@ -5,7 +5,7 @@ function M.check()
 
     local os = require "defold.service.os"
     local project = require "defold.project"
-    local defold = require "defold"
+    local config = require "defold.config"
 
     vim.health.info(string.format("OS: %s / %s", os.name(), os.architecture()))
     vim.health.info(string.format("Plugin Root: %s", os.plugin_root()))
@@ -34,7 +34,7 @@ function M.check()
 
     vim.health.start "Bridge"
 
-    local bridge_path_ok, bridge_path = pcall(sidecar_ok and sidecar.find_bridge_path, defold.plugin_root())
+    local bridge_path_ok, bridge_path = pcall(sidecar_ok and sidecar.find_bridge_path, os.plugin_root())
     if bridge_path_ok then
         vim.health.ok(string.format("Bridge Path: %s", bridge_path))
 
@@ -97,37 +97,37 @@ function M.check()
 
     vim.health.start "Debugger"
 
-    if defold.config.debugger.enable then
+    if config.state.debugger.enable then
         local debugger = require "defold.debugger"
-        local variant = defold.config.debugger.force_variant or debugger.infer_variant()
+        local variant = config.state.debugger.force_variant or debugger.infer_variant()
 
         vim.health.ok "Debugger is enabled"
         vim.health.info(string.format("Variant: %s", variant))
 
         if variant == "moonbug" then
-            if defold.config.debugger.moonbug.port then
-                vim.health.info(string.format("Moonbug Port: %d", defold.config.debugger.moonbug.port))
+            if config.state.debugger.moonbug.port then
+                vim.health.info(string.format("Moonbug Port: %d", config.state.debugger.moonbug.port))
             end
         elseif variant == "mobdebug" then
-            vim.health.info(string.format("Mobdap Path: %s", debugger.get_mobdap_path(defold.config)))
+            vim.health.info(string.format("Mobdap Path: %s", debugger.get_mobdap_path()))
 
-            if defold.config.debugger.mobdebug.mobdap_executable then
+            if config.state.debugger.mobdebug.mobdap_executable then
                 vim.health.info(
-                    string.format("Mobdap Custom Executable: %s", defold.config.debugger.mobdebug.mobdap_executable)
+                    string.format("Mobdap Custom Executable: %s", config.state.debugger.mobdebug.mobdap_executable)
                 )
             end
 
-            if defold.config.debugger.mobdebug.mobdap_arguments then
+            if config.state.debugger.mobdebug.mobdap_arguments then
                 vim.health.info(
                     string.format(
                         "Mobdap Custom Arguments: %s",
-                        table.concat(defold.config.debugger.mobdebug.mobdap_arguments, " ")
+                        table.concat(config.state.debugger.mobdebug.mobdap_arguments, " ")
                     )
                 )
             end
 
-            if defold.config.debugger.mobdebug.port then
-                vim.health.info(string.format("Port: %s", defold.config.debugger.mobdebug.port))
+            if config.state.debugger.mobdebug.port then
+                vim.health.info(string.format("Port: %s", config.state.debugger.mobdebug.port))
             end
         end
     else
@@ -136,11 +136,11 @@ function M.check()
 
     vim.health.start "Launcher"
 
-    vim.health.info(string.format("Launcher Type: %s", defold.config.launcher.type))
-    vim.health.info(string.format("Socket Type: %s", defold.config.launcher.socket_type))
+    vim.health.info(string.format("Launcher Type: %s", config.state.launcher.type))
+    vim.health.info(string.format("Socket Type: %s", config.state.launcher.socket_type))
 
     if sidecar_ok and root then
-        local ok, address = pcall(sidecar.resolve_nvim_server_addr, root, defold.config.launcher.socket_type)
+        local ok, address = pcall(sidecar.resolve_nvim_server_addr, root, config.state.launcher.socket_type)
         if ok then
             vim.health.ok("Server Address: " .. address)
         else

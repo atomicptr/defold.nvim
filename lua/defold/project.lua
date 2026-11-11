@@ -38,6 +38,16 @@ function M.project_root(report_error)
     return root
 end
 
+---Check if the buffer is in the current project
+---@param bufnr? integer
+---@return boolean
+function M.is_buffer_in_project(bufnr)
+    local root = M.project_root()
+    local filename = vim.api.nvim_buf_get_name(bufnr or 0)
+
+    return root ~= nil and filename ~= "" and vim.fs.relpath(root, filename) ~= nil
+end
+
 ---Returns true if we are in a defold project
 ---@return boolean
 function M.is_defold_project()

@@ -22,6 +22,14 @@ function M:enabled()
         return false
     end
 
+    local script = require "defold.script"
+    local project = require "defold.project"
+
+    local kind = script.detect_kind_from_buffer()
+    if (kind ~= script.kinds.SCRIPT and kind ~= script.kinds.GUI_SCRIPT) or not project.is_buffer_in_project() then
+        return false
+    end
+
     local node = vim.treesitter.get_node()
 
     -- if treesitter isn't working just return true
@@ -85,13 +93,13 @@ local function completion_item_from_entry(entry)
 end
 
 ---@param filename string
+---@param root string
 ---@return lsp.CompletionItem[]
-local function get_script_completions(filename)
+local function get_script_completions(filename, root)
     local sidecar = require "defold.sidecar"
     local log = require "defold.service.logger"
-    local project = require "defold.project"
 
-    local path_entries_ok, path_entries = pcall(sidecar.fetch_defold_paths_for, project.project_root(), filename)
+    local path_entries_ok, path_entries = pcall(sidecar.fetch_defold_paths_for, root, filename)
     if not path_entries_ok then
         log.error(string.format("could not fetch defold paths: %s", path_entries))
         return {}
@@ -118,14 +126,14 @@ local function get_script_completions(filename)
 end
 
 ---@param filename string
+---@param root string
 ---@return lsp.CompletionItem[]
-local function get_gui_completions(filename)
+local function get_gui_completions(filename, root)
     local blink_types = require "blink.cmp.types"
     local sidecar = require "defold.sidecar"
     local log = require "defold.service.logger"
-    local project = require "defold.project"
 
-    local nodes_ok, nodes = pcall(sidecar.fetch_gui_nodes_for, project.project_root(), filename)
+    local nodes_ok, nodes = pcall(sidecar.fetch_gui_nodes_for, root, filename)
     if not nodes_ok then
         log.error(string.format("could not fetch GUI nodes: %s", nodes))
         return {}
@@ -149,15 +157,15 @@ local function get_gui_completions(filename)
     return items
 end
 
+---@param root string
 ---@return lsp.CompletionItem[]
-local function get_input_binding_completions()
+local function get_input_binding_completions(root)
     local blink_types = require "blink.cmp.types"
 
     local sidecar = require "defold.sidecar"
     local log = require "defold.service.logger"
-    local project = require "defold.project"
 
-    local bindings_ok, bindings = pcall(sidecar.fetch_input_bindings, project.project_root())
+    local bindings_ok, bindings = pcall(sidecar.fetch_input_bindings, root)
     if not bindings_ok then
         log.error(string.format("could not fetch input bindings: %s", bindings))
         return {}
@@ -182,17 +190,25 @@ end
 ---@param callback fun(response: blink.cmp.CompletionResponse)
 function M:get_completions(ctx, callback)
     local filename = vim.api.nvim_buf_get_name(ctx.bufnr)
-    local ext = vim.fs.ext(filename)
+    local script = require "defold.script"
+    local project = require "defold.project"
+    local kind = script.detect_kind_from_buffer(ctx.bufnr)
+    local root = project.project_root()
 
     ---@type lsp.CompletionItem[]
     local items = {}
 
-    if ext == "script" then
-        items = vim.list_extend(items, get_script_completions(filename))
-        items = vim.list_extend(items, get_input_binding_completions())
-    elseif ext == "gui_script" then
-        items = vim.list_extend(items, get_gui_completions(filename))
-        items = vim.list_extend(items, get_input_binding_completions())
+    if not root or not project.is_buffer_in_project(ctx.bufnr) then
+        callback { items = items, is_incomplete_backward = true, is_incomplete_forward = true }
+        return
+    end
+
+    if kind == script.kinds.SCRIPT then
+        items = vim.list_extend(items, get_script_completions(filename, root))
+        items = vim.list_extend(items, get_input_binding_completions(root))
+    elseif kind == script.kinds.GUI_SCRIPT then
+        items = vim.list_extend(items, get_gui_completions(filename, root))
+        items = vim.list_extend(items, get_input_binding_completions(root))
     end
 
     callback {

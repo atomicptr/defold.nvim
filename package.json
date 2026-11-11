@@ -7,7 +7,23 @@
         "snippets": [
             {
                 "language": "lua",
-                "path": "./snippets/lua/defold.json"
+                "path": "./snippets/module.json"
+            },
+            {
+                "language": "script",
+                "path": "./snippets/script.json"
+            },
+            {
+                "language": "gui_script",
+                "path": "./snippets/gui_script.json"
+            },
+            {
+                "language": "render_script",
+                "path": "./snippets/render_script.json"
+            },
+            {
+                "language": "editor_script",
+                "path": "./snippets/editor_script.json"
             }
         ]
     }
