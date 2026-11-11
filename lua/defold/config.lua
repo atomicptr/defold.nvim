@@ -14,8 +14,8 @@
 
 ---@class defold.config.Debugger Settings for the integrated debugger
 ---@field enable?        boolean                               Enable the debugger
----@field moonbug?       defold.config.debugger.MoonbugConfig
----@field mobdebug?      defold.config.debugger.MobdebugConfig
+---@field moonbug?       defold.config.debugger.MoonbugConfig  Config for `moonbug`
+---@field mobdebug?      defold.config.debugger.MobdebugConfig Config for `mobdebug`
 ---@field force_variant? defold.debugger.Variant               Load variant no matter what is inferred from project
 
 ---@class defold.config.debugger.MoonbugConfig

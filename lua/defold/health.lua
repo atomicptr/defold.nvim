@@ -112,12 +112,17 @@ function M.check()
         vim.health.ok "Debugger is enabled"
         vim.health.info(string.format("Variant: %s", variant))
 
-        if variant == "moonbug" then
+        if variant == "native" then
+            local port = require("defold.debugger.native").port()
+            vim.health.info(
+                port and string.format("Native Attach Port: %d", port) or "Native debugger port not discovered"
+            )
+        elseif variant == "moonbug" then
             if config.state.debugger.moonbug.port then
                 vim.health.info(string.format("Moonbug Port: %d", config.state.debugger.moonbug.port))
             end
         elseif variant == "mobdebug" then
-            vim.health.info(string.format("Mobdap Path: %s", debugger.get_mobdap_path()))
+            vim.health.info(string.format("Mobdap Path: %s", require("defold.debugger.mobdebug").get_path()))
 
             if config.state.debugger.mobdebug.mobdap_executable then
                 vim.health.info(

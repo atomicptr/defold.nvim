@@ -333,6 +333,7 @@ pub fn run(
     let mut launcher = create_launcher(plugin_config)?;
 
     let mut app = Application::new(&nvim)
+        .with_working_dir(&root_dir)
         .with_arg("--listen")
         .with_arg(VAR_ADDRESS)
         .with_arg("--remote")

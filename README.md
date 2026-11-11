@@ -19,7 +19,7 @@ Batteries-included development environment for the [Defold game engine](https://
 
 ### Defold
 
-The minimum supported Defold version is: **1.13.0**
+The minimum supported Defold version is: **1.14.1**
 
 ### Operating System
 
@@ -192,7 +192,10 @@ local config = {
         -- Enable the debugger (default: true)
         enable = true,
 
-        -- When using moonbug (recommended), you need to install the `defold-moonbug` Defold extension
+        -- Override detection: "native", "moonbug", "mobdebug", or "local" (keep your own setup)
+        force_variant = nil,
+
+        -- When using moonbug, you need to install the `defold-moonbug` Defold extension
         moonbug = {
             port = 8888,
         },
@@ -280,9 +283,17 @@ Depending on which debugger integration you've picked this path might be slightl
 
 Be sure that you have the debugger mode enabled via: `debugger.enable = true`
 
-#### Integration: moonbug (recommended)
+#### Integration: native (default)
 
-For debugging, I'm highly recommending using [moonbug](https://github.com/atomicptr/moonbug) as it was purpose built for the Debug Adapter Protocol and also with Defold in mind.
+With [nvim-dap](https://github.com/mfussenegger/nvim-dap) installed and your project open
+in Defold, run `:DapNew` and select **defold.nvim: Launch Game & Attach**. No extra setup needed.
+
+Startup breakpoints may be missed during attachment.
+
+#### Integration: moonbug
+
+[moonbug](https://github.com/atomicptr/moonbug) is an alternative debugger built for
+the Debug Adapter Protocol and Defold.
 
 - Add the [defold-moonbug](https://github.com/atomicptr/defold-moonbug) extension to your Defold project
 - Fetch/Update the dependencies
@@ -302,7 +313,7 @@ And then you run use ``:DapNew`` and the game should be running
 
 #### Integration: local
 
-If you have neither the `defold-moonbug` nor the `defold-mobdebug` extension installed we'll fallback to `local` mode which just means defold.nvim will use whatever you've set up yourself.
+Set `debugger.force_variant = "local"` to keep your own nvim-dap adapters and configurations rather than registering a defold.nvim debugger.
 
 ### Setup Snippets
 

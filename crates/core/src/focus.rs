@@ -86,16 +86,20 @@ fn switch(switcher_type: SwitcherType) -> Result<()> {
                         _ => bail!("Unsupported switcher type {switcher_type:?} for {switcher:?}"),
                     }
                 )),
+            Some("ok"),
         ),
-        Switcher::SwayMsg => run_switch_cmd(Command::new(switcher.path().unwrap()).arg(format!(
-            "[{}={}] focus",
-            match switcher_type {
-                SwitcherType::Class(_) => "class".to_string(),
-                SwitcherType::Title(_) => "title".to_string(),
-                _ => bail!("Unsupported switcher type {switcher_type:?} for {switcher:?}"),
-            },
-            switcher_type.value(),
-        ))),
+        Switcher::SwayMsg => run_switch_cmd(
+            Command::new(switcher.path().unwrap()).arg(format!(
+                "[{}={}] focus",
+                match switcher_type {
+                    SwitcherType::Class(_) => "class".to_string(),
+                    SwitcherType::Title(_) => "title".to_string(),
+                    _ => bail!("Unsupported switcher type {switcher_type:?} for {switcher:?}"),
+                },
+                switcher_type.value(),
+            )),
+            None,
+        ),
         Switcher::WmCtrl => {
             let mut cmd = Command::new(switcher.path().unwrap());
 
@@ -105,7 +109,7 @@ fn switch(switcher_type: SwitcherType) -> Result<()> {
 
             cmd.arg("-a").arg(switcher_type.value());
 
-            run_switch_cmd(&mut cmd)
+            run_switch_cmd(&mut cmd, None)
         }
         Switcher::XDoTool => run_switch_cmd(
             Command::new(switcher.path().unwrap())
@@ -117,6 +121,7 @@ fn switch(switcher_type: SwitcherType) -> Result<()> {
                 })
                 .arg(switcher_type.value())
                 .arg("windowactivate"),
+            None,
         ),
     };
 
@@ -128,7 +133,7 @@ fn switch(switcher_type: SwitcherType) -> Result<()> {
                 .arg(match switcher_type {
                     SwitcherType::AppName(app_name) => format!("'tell application \"System Events\" to tell process \"{app_name}\" to set frontmost to true'"),
                     _ => bail!("Unsupported switcher type {switcher_type:?} for {switcher:?}"),
-                }))
+                }), None)
         }
     };
 
@@ -136,13 +141,28 @@ fn switch(switcher_type: SwitcherType) -> Result<()> {
     return Ok(());
 }
 
-fn run_switch_cmd(cmd: &mut Command) -> Result<()> {
+fn run_switch_cmd(cmd: &mut Command, expected_response: Option<&str>) -> Result<()> {
     tracing::debug!("Executing switch cmd: {cmd:?}");
 
-    cmd.spawn()?.wait()?;
+    let output = cmd.output()?;
+    if !output.status.success() {
+        bail!(
+            "Focus command failed ({}): {}",
+            output.status,
+            String::from_utf8_lossy(&output.stderr).trim()
+        );
+    }
+
+    if let Some(expected) = expected_response {
+        let response = String::from_utf8_lossy(&output.stdout);
+        if response.trim() != expected {
+            bail!("Focus command failed: {}", response.trim());
+        }
+    }
 
     Ok(())
 }
+
 pub fn focus_neovim(root_dir: PathBuf) -> Result<()> {
     if !root_dir.join("game.project").exists() {
         bail!("Could not find game.project file in {root_dir:?}: Not a valid Defold directory");

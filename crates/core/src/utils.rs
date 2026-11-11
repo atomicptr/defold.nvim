@@ -28,7 +28,7 @@ pub fn project_id(root_dir: &str) -> Result<String> {
 }
 
 pub fn classname(root_dir: &str) -> Result<String> {
-    Ok(format!("com.defold.nvim.{}", project_id(root_dir)?))
+    Ok(format!("com.defold.nvim.p{}", project_id(root_dir)?))
 }
 
 pub fn download(url: &str) -> Result<PathBuf> {

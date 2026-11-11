@@ -111,7 +111,11 @@ function M.open_quickfix_from_command_result(result, min_severity, open_quickfix
 
     for _, issue in ipairs(result.issues) do
         if issue_severity_value(issue.severity) >= min_severity_value then
-            local filepath = issue.resource:sub(1, 1) == "/" and issue.resource:sub(2) or issue.resource
+            local filepath = issue.resource
+
+            if filepath and filepath:sub(1, 1) == "/" then
+                filepath = filepath:sub(2)
+            end
 
             local lnum = 1
             local col = 1
