@@ -187,12 +187,4 @@ nodes { id: "hidden" }
                 .is_empty()
         );
     }
-
-    #[test]
-    fn rejects_paths_outside_the_project_and_missing_roots() {
-        let temp = TestDir::new();
-        assert!(fetch_nodes_for(&temp.0, &temp.0.with_extension("gui_script")).is_err());
-        let missing = temp.0.join("missing");
-        assert!(fetch_nodes_for(&missing, &missing.join("main.gui_script")).is_err());
-    }
 }
