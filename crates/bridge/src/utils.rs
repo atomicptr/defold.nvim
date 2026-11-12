@@ -27,7 +27,7 @@ pub fn search_and_kill_process(search_string: &str) {
     let mut sys = match System::new_all() {
         Ok(sys) => sys,
         Err(err) => {
-            tracing::warn!("Could not initialize process cleanup: {err}");
+            tracing::error!("Could not initialize process cleanup: {err}");
             return;
         }
     };
@@ -47,6 +47,8 @@ pub fn search_and_kill_process(search_string: &str) {
 
             if process.kill() {
                 tracing::debug!("successfully killed pid {}", pid);
+            } else {
+                tracing::error!("failed to kill pid {}: {}", pid, cmd_str);
             }
         }
     }

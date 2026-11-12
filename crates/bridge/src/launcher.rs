@@ -8,7 +8,9 @@ use defold_nvim_core::{focus::focus_neovim, nvim_server, utils::classname};
 use std::{
     fs::{self},
     path::{Path, PathBuf},
-    process::{Child, Command},
+    process::{Child, Command, Stdio},
+    thread,
+    time::{Duration, Instant},
 };
 use termlauncher::{Application, CustomTerminal, Terminal};
 use which::which;
@@ -232,10 +234,14 @@ fn run_fsock(
             return Ok(());
         }
 
-        tracing::error!("nvim has failed alive check");
         utils::search_and_kill_process(socket_file_str);
 
-        fs::remove_file(socket_file)?;
+        match fs::remove_file(socket_file) {
+            Ok(()) => {}
+            Err(err) if err.kind() == std::io::ErrorKind::NotFound => {}
+            Err(err) => return Err(err.into()),
+        }
+
         report_process_errors(app.launch_with(launcher)?)?;
 
         return Ok(());
@@ -277,7 +283,6 @@ fn run_netsock(
             return Ok(());
         }
 
-        tracing::error!("nvim has failed alive check");
         utils::search_and_kill_process(&socket);
 
         let socket = nvim_server::allocate_new_netsock_addr(root_dir)?;
@@ -296,27 +301,70 @@ fn run_netsock(
     Ok(())
 }
 
-fn nvim_is_alive(nvim: &str, server: &str) -> bool {
-    let mut cmd = Command::new(nvim);
+fn nvim_has_ui(nvim: &str, server: &str) -> Result<bool> {
+    let mut child = Command::new(nvim)
+        .args([
+            "--headless",
+            "--server",
+            server,
+            "--remote-expr",
+            "len(nvim_list_uis())",
+        ])
+        .stdin(Stdio::null())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()?;
 
-    cmd.arg("--headless")
-        .arg("--server")
-        .arg(server)
-        .arg("--remote-expr")
-        .arg(r#"'bufname("")'"#);
+    let deadline = Instant::now() + Duration::from_secs(2);
 
-    tracing::debug!("nvim alive command: {cmd:?}");
-
-    match cmd.status() {
-        Ok(status) => {
-            tracing::debug!("nvim alive check response: {status}");
-            status.success()
+    while child.try_wait()?.is_none() {
+        if Instant::now() >= deadline {
+            child.kill()?;
+            child.wait()?;
+            bail!("Timed out querying attached Neovim UIs");
         }
-        Err(err) => {
-            tracing::debug!("nvim alive check failed: {err}");
-            false
+
+        thread::sleep(Duration::from_millis(20));
+    }
+
+    let output = child.wait_with_output()?;
+
+    if !output.status.success() {
+        bail!(
+            "UI probe exited with {}: {}",
+            output.status,
+            String::from_utf8_lossy(&output.stderr).trim()
+        );
+    }
+
+    let count = String::from_utf8(output.stdout)?
+        .trim()
+        .parse::<usize>()
+        .context("Invalid UI count returned by Neovim")?;
+
+    Ok(count > 0)
+}
+
+fn nvim_is_alive(nvim: &str, server: &str) -> bool {
+    for attempt in 0..2 {
+        match nvim_has_ui(nvim, server) {
+            Ok(true) => return true,
+            // give a starting/reconnecting frontend a chance to attach...
+            Ok(false) if attempt == 0 => thread::sleep(Duration::from_millis(300)),
+            Ok(false) => {
+                tracing::warn!(
+                    "Neovim at {server} has no attached UI; restarting, unsaved changes may be lost"
+                );
+                return false;
+            }
+            Err(err) => {
+                tracing::error!("Neovim alive check failed at {server}: {err:#}");
+                return false;
+            }
         }
     }
+
+    false
 }
 
 pub fn run(
