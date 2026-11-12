@@ -4,7 +4,9 @@ use crate::{
     utils::{self, is_port_in_use},
 };
 use anyhow::{Context, Result, bail};
-use defold_nvim_core::{focus::focus_neovim, nvim_server, utils::classname};
+#[cfg(target_os = "linux")]
+use defold_nvim_core::utils::classname;
+use defold_nvim_core::{focus::focus_neovim, nvim_server};
 use std::{
     fs::{self},
     path::{Path, PathBuf},
@@ -46,15 +48,10 @@ fn report_process_errors(mut child: Child) -> Result<()> {
     Ok(())
 }
 
-fn apply_launcher_vars(
-    launcher: &Terminal,
-    plugin_config: &PluginConfig,
-    var: &str,
-    replace_with: &str,
-) -> Terminal {
+#[cfg(target_os = "linux")]
+fn apply_launcher_vars(launcher: &Terminal, var: &str, replace_with: &str) -> Terminal {
     match launcher {
         Terminal::Custom(term) => Terminal::Custom(CustomTerminal {
-            run_arg: plugin_config.run_arg.clone().or(term.run_arg.clone()),
             arguments: apply_vars(&term.arguments, var, replace_with),
             ..term.clone()
         }),
@@ -386,7 +383,13 @@ pub fn run(
         .context("could not convert nvim path to string")?
         .to_string();
 
-    let mut launcher = create_launcher(plugin_config)?;
+    let launcher = match create_launcher(plugin_config)? {
+        Terminal::Custom(mut term) => {
+            term.run_arg = plugin_config.run_arg.clone().or(term.run_arg);
+            Terminal::Custom(term)
+        }
+        term => term,
+    };
 
     let mut app = Application::new(&nvim)
         .with_working_dir(&root_dir)
@@ -397,7 +400,7 @@ pub fn run(
         .with_arg(VAR_FILE);
 
     #[cfg(target_os = "linux")]
-    {
+    let launcher = {
         let class = &classname(
             root_dir
                 .to_str()
@@ -406,13 +409,9 @@ pub fn run(
 
         app = app.with_class(class);
 
-        // if is custom replace it in their args too
-        launcher = if let Terminal::Custom(_) = launcher {
-            apply_launcher_vars(&launcher, plugin_config, VAR_CLASSNAME, class)
-        } else {
-            launcher
-        };
-    }
+        // replace the class placeholder in custom launcher arguments too
+        apply_launcher_vars(&launcher, VAR_CLASSNAME, class)
+    };
 
     let file_str = file.to_str().context("could not convert path to string")?;
 

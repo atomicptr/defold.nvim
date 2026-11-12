@@ -36,3 +36,6 @@ pretty_assertions = "1.4.1"
 
 [package.metadata.cargo-machete]
 ignored = ["rust-ini"]
+
+[lints]
+workspace = true

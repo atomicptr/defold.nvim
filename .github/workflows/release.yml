@@ -83,8 +83,6 @@ jobs:
 
       - name: prepare ${{ matrix.config.name }}
         run: |
-          mkdir -p target/release
-
           # rename builds to be unique
           mv "${{ matrix.config.artifact.sidecar }}" "${{ matrix.config.dist.sidecar }}"
           mv "${{ matrix.config.artifact.bridge }}" "${{ matrix.config.dist.bridge }}"

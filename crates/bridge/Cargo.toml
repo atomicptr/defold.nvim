@@ -19,3 +19,6 @@ tracing = "0.1.44"
 tracing-appender = "0.2.5"
 tracing-subscriber = "0.3.23"
 which = "8.0.6"
+
+[lints]
+workspace = true
