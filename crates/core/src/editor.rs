@@ -151,6 +151,7 @@ pub fn send_command(port: u16, cmd: &str) -> Result<CommandResult> {
             success: false,
             issues: vec![],
             status,
+            target: None,
         },
     };
 

@@ -4,6 +4,7 @@ pub mod defold_paths;
 pub mod editor;
 pub mod editor_commands;
 pub mod editor_config;
+pub mod engine;
 pub mod focus;
 pub mod game_project;
 mod miniproto;

@@ -2,6 +2,9 @@ local M = {}
 
 local ready = false
 
+---@type string?
+local library_path
+
 ---@type function[]
 local callbacks = {}
 
@@ -19,6 +22,7 @@ local downloading = false
 ---@field success boolean
 ---@field issues  defold.sidecar.Issue[]
 ---@field status  integer
+---@field target? { url: string }
 
 ---@class defold.sidecar.Issue
 ---@field message   string
@@ -27,6 +31,9 @@ local downloading = false
 ---@field range?    defold.sidecar.Range
 
 ---@alias defold.sidecar.IssueSeverity "error"|"warning"|"info"
+---@alias defold.sidecar.WorkerValue nil|boolean|number|string
+---@alias defold.sidecar.WorkerCallback fun(result: defold.sidecar.WorkerValue, err?: string)
+---@alias defold.sidecar.WorkerCall fun(fn: string, cb: defold.sidecar.WorkerCallback, ...: defold.sidecar.WorkerValue)
 
 ---@class defold.sidecar.Range
 ---@field start defold.sidecar.Position
@@ -63,6 +70,8 @@ local downloading = false
 ---@field send_command             fun(port: integer, cmd: string): defold.sidecar.CommandResult
 ---@field set_default_editor       fun(port: integer, bridge_path: string, launcher_config: defold.config.Launcher)
 ---@field bridge_path              string Selected executable, available after ensure completes.
+---@field start_native_debugger    fun(url: string, port: integer, address?: string): integer
+---@field worker_call              defold.sidecar.WorkerCall
 ---@field resolve_nvim_server_addr fun(game_root: string, socket_type: "fsock"|"netsock"|nil): string
 ---@field focus_neovim             fun(game_root: string)
 ---@field focus_game               fun(game_root: string)
@@ -75,8 +84,10 @@ local downloading = false
 ---@field data_dir                 fun(): string
 ---@field cache_dir                fun(): string
 
+---@param path string
 local function load(path)
     local log = require "defold.service.logger"
+    library_path = path
 
     if not package.loaded.defold_nvim_sidecar then
         log.debug(string.format("Loading plugin library: %s", path))
@@ -98,6 +109,62 @@ end
 
 function M.is_ready()
     return ready
+end
+
+---Call a sidecar function in an isolated worker and send the result back to the main thread
+---@param method   string
+---@param callback defold.sidecar.WorkerCallback
+---@param ...      defold.sidecar.WorkerValue
+function M.worker_call(method, callback, ...)
+    if not library_path then
+        callback(nil, "Defold sidecar is not loaded")
+        return
+    end
+
+    local ok, queued, err = pcall(function(...)
+        -- workers have isolated lua states so we need to load sidecar ourselves
+        ---@param library string
+        ---@param name string
+        ---@param ... defold.sidecar.WorkerValue
+        ---@return boolean, defold.sidecar.WorkerValue
+        local function invoke(library, name, ...)
+            local success, result = pcall(function(...)
+                local instance = assert(package.loadlib(library, "luaopen_defold_nvim_sidecar"))()
+                return instance[name](...)
+            end, ...)
+
+            if not success then
+                return false, tostring(result)
+            end
+
+            local kind = type(result)
+
+            if kind ~= "nil" and kind ~= "boolean" and kind ~= "number" and kind ~= "string" then
+                return false, "sidecar.worker_call supports only scalar results"
+            end
+
+            return true, result
+        end
+
+        local work = vim.uv.new_work(
+            invoke,
+            vim.schedule_wrap(function(success, result)
+                if success then
+                    callback(result)
+                else
+                    callback(nil, result)
+                end
+            end)
+        )
+
+        return work:queue(library_path, method, ...)
+    end, ...)
+
+    if not ok then
+        callback(nil, tostring(queued))
+    elseif not queued then
+        callback(nil, err or "Could not queue sidecar call")
+    end
 end
 
 ---@param callback? fun() Called after the sidecar and bridge are ready

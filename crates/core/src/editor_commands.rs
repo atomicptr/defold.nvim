@@ -6,6 +6,13 @@ pub struct CommandResult {
     pub issues: Vec<Issue>,
     #[serde(default)]
     pub status: u16,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub target: Option<Target>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Target {
+    pub url: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

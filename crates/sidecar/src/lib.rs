@@ -1,7 +1,7 @@
 use anyhow::Context;
 use defold_nvim_core::{
-    defold_gui, defold_inputs, defold_paths, editor, editor_config, nvim_server, path, project,
-    utils,
+    defold_gui, defold_inputs, defold_paths, editor, editor_config, engine, nvim_server, path,
+    project, utils,
 };
 use defold_nvim_core::{focus, game_project::GameProject};
 use mlua::Value::{self};
@@ -123,6 +123,10 @@ fn register_exports(lua: &Lua) -> LuaResult<LuaTable> {
         lua.create_function(fetch_input_bindings)?,
     )?;
     exports.set("editor_version", lua.create_function(editor_version)?)?;
+    exports.set(
+        "start_native_debugger",
+        lua.create_function(start_native_debugger)?,
+    )?;
     exports.set("project_id", lua.create_function(project_id)?)?;
     exports.set("data_dir", lua.create_function(data_dir)?)?;
     exports.set("cache_dir", lua.create_function(cache_dir)?)?;
@@ -312,6 +316,18 @@ fn fetch_input_bindings(lua: &Lua, root_dir: String) -> LuaResult<Value> {
     let res = lua.to_value(&bindings)?;
 
     Ok(res)
+}
+
+#[instrument(level = "debug", err(Debug), skip_all)]
+fn start_native_debugger(
+    _lua: &Lua,
+    (url, port, address): (String, u16, Option<String>),
+) -> LuaResult<u16> {
+    Ok(engine::start_native_debugger(
+        &url,
+        port,
+        address.as_deref().unwrap_or("127.0.0.1"),
+    )?)
 }
 
 fn data_dir(_lua: &Lua, _: ()) -> LuaResult<String> {
