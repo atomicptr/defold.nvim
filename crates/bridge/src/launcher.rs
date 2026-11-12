@@ -1,5 +1,5 @@
 use crate::{
-    neovide,
+    path,
     plugin_config::{LauncherType, PluginConfig, SocketType},
     utils::{self, is_port_in_use},
 };
@@ -15,7 +15,7 @@ use std::{
 use termlauncher::{Application, CustomTerminal, Terminal};
 use which::which;
 
-const ERR_NEOVIDE_NOT_FOUND: &str = "Could not find Neovide, have you installed it?";
+const ERR_NEOVIDE_NOT_FOUND: &str = "Neovide is not installed. Make sure defold.nvim is setup properly or run the repair script. Or make sure the system executable is installed";
 const ERR_TERMINAL_NOT_FOUND: &str = "Could not find any suitable terminal";
 
 const VAR_CLASSNAME: &str = "{CLASSNAME}";
@@ -74,12 +74,20 @@ fn create_launcher(cfg: &PluginConfig) -> Result<Terminal> {
                 .as_ref()
                 .map(Into::into)
                 .or_else(|| which("neovide").ok())
-                .or_else(|| match neovide::install() {
-                    Ok(path) => Some(path),
-                    Err(err) => {
-                        tracing::error!("Could not download neovide because: {err:?}");
-                        None
-                    }
+                .or_else(|| {
+                    let bin = path::data_dir().ok()?.join("bin");
+
+                    let managed = if cfg!(target_os = "macos") {
+                        bin.join("Neovide.app/Contents/MacOS/neovide")
+                    } else {
+                        bin.join(if cfg!(target_os = "windows") {
+                            "neovide.exe"
+                        } else {
+                            "neovide"
+                        })
+                    };
+
+                    managed.is_file().then_some(managed)
                 })
                 .context(ERR_NEOVIDE_NOT_FOUND)?;
 
@@ -353,7 +361,7 @@ fn nvim_is_alive(nvim: &str, server: &str) -> bool {
             Ok(false) if attempt == 0 => thread::sleep(Duration::from_millis(300)),
             Ok(false) => {
                 tracing::warn!(
-                    "Neovim at {server} has no attached UI; restarting, unsaved changes may be lost"
+                    "Neovim at {server} has no attached UI. Restarting it may lose unsaved changes."
                 );
                 return false;
             }

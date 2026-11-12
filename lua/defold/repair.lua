@@ -1,11 +1,11 @@
 local M = {}
-local log = require "defold.service.logger"
 
 local function marker_path()
     return vim.fs.joinpath(vim.fn.stdpath "data", "repair-defold.nvim")
 end
 
 function M.schedule()
+    local log = require "defold.service.logger"
     local os = require "defold.service.os"
     local sidecar = require "defold.sidecar"
 
@@ -27,6 +27,7 @@ function M.schedule()
 end
 
 function M.apply_pending()
+    local log = require "defold.service.logger"
     local os = require "defold.service.os"
 
     if not os.file_exists(marker_path()) then

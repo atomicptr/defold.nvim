@@ -1,15 +1,11 @@
 use std::{
-    env::temp_dir,
     fs::{self, File},
-    io,
-    path::{Path, PathBuf},
+    path::Path,
 };
 
 use anyhow::{Context, Result};
 use fs_extra::{dir, file};
 use sha3::{Digest, Sha3_256};
-use url::Url;
-use walkdir::WalkDir;
 
 #[must_use]
 pub fn sha3(str: &str) -> String {
@@ -31,61 +27,6 @@ pub fn classname(root_dir: &str) -> Result<String> {
     Ok(format!("com.defold.nvim.p{}", project_id(root_dir)?))
 }
 
-pub fn download(url: &str) -> Result<PathBuf> {
-    let download_dir = temp_dir()
-        .join("defold.nvim")
-        .join("download")
-        .join(sha3(url).get(..8).context("could not make hash")?);
-    fs::create_dir_all(&download_dir)?;
-
-    let parsed_url = Url::parse(url)?;
-
-    let filename = parsed_url
-        .path_segments()
-        .and_then(std::iter::Iterator::last)
-        .unwrap_or("file");
-
-    let download_file = download_dir.join(filename);
-
-    download_to(url, &download_file)?;
-
-    Ok(download_file)
-}
-
-pub fn clear_download(url: &str) -> Result<()> {
-    let download_root_dir = temp_dir().join("defold.nvim").join("download");
-    let download_dir = download_root_dir.join(sha3(url).get(..8).context("could not make hash")?);
-    fs::remove_dir_all(download_dir)?;
-    delete_empty_dirs_from(&download_root_dir)?;
-    Ok(())
-}
-
-pub fn download_to(url: &str, path: &Path) -> Result<()> {
-    tracing::debug!("Downloading {url} to {}...", path.display());
-
-    let mut res = reqwest::blocking::get(url)?;
-    res.error_for_status_ref()?;
-
-    let mut file = File::create(path)?;
-    io::copy(&mut res, &mut file)?;
-    Ok(())
-}
-
-pub fn delete_empty_dirs_from(root_dir: &Path) -> Result<()> {
-    for entry in WalkDir::new(root_dir)
-        .contents_first(true)
-        .into_iter()
-        .filter_map(Result::ok)
-    {
-        let path = entry.path();
-
-        if path.is_dir() && fs::read_dir(path)?.next().is_none() {
-            fs::remove_dir(path)?;
-        }
-    }
-    Ok(())
-}
-
 // Apparently fs::rename doesnt work on tmpfs
 pub fn move_file(from: &Path, to: &Path) -> Result<()> {
     if let Some(parent) = to.parent() {
@@ -104,6 +45,48 @@ pub fn move_file(from: &Path, to: &Path) -> Result<()> {
         )?;
     } else {
         file::move_file(from, to, &file::CopyOptions::new().overwrite(true))?;
+    }
+
+    Ok(())
+}
+
+pub fn unpack(archive: &Path, target: &Path) -> Result<()> {
+    fs::create_dir_all(target)?;
+
+    let name = archive.to_string_lossy();
+
+    if name.ends_with(".zip") {
+        zip::ZipArchive::new(File::open(archive)?)?.extract(target)?;
+    } else if name.ends_with(".tar.gz") {
+        tar::Archive::new(flate2::read::GzDecoder::new(File::open(archive)?)).unpack(target)?;
+    } else {
+        #[cfg(target_os = "macos")]
+        if name.ends_with(".dmg") {
+            use dmg::Attach;
+
+            let handle = Attach::new(archive).with()?;
+
+            for entry in fs::read_dir(&handle.mount_point)? {
+                let entry = entry?;
+                let destination = target.join(entry.file_name());
+                let kind = entry.file_type()?;
+                if kind.is_dir() {
+                    dir::copy(
+                        entry.path(),
+                        destination,
+                        &dir::CopyOptions::new().copy_inside(true),
+                    )?;
+                } else if kind.is_file() {
+                    fs::copy(entry.path(), destination)?;
+                }
+
+                // Do not follow top-level links into the host filesystem (e.g. /Applications).
+            }
+
+            return Ok(());
+        }
+
+        anyhow::bail!("Unsupported archive: {}", archive.display());
     }
 
     Ok(())

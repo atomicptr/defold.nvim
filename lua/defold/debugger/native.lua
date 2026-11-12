@@ -41,7 +41,7 @@ local function launch(callback)
     local log = require "defold.service.logger"
 
     if launching then
-        log.error "A native debug launch is already in progress"
+        log.error "A debug launch is already in progress"
         return
     end
 
@@ -57,7 +57,7 @@ local function launch(callback)
     local os = require "defold.service.os"
     local editor = require "defold.editor"
 
-    local base = "http://127.0.0.1:" .. editor_port
+    local base = string.format("http://127.0.0.1:%d", editor_port)
     local started = false
     launching = true
 
@@ -67,7 +67,7 @@ local function launch(callback)
         if started then
             editor.send_command("debugger-detach", true)
         end
-        log.error("Native debug launch failed: " .. err)
+        log.error(string.format("Debug launch failed: %s", err))
     end
 
     os.fetch_json(base .. "/console", function(previous, previous_err)
@@ -104,7 +104,7 @@ local function launch(callback)
                         return
                     end
 
-                    fail "No native debugger port announced in the Defold console"
+                    fail "No debugger port announced in the Defold console"
                     return
                 end
 
@@ -126,16 +126,16 @@ local function launch(callback)
 end
 
 function M.register()
+    local log = require "defold.service.logger"
     local dap = require "dap"
     local project = require "defold.project"
 
-    ---@param callback       fun(adapter: dap.ServerAdapter)
-    ---@param session_config dap.Configuration
+    ---@param callback fun(adapter: dap.ServerAdapter)
     dap.adapters.defold_nvim_native = function(callback, session_config)
         ---@param port integer?
         local function attach(port)
             if not port then
-                require("defold.service.logger").error "No debugger port discovered for this project; launch first"
+                log.error "No debugger port discovered for this project. Launch the game first."
                 return
             end
 
@@ -171,7 +171,7 @@ function M.register()
         {
             type = "defold_nvim_native",
             request = "attach",
-            name = "defold.nvim: Attach to Native Debugger",
+            name = "defold.nvim: Attach to Debugger",
             ---@return string?
             localRoot = function()
                 return project.project_root()

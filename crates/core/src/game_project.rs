@@ -1,4 +1,7 @@
-use std::{fs, path::Path};
+use std::{
+    fs,
+    path::{Component, Path},
+};
 
 use anyhow::{Context, Result, bail};
 use ini::Ini;
@@ -60,6 +63,22 @@ impl TryFrom<String> for GameProject {
             });
         }
 
+        if let Some(library) = &library {
+            for include_dir in &library.include_dirs {
+                let mut depth = 0;
+                for component in Path::new(include_dir).components() {
+                    match component {
+                        Component::Normal(_) => depth += 1,
+                        Component::ParentDir if depth > 0 => depth -= 1,
+                        Component::CurDir => {}
+                        _ => bail!(
+                            "library.include_dirs must stay within the library: {include_dir}"
+                        ),
+                    }
+                }
+            }
+        }
+
         Ok(GameProject {
             title,
             dependencies,
@@ -72,6 +91,29 @@ impl TryFrom<String> for GameProject {
 mod tests {
     use crate::game_project::GameProject;
     use pretty_assertions::assert_eq;
+
+    #[test]
+    fn reject_include_dirs_outside_library() {
+        for include_dir in ["../outside", "/outside", "library/../../outside"] {
+            let input = format!("[project]\ntitle = Test\n[library]\ninclude_dirs = {include_dir}");
+            assert!(GameProject::try_from(input).is_err(), "{include_dir}");
+        }
+    }
+
+    #[test]
+    fn accept_include_dirs_within_library() {
+        let input = "[project]\ntitle = Test\n[library]\ninclude_dirs = ./lib, nested/../lib, .";
+        assert!(GameProject::try_from(input.to_string()).is_ok());
+    }
+
+    #[cfg(target_os = "windows")]
+    #[test]
+    fn reject_windows_rooted_include_dirs() {
+        for include_dir in [r"C:\outside", r"C:outside", r"\outside", r"..\outside"] {
+            let input = format!("[project]\ntitle = Test\n[library]\ninclude_dirs = {include_dir}");
+            assert!(GameProject::try_from(input).is_err(), "{include_dir}");
+        }
+    }
 
     #[test]
     fn test_parse_game_project() {

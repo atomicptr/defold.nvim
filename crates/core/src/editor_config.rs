@@ -5,7 +5,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use crate::{bridge, editor, path};
+use crate::{editor, path};
 
 #[derive(Debug, Deserialize)]
 pub enum LauncherType {
@@ -105,14 +105,13 @@ const SCRIPT_EXT: &'static str = "bat";
 const SCRIPT_EXT: &str = "sh";
 
 fn create_runner_script(
-    plugin_root: &Path,
+    bridge_path: &Path,
     launcher_settings: &LauncherSettings,
 ) -> Result<PathBuf> {
     let dir = path::data_dir()?.join("bin");
     fs::create_dir_all(&dir)?;
 
     let script_path = dir.join(format!("run.{SCRIPT_EXT}"));
-    let bridge_path = bridge::path(Some(plugin_root))?;
     let launch_pre_args = launcher_settings.bridge_pre_cli_args().join(" ");
     let launch_post_args = launcher_settings.bridge_post_cli_args().join(" ");
 
@@ -162,19 +161,22 @@ struct EditorConfig {
 
 pub fn set_default_editor(
     port: u16,
-    plugin_root: &Path,
+    bridge_path: &Path,
     launcher_settings: &LauncherSettings,
 ) -> Result<()> {
     if !editor::is_editor_port(port) {
         bail!("No edito was found runnign at {port}");
     }
 
-    if !plugin_root.exists() {
-        bail!("plugin root '{}' could not be found", plugin_root.display());
+    if !bridge_path.is_file() {
+        bail!(
+            "bridge executable '{}' could not be found",
+            bridge_path.display()
+        );
     }
 
     let config = EditorConfig {
-        custom_editor: create_runner_script(plugin_root, launcher_settings)?
+        custom_editor: create_runner_script(bridge_path, launcher_settings)?
             .to_str()
             .context("could not convert path to string")?
             .to_string(),

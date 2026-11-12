@@ -1,7 +1,7 @@
 use anyhow::Context;
 use defold_nvim_core::{
-    bridge, defold_annotations, defold_gui, defold_inputs, defold_paths, editor, editor_config,
-    mobdap, nvim_server, path, project, utils,
+    defold_gui, defold_inputs, defold_paths, editor, editor_config, nvim_server, path, project,
+    utils,
 };
 use defold_nvim_core::{focus, game_project::GameProject};
 use mlua::Value::{self};
@@ -93,17 +93,18 @@ fn register_exports(lua: &Lua) -> LuaResult<LuaTable> {
         "set_default_editor",
         lua.create_function(set_default_editor)?,
     )?;
-    exports.set("find_bridge_path", lua.create_function(find_bridge_path)?)?;
     exports.set(
         "resolve_nvim_server_addr",
         lua.create_function(resolve_nvim_server_addr)?,
     )?;
     exports.set("focus_neovim", lua.create_function(focus_neovim)?)?;
     exports.set("focus_game", lua.create_function(focus_game)?)?;
-    exports.set("mobdap_install", lua.create_function(mobdap_install)?)?;
+    exports.set("unpack", lua.create_function(unpack)?)?;
+    exports.set("move", lua.create_function(move_file)?)?;
+    exports.set("hash", lua.create_function(hash)?)?;
     exports.set(
-        "install_dependencies",
-        lua.create_function(install_dependencies)?,
+        "install_dependency",
+        lua.create_function(install_dependency)?,
     )?;
     exports.set(
         "list_dependency_dirs",
@@ -121,7 +122,6 @@ fn register_exports(lua: &Lua) -> LuaResult<LuaTable> {
         "fetch_input_bindings",
         lua.create_function(fetch_input_bindings)?,
     )?;
-    exports.set("annotation_dir", lua.create_function(annotation_dir)?)?;
     exports.set("editor_version", lua.create_function(editor_version)?)?;
     exports.set("project_id", lua.create_function(project_id)?)?;
     exports.set("data_dir", lua.create_function(data_dir)?)?;
@@ -187,22 +187,12 @@ fn send_command(lua: &Lua, (port, cmd): (u16, String)) -> LuaResult<Value> {
 #[instrument(level = "debug", err(Debug), skip_all)]
 fn set_default_editor(
     lua: &Lua,
-    (port, plugin_root, launcher_settings): (u16, String, LuaValue),
+    (port, bridge_path, launcher_settings): (u16, String, LuaValue),
 ) -> LuaResult<()> {
     let launcher_settings = lua.from_value(launcher_settings)?;
-    editor_config::set_default_editor(port, &PathBuf::from(plugin_root), &launcher_settings)?;
+    editor_config::set_default_editor(port, &PathBuf::from(bridge_path), &launcher_settings)?;
 
     Ok(())
-}
-
-#[instrument(level = "debug", err(Debug), skip_all)]
-fn find_bridge_path(_lua: &Lua, plugin_root: Option<String>) -> LuaResult<String> {
-    let path = bridge::path(plugin_root.and_then(|str| absolute(str).ok()).as_deref())?;
-
-    Ok(path
-        .to_str()
-        .context("could not convert path to string")?
-        .to_string())
 }
 
 #[instrument(level = "debug", err(Debug), skip_all)]
@@ -234,33 +224,21 @@ fn focus_game(_lua: &Lua, game_root: String) -> LuaResult<()> {
     Ok(())
 }
 
-#[instrument(level = "debug", err(Debug), skip_all)]
-fn mobdap_install(_lua: &Lua, _: ()) -> LuaResult<String> {
-    let path = mobdap::install()?;
-    Ok(path
-        .to_str()
-        .context("could not convert path to string")?
-        .to_string())
+fn unpack(_lua: &Lua, (archive, target): (PathBuf, PathBuf)) -> LuaResult<()> {
+    Ok(utils::unpack(&archive, &target)?)
 }
 
-#[instrument(level = "debug", err(Debug), skip_all)]
-fn install_dependencies(
-    _lua: &Lua,
-    (game_root, force_redownload): (String, Option<bool>),
-) -> LuaResult<()> {
-    project::install_dependencies(&absolute(game_root)?, force_redownload.unwrap_or_default())?;
-    Ok(())
+fn move_file(_lua: &Lua, (source, target): (PathBuf, PathBuf)) -> LuaResult<()> {
+    Ok(utils::move_file(&source, &target)?)
 }
 
-#[instrument(level = "debug", err(Debug), skip_all)]
-fn annotation_dir(
-    _lua: &Lua,
-    (_game_root, version): (String, Option<String>),
-) -> LuaResult<String> {
-    Ok(defold_annotations::ensure(version.as_deref())?
-        .to_str()
-        .context("could not convert annotation path to string")?
-        .to_owned())
+#[allow(clippy::unnecessary_wraps)]
+fn hash(_lua: &Lua, input: String) -> LuaResult<String> {
+    Ok(utils::sha3(&input))
+}
+
+fn install_dependency(_lua: &Lua, (source, target): (PathBuf, PathBuf)) -> LuaResult<()> {
+    Ok(project::install_dependency(&source, &target)?)
 }
 
 #[instrument(level = "debug", err(Debug), skip_all)]

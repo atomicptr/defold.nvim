@@ -1,7 +1,10 @@
 local M = {}
 
----@type boolean
-M.loaded = false
+---Plugin setup is done
+local setup_done = false
+
+---Plugin got actually loaded
+local plugin_loaded = false
 
 ---@return string
 function M.plugin_root()
@@ -49,23 +52,22 @@ function M.setup(opts)
         config.state.game_runner.mode = "send"
     end
 
-    if M.loaded then
+    if setup_done or plugin_loaded then
         return
     end
 
     -- do filetype detection before the download
     vim.filetype.add(require("defold.config.filetype").minimal)
 
-    local download = require "defold.download"
-    if not download.is_ready() then
-        download.download(M.setup)
+    local sidecar = require "defold.sidecar"
+    if not sidecar.is_ready() then
+        sidecar.ensure(M.setup)
         return
     end
 
     local log = require "defold.service.logger"
 
     if config.state.debug then
-        local sidecar = require "defold.sidecar"
         local ok, err = pcall(sidecar.set_log_level, "debug")
         if not ok then
             log.error(string.format("Could not setup sidecar: %s", err))
@@ -94,7 +96,7 @@ function M.setup(opts)
                 end
 
                 local lsp = require "defold.config.lsp"
-                project.refresh_annotations()
+                project.refresh_annotations(update_lua_lsp_paths)
                 local lsp_config = lsp()
 
                 log.debug(string.format("For %s, loaded lsp config %s", root, vim.inspect(lsp_config)))
@@ -108,6 +110,8 @@ function M.setup(opts)
         end,
     })
 
+    setup_done = true
+
     vim.defer_fn(function()
         local project = require "defold.project"
 
@@ -120,6 +124,7 @@ function M.setup(opts)
         end
 
         if config.state.defold.set_default_editor then
+            project.setup_neovide()
             M.setup_default_editor()
         end
 
@@ -133,23 +138,12 @@ function M.setup(opts)
     end, 0)
 end
 
----Makes sure the native library `sidecar` gets loaded
----@param callback? fun() Callback called after Rust modules are ready
-function M.download(callback)
-    require("defold.download").download(callback)
-end
-
----Deletes all defold.nvim managed resources, restart Neovim after calling this
-function M.repair()
-    require("defold.repair").schedule()
-end
-
 function M.load_plugin()
-    if M.loaded then
+    if plugin_loaded then
         return
     end
 
-    M.loaded = true
+    plugin_loaded = true
 
     local config = require "defold.config"
 
@@ -166,20 +160,19 @@ function M.load_plugin()
 
     local project_root = project.project_root(false)
 
-    log.debug("Project Root: " .. project_root)
-    log.debug("Plugin Version: " .. require "defold.version")
-    log.debug("Sidecar Version: " .. sidecar.version)
+    log.debug(string.format("Project Root: %s", project_root))
+    log.debug(string.format("Plugin Version: %s", require "defold.version"))
+    log.debug(string.format("Sidecar Version: %s", sidecar.version))
 
-    local bridge_ok, bridge_path = pcall(sidecar.find_bridge_path, M.plugin_root())
-    if bridge_ok then
-        log.debug("Bridge Path: " .. bridge_path)
-    end
+    log.debug(string.format("Bridge Path: %s", sidecar.bridge_path))
 
     if config.state.debugger.enable then
-        log.debug("Debugger Variant: " .. (config.state.debugger.force_variant or debugger.infer_variant()))
+        log.debug(
+            string.format("Debugger Variant: %s", config.state.debugger.force_variant or debugger.infer_variant())
+        )
     end
 
-    log.debug("Config: " .. vim.inspect(config.state))
+    log.debug(string.format("Config: %s", vim.inspect(config.state)))
 
     -- register hot reload when saving lua files
     if config.state.defold.hot_reload_enabled then
@@ -196,10 +189,10 @@ function M.load_plugin()
     end
 
     -- integrate with `:make`
-    if config.state.setup_make and bridge_ok then
+    if config.state.setup_make then
         local make_cmd = string.format(
             '"%s" build-game "%s" --min-severity %s',
-            bridge_path,
+            sidecar.bridge_path,
             project.project_root(),
             config.state.quickfix.min_severity
         )
@@ -266,9 +259,7 @@ function M.load_plugin()
         -- when a user runs DefoldFetch I recon they also expect us to update the dependencies
         editor.send_command("fetch-libraries", true)
 
-        project.install_dependencies(opt.bang)
-
-        update_lua_lsp_paths()
+        project.install_dependencies(opt.bang, update_lua_lsp_paths)
     end, { bang = true, nargs = 0, desc = "Fetch & create Defold project dependency annotations" })
 
     -- integrate the debugger into dap
@@ -289,16 +280,14 @@ function M.load_plugin()
     -- when a project is first opened, try to figure out the engine version
     vim.api.nvim_create_autocmd("BufEnter", {
         callback = function()
-            if project.refresh_annotations(update_lua_lsp_paths) then
-                update_lua_lsp_paths()
-            end
+            project.refresh_annotations(update_lua_lsp_paths)
         end,
     })
 
     project.refresh_annotations(update_lua_lsp_paths)
 
     if config.state.defold.auto_fetch_dependencies then
-        project.install_dependencies(false)
+        project.install_dependencies(false, update_lua_lsp_paths)
     end
 
     update_lua_lsp_paths()
@@ -317,11 +306,22 @@ function M.setup_default_editor()
     end
 
     local sidecar = require "defold.sidecar"
-    local ok, err = pcall(sidecar.set_default_editor, port, M.plugin_root(), config.state.launcher)
+    local ok, err = pcall(sidecar.set_default_editor, port, sidecar.bridge_path, config.state.launcher)
 
     if not ok then
         log.error(string.format("Could not set default editor because: %s", err))
     end
+end
+
+---Makes sure the required plugin components are installed and loaded
+---@param callback? fun() Callback called when the plugin components are ready
+function M.download(callback)
+    require("defold.sidecar").ensure(callback)
+end
+
+---Deletes all defold.nvim managed resources, restart Neovim after calling this
+function M.repair()
+    require("defold.repair").schedule()
 end
 
 return M

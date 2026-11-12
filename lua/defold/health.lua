@@ -16,8 +16,8 @@ function M.check()
 
     local sidecar_ok, sidecar = pcall(require, "defold.sidecar")
     ---@cast sidecar defold.Sidecar
-    if sidecar_ok and not require("defold.download").is_ready() then
-        vim.health.warn "Rust modules are not ready yet; retry after installation finishes"
+    if sidecar_ok and not sidecar.is_ready() then
+        vim.health.warn "Installation is not finished yet. Retry after it completes."
         return
     end
 
@@ -39,11 +39,8 @@ function M.check()
 
     vim.health.start "Bridge"
 
-    local bridge_path_ok, bridge_path = pcall(function()
-        assert(sidecar_ok, "Sidecar not available")
-        return sidecar.find_bridge_path(os.plugin_root())
-    end)
-    if bridge_path_ok then
+    local bridge_path = sidecar_ok and sidecar.bridge_path or nil
+    if bridge_path and os.file_exists(bridge_path) then
         vim.health.ok(string.format("Bridge Path: %s", bridge_path))
 
         local bridge_version_ok, bridge_version = pcall(function()
@@ -56,7 +53,7 @@ function M.check()
             vim.health.error(string.format("Bridge Version: Could not get version: %s", bridge_version))
         end
     else
-        vim.health.error(string.format("Bridge Not Found: %s", bridge_path))
+        vim.health.error(string.format("Bridge Not Found: %s", bridge_path or "not installed"))
     end
 
     vim.health.start "Defold"
@@ -64,8 +61,8 @@ function M.check()
     if not root then
         vim.health.warn "Could not find a Defold project"
     else
-        vim.health.start("Defold: " .. root)
-        vim.health.ok("Project Root: " .. root)
+        vim.health.start(string.format("Defold: %s", root))
+        vim.health.ok(string.format("Project Root: %s", root))
 
         if sidecar_ok then
             local port = project.editor_port()
@@ -73,9 +70,9 @@ function M.check()
                 vim.health.ok(string.format("Editor Port found at: %d", port))
                 local ok, version = pcall(sidecar.editor_version, root)
                 if ok then
-                    vim.health.ok("Editor Version: " .. version)
+                    vim.health.ok(string.format("Editor Version: %s", version))
                 else
-                    vim.health.warn("Could not query editor version: " .. tostring(version))
+                    vim.health.warn(string.format("Could not query editor version: %s", tostring(version)))
                 end
             else
                 vim.health.warn "Could not find editor port, is the editor running?"
@@ -86,7 +83,7 @@ function M.check()
                 return project.dependency_api_paths()
             end)
             if not ok then
-                vim.health.warn("Could not find dependencies: " .. tostring(deps))
+                vim.health.warn(string.format("Could not find dependencies: %s", tostring(deps)))
             else
                 for _, dep in ipairs(deps) do
                     local dirname = vim.fs.basename(dep)
@@ -114,9 +111,7 @@ function M.check()
 
         if variant == "native" then
             local port = require("defold.debugger.native").port()
-            vim.health.info(
-                port and string.format("Native Attach Port: %d", port) or "Native debugger port not discovered"
-            )
+            vim.health.info(port and string.format("Debugger Attach Port: %d", port) or "Debugger port not discovered")
         elseif variant == "moonbug" then
             if config.state.debugger.moonbug.port then
                 vim.health.info(string.format("Moonbug Port: %d", config.state.debugger.moonbug.port))
@@ -155,7 +150,7 @@ function M.check()
     if sidecar_ok and root then
         local ok, address = pcall(sidecar.resolve_nvim_server_addr, root, config.state.launcher.socket_type)
         if ok then
-            vim.health.ok("Server Address: " .. address)
+            vim.health.ok(string.format("Server Address: %s", address))
         else
             vim.health.error "Could not determine server address"
         end

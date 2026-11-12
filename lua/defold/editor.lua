@@ -67,7 +67,7 @@ function M.send_command(command, dont_report_error)
     )
 end
 
----@param severity defold.sidecar.IssueSeverity
+---@param severity? defold.sidecar.IssueSeverity
 ---@return integer
 local function issue_severity_value(severity)
     if severity == "information" then

@@ -3,17 +3,6 @@ local M = {}
 local user_agent =
     "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36"
 
----@param command string
----@return string
-function M.exec(command)
-    local log = require "defold.service.logger"
-
-    log.debug("Exec: " .. command)
-    local res = vim.fn.system(command)
-    log.debug("Result => " .. res)
-    return res
-end
-
 ---Test if a command exists on the system
 ---@return boolean
 function M.command_exists(cmd)
@@ -69,17 +58,19 @@ function M.architecture()
 end
 
 ---Download file asynchronously at url and download it to to_path
----@param url string
----@param to_path string
----@param callback fun(err?: string)
-function M.download(url, to_path, callback)
+---@param url          string
+---@param to_path      string
+---@param callback     fun(err?: string)
+---@param on_progress? fun(bytes: integer)
+function M.download(url, to_path, callback, on_progress)
+    local log = require "defold.service.logger"
     local command
 
     if M.is_windows() then
         ---@param value string
         ---@return string
         local function quote(value)
-            return "'" .. value:gsub("'", "''") .. "'"
+            return string.format("'%s'", value:gsub("'", "''"))
         end
 
         command = {
@@ -87,9 +78,12 @@ function M.download(url, to_path, callback)
             "-NoProfile",
             "-NonInteractive",
             "-Command",
-            "$ErrorActionPreference = 'Stop'; Invoke-WebRequest -Uri " .. quote(url) .. " -UserAgent " .. quote(
-                user_agent
-            ) .. " -OutFile " .. quote(to_path),
+            string.format(
+                "$ErrorActionPreference = 'Stop'; Invoke-WebRequest -Uri %s -UserAgent %s -OutFile %s",
+                quote(url),
+                quote(user_agent),
+                quote(to_path)
+            ),
         }
     elseif M.command_exists "curl" then
         command = { "curl", "-fLsS", "--user-agent", user_agent, "-o", to_path, url }
@@ -100,24 +94,65 @@ function M.download(url, to_path, callback)
         return
     end
 
+    local timer = nil
+
+    if on_progress then
+        timer = vim.uv.new_timer()
+    end
+
+    local function finish(err)
+        if err then
+            log.debug(string.format("Download failed: %s: %s", url, err))
+        else
+            log.debug(string.format("Download completed: %s", to_path))
+        end
+
+        if timer then
+            timer:stop()
+            timer:close()
+        end
+
+        callback(err)
+    end
+
+    if timer then
+        timer:start(
+            0,
+            100,
+            vim.schedule_wrap(function()
+                if not timer:is_closing() then
+                    local stat = vim.uv.fs_stat(to_path)
+                    if stat and on_progress then
+                        on_progress(stat.size)
+                    end
+                end
+            end)
+        )
+    end
+
+    log.debug(string.format("Downloading %s to %s", url, to_path))
+
     local ok, err = pcall(
         vim.system,
         command,
         { text = true },
         vim.schedule_wrap(function(result)
-            callback(
-                result.code ~= 0 and ("Download failed: " .. (result.stderr or "") .. " (exit " .. result.code .. ")")
-                    or nil
-            )
+            if result.code ~= 0 then
+                finish(string.format("Download failed: %s (exit %d)", result.stderr or "", result.code))
+                return
+            end
+
+            finish()
         end)
     )
+
     if not ok then
-        callback(tostring(err))
+        finish(tostring(err))
     end
 end
 
 ---Fetch JSON asynchronously.
----@param url string
+---@param url      string
 ---@param callback fun(data: any, err?: string)
 function M.fetch_json(url, callback)
     local tmp_path = vim.fn.tempname()
@@ -132,29 +167,53 @@ function M.fetch_json(url, callback)
             return vim.json.decode(table.concat(vim.fn.readfile(tmp_path), "\n"))
         end)
         os.remove(tmp_path)
-        callback(ok and data or nil, not ok and tostring(data) or nil)
+        if not ok then
+            callback(nil, tostring(data))
+            return
+        end
+
+        callback(data)
     end)
 end
 
----Move file from location a to b
----@param from_path string
----@param to_path string
-function M.move(from_path, to_path)
-    if M.is_windows() then
-        M.exec(string.format("powershell.exe -Command \"Move-Item -Path '%s' -Destination '%s'\"", from_path, to_path))
-        return
-    end
+---Copy a file, creating its destination directory.
+---@param source string
+---@param target string
+function M.copy(source, target)
+    local log = require "defold.service.logger"
 
-    M.exec(string.format("mv '%s' '%s'", from_path, to_path))
+    vim.fn.mkdir(vim.fs.dirname(target), "p")
+    local ok, err = vim.uv.fs_copyfile(source, target)
+    if not ok then
+        log.fatal(tostring(err))
+    end
 end
 
----Make application executable
----@param path any
-function M.make_executable(path)
-    if M.is_windows() then
-        return
+---Write text
+---@param path    string
+---@param content string
+function M.write(path, content)
+    local log = require "defold.service.logger"
+
+    local file, err = io.open(path, "w")
+    if not file then
+        return log.fatal(tostring(err))
     end
-    M.exec(string.format("chmod +x '%s'", path))
+
+    local written, write_err = file:write(content)
+    local closed, close_err = file:close()
+
+    if not written or not closed then
+        log.fatal(tostring(write_err or close_err))
+    end
+end
+
+---@param path      string
+---@param threshold integer Seconds
+---@return boolean
+function M.was_updated_within(path, threshold)
+    local stat = vim.uv.fs_stat(path)
+    return stat ~= nil and vim.fn.localtime() - stat.mtime.sec < threshold
 end
 
 function M.file_exists(path)
@@ -209,22 +268,6 @@ function M.cache_dir()
     return dir
 end
 
----Writes (and overwrites if present) `content` to `path`
----@param path string
----@param content string
-function M.write(path, content)
-    local file = io.open(path, "w")
-
-    if not file then
-        local log = require "defold.service.logger"
-        log.error(string.format("Could not open file for writing: %s", path))
-        return
-    end
-
-    file:write(content)
-    file:close()
-end
-
 ---Read file to string
 ---@param path string
 ---@return string|nil
@@ -241,34 +284,6 @@ function M.read_to_string(path)
     file:close()
 
     return content
-end
-
----Checks if a file was updated within `threshold`
----@param path string
----@param threshold integer time in seconds
----@return boolean
-function M.was_updated_within(path, threshold)
-    local stat = vim.uv.fs_stat(path)
-    if not stat then
-        return false -- doesnt exist, wasnt updated
-    end
-
-    local current_time = os.time()
-    local last_modified = stat.mtime.sec
-
-    return (current_time - last_modified) <= threshold
-end
-
----@param n integer
----@return integer
-function M.hours(n)
-    return n * 60 * 60
-end
-
----@param n integer
----@return integer
-function M.days(n)
-    return n * M.hours(24)
 end
 
 return M

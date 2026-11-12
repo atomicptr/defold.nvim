@@ -1,12 +1,9 @@
 local M = {}
 
----@param install_when_not_present? boolean
 ---@return string|nil
-function M.get_path(install_when_not_present)
+function M.get_path()
     local config = require "defold.config"
     local os = require "defold.service.os"
-    local log = require "defold.service.logger"
-    local sidecar = require "defold.sidecar"
 
     if config.state.debugger.mobdebug.mobdap_executable then
         return config.state.debugger.mobdebug.mobdap_executable
@@ -16,39 +13,83 @@ function M.get_path(install_when_not_present)
         return vim.fn.exepath "mobdap"
     end
 
-    if M.path then
-        return M.path
-    end
+    return M.path
+end
 
-    if not install_when_not_present then
-        return nil
-    end
+---@param on_ready? fun(path: string)
+function M.setup(on_ready)
+    local log = require "defold.service.logger"
+    local os = require "defold.service.os"
+    local sidecar = require "defold.sidecar"
+    local download = require "defold.download"
 
-    local ok, res = pcall(sidecar.mobdap_install)
-    if not ok then
-        log.error(string.format("Could not install mobdap: %s", res))
+    local path = M.get_path()
+    if path then
+        if on_ready then
+            on_ready(path)
+        end
+
         return
     end
 
-    M.path = res
-    return res
-end
+    local data = sidecar.data_dir()
 
-function M.setup()
-    M.get_path(true)
+    local archive = "tar.gz"
+    local filename = "mobdap"
+
+    if os.is_windows() then
+        archive = "zip"
+        filename = "mobdap.exe"
+    end
+
+    local architecture = os.architecture()
+
+    if architecture == "aarch64" then
+        architecture = "arm64"
+    end
+
+    download.ensure({
+        name = "Mobdap",
+        owner = "atomicptr",
+        repo = "mobdap",
+        asset = string.format("mobdap-%s-%s.%s", os.name(), architecture, archive),
+
+        path = vim.fs.joinpath(data, "bin", filename),
+        version_path = vim.fs.joinpath(data, "meta", "mobdap_version"),
+
+        archive = true,
+        entry = filename,
+        executable = true,
+    }, function(installed, err)
+        if not installed then
+            log.error(string.format("Installation failed (Mobdap): %s", tostring(err)))
+            return
+        end
+
+        M.path = installed
+
+        if on_ready then
+            on_ready(installed)
+        end
+    end)
 end
 
 function M.register()
+    local log = require "defold.service.logger"
     local config = require "defold.config"
     local dap = require "dap"
     local project = require "defold.project"
 
-    dap.adapters.defold_nvim_mobdebug = {
-        id = "defold_nvim_mobdebug",
-        type = "executable",
-        command = M.get_path(),
-        args = config.state.debugger.mobdebug.mobdap_arguments,
-    }
+    dap.adapters.defold_nvim_mobdebug = function(callback)
+        M.setup(function(path)
+            callback {
+                id = "defold_nvim_mobdebug",
+                type = "executable",
+                command = path,
+                args = config.state.debugger.mobdebug.mobdap_arguments,
+            }
+        end)
+    end
 
     dap.configurations.lua = {
         {
@@ -71,7 +112,7 @@ function M.register()
     }
 
     dap.listeners.after["event_mobdap_waiting_for_connection"].defold_nvim_start_game = function()
-        require("defold.service.logger").debug "debugger: connected"
+        log.debug "debugger: connected"
         require("defold.editor").run_game "send"
     end
 end

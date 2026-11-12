@@ -6,9 +6,9 @@ use std::{
 use anyhow::Result;
 use clap::{ArgAction, Parser, Subcommand};
 use defold_nvim_core::{
-    defold_annotations, editor,
+    editor,
     focus::{focus_game, focus_neovim},
-    mobdap, neovide, path, project, script_api,
+    path, project, script_api,
 };
 use tracing::Level;
 use tracing_appender::rolling::never;
@@ -70,18 +70,6 @@ enum Commands {
     },
     /// Focus the game
     FocusGame {
-        #[clap(value_name = "GAME_ROOT_DIR", index = 1)]
-        game_root_dir: String,
-    },
-    /// Downloads Neovide
-    DownloadNeovide,
-    /// Downloads Mobdap Debugger
-    DownloadMobdap,
-    /// Install dependencies for game
-    InstallDependencies {
-        #[clap(long = "force-redownload")]
-        force_redownload: bool,
-
         #[clap(value_name = "GAME_ROOT_DIR", index = 1)]
         game_root_dir: String,
     },
@@ -188,36 +176,8 @@ fn main() -> Result<()> {
         )?,
         Commands::FocusNeovim { game_root_dir } => focus_neovim(absolute(game_root_dir)?)?,
         Commands::FocusGame { game_root_dir } => focus_game(absolute(game_root_dir)?)?,
-        Commands::DownloadNeovide => {
-            let path = neovide::install()?;
-            println!("Installed neovide at {}", path.display());
-        }
-        Commands::DownloadMobdap => {
-            let path = mobdap::install()?;
-            println!("Installed mobdap at {}", path.display());
-        }
-        Commands::InstallDependencies {
-            force_redownload,
-            game_root_dir,
-        } => {
-            let root_dir = absolute(&game_root_dir)?;
-
-            let version = editor::version(&root_dir).ok();
-            if let Err(err) = defold_annotations::ensure(version.as_deref()) {
-                tracing::warn!("Could not update Defold annotations: {err:#}");
-            }
-
-            project::install_dependencies(&root_dir, force_redownload)?;
-            println!("Finished installing dependencies for {game_root_dir}");
-        }
         Commands::ListDependencies { game_root_dir } => {
             let root_dir = absolute(&game_root_dir)?;
-
-            if let Ok(dir) = defold_annotations::cached_dir()
-                && dir.is_dir()
-            {
-                tracing::info!("{}", dir.display());
-            }
 
             for dir in project::list_dependency_dirs(&root_dir)? {
                 tracing::info!("{}", dir.display());

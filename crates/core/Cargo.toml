@@ -6,7 +6,6 @@ edition = "2024"
 [dependencies]
 anyhow = { version = "1.0.104", features = ["backtrace"] }
 tar = "0.4.46"
-version-compare = "0.2.1"
 flate2 = "1.1.11"
 zip = "9.5.1"
 dirs = "7.0.0"
@@ -22,7 +21,6 @@ sha3 = "0.12.0"
 strum = { version = "0.28.0", features = ["derive"] }
 tracing = "0.1.44"
 which = "8.0.6"
-url = "2.5.8"
 walkdir = "2.5.0"
 serde_yaml = "0.9.34"
 textwrap = "0.16.4"

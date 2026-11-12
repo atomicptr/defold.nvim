@@ -1,6 +1,7 @@
 local M = {}
 
 function M.register()
+    local log = require "defold.service.logger"
     local config = require "defold.config"
     local dap = require "dap"
 
@@ -17,7 +18,7 @@ function M.register()
             name = "defold.nvim: Launch Game & Attach",
             project_root_dir = "${workspaceFolder}",
             before = function()
-                require("defold.service.logger").debug "debugger: connected"
+                log.debug "debugger: connected"
                 require("defold.editor").run_game "send"
             end,
             -- TODO: offer this only when no game is running

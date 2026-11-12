@@ -11,7 +11,11 @@ local styles = {
 ---@param style defold.snippets.NamingStyle
 ---@return string
 local function format_name(name, style)
-    assert(styles[style], "Unknown Defold snippet naming style: " .. tostring(style))
+    local log = require "defold.service.logger"
+
+    if not styles[style] then
+        log.fatal(string.format("Unknown Defold snippet naming style: %s", tostring(style)))
+    end
 
     if style ~= "preserve" then
         local separated = name:gsub("(%u)(%u%l)", "%1_%2"):gsub("([%l%d])(%u)", "%1_%2")
@@ -29,7 +33,10 @@ local function format_name(name, style)
         name = table.concat(words, style == "PascalCase" and "" or "_")
     end
 
-    assert(name:match "^[%a_][%w_]*$", "Cannot generate a class name from: " .. name)
+    if not name:match "^[%a_][%w_]*$" then
+        log.fatal(string.format("Cannot generate a class name from: %s", name))
+    end
+
     return name
 end
 
@@ -39,9 +46,19 @@ end
 function M.class_name_from_buffer(bufnr)
     local config = require "defold.config"
     local project = require "defold.project"
-    local root = assert(project.project_root(), "No Defold project found")
+    local log = require "defold.service.logger"
+
+    local root = project.project_root()
+    if not root then
+        log.fatal "No Defold project found"
+    end
+
     local filename = vim.api.nvim_buf_get_name(bufnr or 0)
-    local relative = assert(vim.fs.relpath(root, filename), "Buffer is outside the Defold project")
+    local relative = vim.fs.relpath(root, filename)
+    if not relative then
+        log.fatal "Buffer is outside the Defold project"
+    end
+
     local parts = vim.split(relative, "/", { plain = true })
     local basename = table.remove(parts):gsub("%.[^.]+$", "")
     local class_name = format_name(basename, config.state.snippets.class_naming_style)

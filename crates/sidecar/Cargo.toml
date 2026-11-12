@@ -10,7 +10,6 @@ crate-type = ["cdylib"]
 [dependencies]
 anyhow = { version = "1.0.104", features = ["backtrace"] }
 defold-nvim-core = { path = "../core" }
-dirs = "7.0.0"
 mlua = { version = "0.12.2", features = [
     "module",
     "luajit",
