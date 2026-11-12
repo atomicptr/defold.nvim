@@ -27,6 +27,8 @@ The minimum supported Defold version is: **1.14.1**
 - MacOS 🍎   - Experimental, both ARM and Intel Macs are supported
 - Windows 🪟 - Experimental
 
+On Linux, error dialogs optionally require Zenity, KDialog, or YAD, otherwise errors are console only.
+
 ### Launchers
 
 Since Neovim is a terminal based application it has to be run through something, by default we do this through [Neovide](https://neovide.dev/) or a terminal

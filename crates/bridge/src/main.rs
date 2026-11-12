@@ -19,6 +19,7 @@ use crate::{
 };
 
 mod build_game;
+mod error_dialog;
 mod launcher;
 mod plugin_config;
 mod utils;
@@ -36,6 +37,10 @@ struct Args {
 enum Commands {
     /// Open a file in Neovim or launch a new instance
     LaunchNeovim {
+        /// Show a native error dialog if launching fails
+        #[arg(long)]
+        show_error_dialog: bool,
+
         #[arg(long = "launcher-type")]
         launcher_type: Option<LauncherType>,
 
@@ -106,6 +111,8 @@ enum Commands {
         #[arg(long, action = ArgAction::SetTrue)]
         disable_logs: bool,
     },
+    /// Show a sample launch error dialog
+    TestErrorDialog,
     /// Print the version of this executable
     Version,
 }
@@ -125,7 +132,7 @@ fn main() -> Result<()> {
 
     fs::create_dir_all(&logs)?;
 
-    let (logfile, _logfile_guard) = tracing_appender::non_blocking(never(logs, "bridge.log"));
+    let (logfile, _logfile_guard) = tracing_appender::non_blocking(never(&logs, "bridge.log"));
 
     tracing_subscriber::fmt()
         .with_file(true)
@@ -161,19 +168,31 @@ fn main() -> Result<()> {
             game_root_dir,
             file,
             line,
-        } => launcher::run(
-            &PluginConfig {
-                launcher_type,
-                socket_type,
-                executable,
-                appname,
-                run_arg,
-                arguments,
-            },
-            absolute(game_root_dir)?,
-            &absolute(file)?,
-            line,
-        )?,
+            show_error_dialog,
+        } => {
+            let result = launcher::run(
+                &PluginConfig {
+                    launcher_type,
+                    socket_type,
+                    executable,
+                    appname,
+                    run_arg,
+                    arguments,
+                },
+                absolute(game_root_dir)?,
+                &absolute(file)?,
+                line,
+            );
+
+            if show_error_dialog
+                && let Err(error) = &result
+                && let Err(dialog_error) = error_dialog::show(error, Some(&logs.join("bridge.log")))
+            {
+                eprintln!("Could not show launch error dialog: {dialog_error}");
+            }
+
+            result?;
+        }
         Commands::FocusNeovim { game_root_dir } => focus_neovim(absolute(game_root_dir)?)?,
         Commands::FocusGame { game_root_dir } => focus_game(absolute(game_root_dir)?)?,
         Commands::ListDependencies { game_root_dir } => {
@@ -220,6 +239,12 @@ fn main() -> Result<()> {
             };
 
             build_game(port, min_severity, !disable_logs)?
+        }
+        Commands::TestErrorDialog => {
+            let error = anyhow::anyhow!("This is a test error; no Neovim launch was attempted.")
+                .context("Testing the launch error dialog");
+
+            error_dialog::show(&error, Some(&logs.join("bridge.log")))?;
         }
         Commands::Version => {
             println!("{}", env!("CARGO_PKG_VERSION"));
