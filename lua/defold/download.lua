@@ -22,6 +22,8 @@ function M.download(callback)
     end
 
     if not download_state.downloading then
+        local was_repaired = false
+
         download_state.downloading = true
         download_state.ready = false
 
@@ -38,6 +40,10 @@ function M.download(callback)
 
             download_state.ready = true
 
+            if was_repaired then
+                log.info "Repair successful"
+            end
+
             for cb in pairs(callbacks) do
                 local ok, callback_err = pcall(cb)
                 if not ok then
@@ -46,7 +52,11 @@ function M.download(callback)
             end
         end
 
-        local ok, err = pcall(require("defold.sidecar").ensure, finish)
+        local ok, err = pcall(function()
+            was_repaired = require("defold.repair").apply_pending() or false
+            require("defold.sidecar").ensure(finish)
+        end)
+
         if not ok then
             finish(tostring(err))
         end

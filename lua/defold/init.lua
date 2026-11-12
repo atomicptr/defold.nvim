@@ -139,6 +139,11 @@ function M.download(callback)
     require("defold.download").download(callback)
 end
 
+---Deletes all defold.nvim managed resources, restart Neovim after calling this
+function M.repair()
+    require("defold.repair").schedule()
+end
+
 function M.load_plugin()
     if M.loaded then
         return

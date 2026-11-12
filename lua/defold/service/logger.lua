@@ -57,4 +57,9 @@ function M.error(message)
     log(vim.log.levels.ERROR, message)
 end
 
+function M.fatal(message)
+    M.error(message)
+    error(message, 2)
+end
+
 return M

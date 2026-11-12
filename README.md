@@ -354,6 +354,12 @@ There are also logs available, you can find the paths inside `:checkhealth defol
 - **System > Cache Dir**: The location of the plugin logs
 - **Sidecar > Sidecar Cache Dir**: The location of the sidecar (Neovim native extension) and bridge (Tool that calls Neovim instances)
 
+To repair/re-install all managed defold.nvim state:
+
+- Run `:lua require("defold").repair()`
+- Close all Neovim instances and restart Neovim
+- Done
+
 ## License
 
 GPLv3
