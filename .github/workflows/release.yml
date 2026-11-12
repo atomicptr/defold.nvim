@@ -16,8 +16,8 @@ jobs:
       matrix:
         config:
           - name: Linux x86
-            os: ubuntu-latest
-            cargo-tools: cargo-edit,cargo-zigbuild
+            os: ubuntu-22.04
+            cargo-tools: cargo-edit
             artifact:
               sidecar: target/x86_64-unknown-linux-gnu/release/libdefold_nvim_sidecar.so
               bridge: target/x86_64-unknown-linux-gnu/release/defold-nvim-bridge
@@ -60,8 +60,6 @@ jobs:
       - uses: taiki-e/install-action@v2
         with:
           tool: ${{ matrix.config.cargo-tools }}
-      - uses: mlugg/setup-zig@v2
-        if: contains(matrix.config.os, 'ubuntu')
 
       - name: set version ${{ matrix.config.name }}
         shell: bash
@@ -73,7 +71,7 @@ jobs:
       - name: build ${{ matrix.config.name }}
         if: contains(matrix.config.os, 'ubuntu')
         run: |
-          cargo zigbuild --release --target x86_64-unknown-linux-gnu.2.17
+          cargo build --release --locked --target x86_64-unknown-linux-gnu
 
       - name: build ${{ matrix.config.name }}
         if: contains(matrix.config.os, 'macos')
@@ -85,6 +83,8 @@ jobs:
 
       - name: prepare ${{ matrix.config.name }}
         run: |
+          mkdir -p target/release
+
           # rename builds to be unique
           mv "${{ matrix.config.artifact.sidecar }}" "${{ matrix.config.dist.sidecar }}"
           mv "${{ matrix.config.artifact.bridge }}" "${{ matrix.config.dist.bridge }}"
