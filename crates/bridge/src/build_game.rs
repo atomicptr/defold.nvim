@@ -137,7 +137,12 @@ where
 fn stream_logs(sys: &mut System, port: u16, game_pid: u32) -> Result<()> {
     let stream_url = editor::console_stream_url(port);
 
-    let mut response = reqwest::blocking::get(&stream_url)?.error_for_status()?;
+    let mut response = reqwest::blocking::Client::builder()
+        .no_proxy()
+        .build()?
+        .get(&stream_url)
+        .send()?
+        .error_for_status()?;
 
     let (tx, rx) = channel::<Vec<u8>>();
 

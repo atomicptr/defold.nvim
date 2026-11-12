@@ -186,7 +186,9 @@ pub fn set_default_editor(
 
     let url = format!("http://localhost:{port}/prefs/code");
 
-    reqwest::blocking::Client::new()
+    reqwest::blocking::Client::builder()
+        .no_proxy()
+        .build()?
         .post(url)
         .json(&config)
         .send()?;
