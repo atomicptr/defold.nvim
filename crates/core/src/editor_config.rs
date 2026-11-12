@@ -195,3 +195,95 @@ pub fn set_default_editor(
 
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn settings() -> LauncherSettings {
+        LauncherSettings {
+            launcher_type: None,
+            executable: None,
+            socket_type: None,
+            run_arg: None,
+            arguments: None,
+            appname: None,
+            debug: None,
+        }
+    }
+
+    #[test]
+    fn defaults_to_neovide_without_optional_flags() {
+        let settings = settings();
+
+        assert_eq!(
+            settings.bridge_pre_cli_args(),
+            ["--launcher-type", "neovide"]
+        );
+        assert_eq!(settings.bridge_post_cli_args().len(), 0);
+    }
+
+    #[test]
+    fn maps_launcher_settings_to_bridge_flags_without_splitting_values() {
+        for (launcher_type, launcher_name, socket_type, socket_name) in [
+            (
+                LauncherType::Terminal,
+                "terminal",
+                SocketType::Fsock,
+                "fsock",
+            ),
+            (
+                LauncherType::Neovide,
+                "neovide",
+                SocketType::Netsock,
+                "netsock",
+            ),
+        ] {
+            let settings = LauncherSettings {
+                launcher_type: Some(launcher_type),
+                socket_type: Some(socket_type),
+                executable: Some("custom launcher".into()),
+                appname: Some("my nvim".into()),
+                run_arg: Some("--execute".into()),
+                ..settings()
+            };
+
+            assert_eq!(
+                settings.bridge_pre_cli_args(),
+                [
+                    "--launcher-type",
+                    launcher_name,
+                    "--socket-type",
+                    socket_name,
+                    "--executable",
+                    "custom launcher",
+                    "--appname",
+                    "my nvim",
+                    "--run-arg",
+                    "--execute",
+                ]
+            );
+        }
+    }
+
+    #[test]
+    fn separates_launcher_arguments_from_bridge_options() {
+        let settings = LauncherSettings {
+            arguments: Some(vec![
+                "--socket-type".into(),
+                "literal value with spaces".into(),
+                String::new(),
+            ]),
+            ..settings()
+        };
+
+        assert_eq!(
+            settings.bridge_post_cli_args(),
+            ["--", "--socket-type", "literal value with spaces", ""]
+        );
+        assert_eq!(
+            settings.bridge_pre_cli_args(),
+            ["--launcher-type", "neovide"]
+        );
+    }
+}

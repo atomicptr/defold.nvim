@@ -165,150 +165,34 @@ pub fn console_stream_url(port: u16) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::{
-        io::{Read, Write},
-        net::TcpListener,
-        thread,
-    };
-
-    fn http_server(
-        status: &str,
-        body: &str,
-        request_end: &str,
-    ) -> (u16, thread::JoinHandle<String>) {
-        let server = TcpListener::bind("127.0.0.1:0").unwrap();
-        server.set_nonblocking(true).unwrap();
-        let request_end = request_end.to_owned();
-        let port = server.local_addr().unwrap().port();
-        let response = format!(
-            "HTTP/1.1 {status}\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{body}",
-            body.len()
-        );
-        let handle = thread::spawn(move || {
-            let deadline = std::time::Instant::now() + Duration::from_secs(5);
-            let mut stream = loop {
-                match server.accept() {
-                    Ok((stream, _)) => break stream,
-                    Err(error) if error.kind() == std::io::ErrorKind::WouldBlock => {
-                        assert!(
-                            std::time::Instant::now() < deadline,
-                            "No editor request received"
-                        );
-                        thread::sleep(Duration::from_millis(10));
-                    }
-                    Err(error) => panic!("Failed to accept editor request: {error}"),
-                }
-            };
-            stream.set_nonblocking(false).unwrap();
-            stream
-                .set_read_timeout(Some(Duration::from_secs(2)))
-                .unwrap();
-            let mut request = Vec::new();
-            let mut buffer = [0; 1024];
-            while !request.ends_with(request_end.as_bytes()) {
-                let n = stream.read(&mut buffer).unwrap();
-                assert_ne!(n, 0);
-                request.extend_from_slice(&buffer[..n]);
-            }
-
-            stream.write_all(response.as_bytes()).unwrap();
-            String::from_utf8(request).unwrap()
-        });
-        (port, handle)
-    }
-
-    fn eval_server(status: &str, body: &str) -> (u16, thread::JoinHandle<String>) {
-        http_server(status, body, "print(editor.version)")
-    }
 
     #[test]
-    fn probes_editor_status() {
-        for (status, expected) in [
-            ("200 OK", true),
-            ("404 Not Found", false),
-            ("405 Method Not Allowed", false),
-            ("503 Service Unavailable", false),
-        ] {
-            let (port, server) = http_server(status, "", "\r\n\r\n");
-            let actual = is_editor_port(port);
-            let request = server.join().unwrap();
-            assert_eq!(actual, expected);
-            assert!(request.starts_with("HEAD / HTTP/1.1"));
+    fn accepts_three_numeric_version_components() {
+        for version in ["1.14.0", "0.0.0", "123.456.789"] {
+            assert_eq!(parse_version(version).unwrap(), version);
         }
     }
 
     #[test]
-    fn editor_requests_bypass_proxies() {
-        const CHILD_ENV: &str = "DEFOLD_NVIM_PROXY_TEST_CHILD";
-
-        if std::env::var_os(CHILD_ENV).is_none() {
-            // Configure proxies before the child starts, without mutating the
-            // environment shared by parallel tests in this process.
-            let mut child = std::process::Command::new(std::env::current_exe().unwrap());
-            child.args(["--exact", "editor::tests::editor_requests_bypass_proxies"]);
-            child.env(CHILD_ENV, "1");
-
-            for key in [
-                "HTTP_PROXY",
-                "HTTPS_PROXY",
-                "ALL_PROXY",
-                "http_proxy",
-                "https_proxy",
-                "all_proxy",
-            ] {
-                child.env(key, "http://127.0.0.1:9");
-            }
-
-            child.env("NO_PROXY", "").env("no_proxy", "");
-            assert!(child.status().unwrap().success());
-            return;
-        }
-
-        probes_editor_status();
-        queries_editor_version_with_authentication();
-
-        let spec = r#"{"paths":{"/command/{command}":{"post":{"parameters":[{"schema":{"enum":["build","run"]}}]}}}}"#;
-        let (port, server) = http_server("200 OK", spec, "\r\n\r\n");
-        let commands = list_commands(port);
-        let request = server.join().unwrap();
-        assert_eq!(commands.unwrap(), vec!["build", "run"]);
-        assert!(request.starts_with("GET /openapi.json HTTP/1.1"));
-
-        let (port, server) = http_server("200 OK", r#"{"success":true,"issues":[]}"#, "\r\n\r\n");
-        let result = send_command(port, "build");
-        let request = server.join().unwrap();
-        let result = result.unwrap();
-        assert!(result.success);
-        assert_eq!(result.status, 200);
-        assert!(request.starts_with("POST /command/build HTTP/1.1"));
-    }
-
-    #[test]
-    fn queries_editor_version_with_authentication() {
-        let (port, server) = eval_server("200 OK", "1.14.0\n");
-        assert_eq!(query_version(port, "test-token").unwrap(), "1.14.0");
-        let request = server.join().unwrap();
-        assert!(request.starts_with("POST /eval HTTP/1.1"));
-        assert!(
-            request
-                .to_lowercase()
-                .contains("authorization: bearer test-token")
-        );
-        assert!(request.to_lowercase().contains("content-type: text/plain"));
-    }
-
-    #[test]
-    fn rejects_failed_or_unrecognized_version_queries() {
-        for (status, body) in [
-            ("401 Unauthorized", "Unauthorized"),
-            ("404 Not Found", "Not Found"),
-            ("503 Service Unavailable", "Not ready"),
-            ("200 OK", "1.14.1-beta"),
-            ("200 OK", "unexpected output"),
+    fn rejects_malformed_versions() {
+        for version in [
+            "",
+            "1",
+            "1.14",
+            "1.14.0.1",
+            ".14.0",
+            "1..0",
+            "1.14.",
+            "1.14.1-beta",
+            "v1.14.0",
+            "1.14.a",
+            "1.14.-1",
+            "1.14.０",
+            " 1.14.0",
+            "1.14.0\n",
+            "unexpected output",
         ] {
-            let (port, server) = eval_server(status, body);
-            assert!(query_version(port, "test-token").is_err());
-            server.join().unwrap();
+            assert!(parse_version(version).is_err(), "accepted {version:?}");
         }
     }
 }

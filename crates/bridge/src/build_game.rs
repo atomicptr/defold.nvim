@@ -191,3 +191,107 @@ fn process_alive(sys: &mut System, pid: u32) -> bool {
     sys.refresh_processes(sysinfo::ProcessesToUpdate::Some(&[process]), true);
     sys.process(process).is_some()
 }
+
+#[cfg(test)]
+mod tests {
+    use super::issue_to_defold_error;
+    use defold_nvim_core::editor_commands::{Issue, Position, Range};
+
+    fn issue() -> Issue {
+        Issue {
+            message: "Undefined variable: player".to_owned(),
+            severity: "error".to_owned(),
+            resource: Some("/main/player.script".to_owned()),
+            range: None,
+        }
+    }
+
+    #[test]
+    fn issues_without_resources_are_not_reported() {
+        let mut issue = issue();
+        issue.resource = None;
+
+        assert_eq!(issue_to_defold_error(&issue), None);
+    }
+
+    #[test]
+    fn resources_have_only_one_leading_forward_slash_removed() {
+        for (resource, expected_path) in [
+            ("/main/player.script", "main/player.script"),
+            ("main/player.script", "main/player.script"),
+            ("//main/player.script", "/main/player.script"),
+            (r"\main\player.script", r"\main\player.script"),
+            ("", ""),
+        ] {
+            let mut issue = issue();
+            issue.resource = Some(resource.to_owned());
+
+            assert_eq!(
+                issue_to_defold_error(&issue),
+                Some(format!(
+                    "ERROR:SCRIPT: {expected_path}:1: Undefined variable: player"
+                )),
+                "resource: {resource:?}"
+            );
+        }
+    }
+
+    #[test]
+    fn severity_is_case_insensitive_and_defaults_to_error() {
+        for (severity, expected_severity) in [
+            ("warning", "WARNING"),
+            ("WaRnInG", "WARNING"),
+            ("info", "INFO"),
+            ("InFo", "INFO"),
+            ("error", "ERROR"),
+            ("ERROR", "ERROR"),
+            ("unknown", "ERROR"),
+            ("", "ERROR"),
+        ] {
+            let mut issue = issue();
+            issue.severity = severity.to_owned();
+
+            assert_eq!(
+                issue_to_defold_error(&issue),
+                Some(format!(
+                    "{expected_severity}:SCRIPT: main/player.script:1: Undefined variable: player"
+                )),
+                "severity: {severity:?}"
+            );
+        }
+    }
+
+    #[test]
+    fn range_start_line_is_converted_from_zero_based_to_one_based() {
+        for (start_line, expected_line) in [(0, 1), (41, 42)] {
+            let mut issue = issue();
+            issue.range = Some(Range {
+                start: Position {
+                    line: start_line,
+                    character: 12,
+                },
+                end: Position {
+                    line: start_line + 3,
+                    character: 24,
+                },
+            });
+
+            assert_eq!(
+                issue_to_defold_error(&issue),
+                Some(format!(
+                    "ERROR:SCRIPT: main/player.script:{expected_line}: Undefined variable: player"
+                ))
+            );
+        }
+    }
+
+    #[test]
+    fn missing_range_defaults_to_first_line() {
+        let issue = issue();
+
+        assert_eq!(
+            issue_to_defold_error(&issue).as_deref(),
+            Some("ERROR:SCRIPT: main/player.script:1: Undefined variable: player")
+        );
+    }
+}

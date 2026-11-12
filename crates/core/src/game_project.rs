@@ -74,6 +74,50 @@ mod tests {
     use pretty_assertions::assert_eq;
 
     #[test]
+    fn rejects_projects_without_required_metadata() {
+        for (source, expected) in [
+            ("[library]\ninclude_dirs = api", "no [project] section"),
+            (
+                "[project]\nversion = 1.0",
+                "no title field in [project] section",
+            ),
+        ] {
+            let error = GameProject::try_from(source.to_string()).unwrap_err();
+            assert!(error.to_string().contains(expected), "{error}");
+        }
+    }
+
+    #[test]
+    fn defaults_optional_dependencies_and_library() {
+        let project = GameProject::try_from("[project]\ntitle = Minimal".to_string()).unwrap();
+
+        assert_eq!(project.dependencies.len(), 0);
+        assert!(project.library.is_none());
+
+        let project = GameProject::try_from(
+            "[project]\ntitle = Minimal\n[library]\nother = ignored".to_string(),
+        )
+        .unwrap();
+
+        assert_eq!(project.library.unwrap().include_dirs.len(), 0);
+    }
+
+    #[test]
+    fn trims_library_directories_and_filters_dependency_keys() {
+        let project = GameProject::try_from(
+            "[project]\ntitle = Library\ndependencies#1 = first.zip\ndependencies#2 = second.zip\ndependencies = ignored.zip\n[library]\ninclude_dirs = api, scripts/internal , resources"
+                .to_string(),
+        )
+        .unwrap();
+
+        assert_eq!(project.dependencies, ["first.zip", "second.zip"]);
+        assert_eq!(
+            project.library.unwrap().include_dirs,
+            ["api", "scripts/internal", "resources"]
+        );
+    }
+
+    #[test]
     fn test_parse_game_project() {
         let input = r"[project]
 title = My Fancy Game

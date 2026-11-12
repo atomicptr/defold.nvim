@@ -451,6 +451,129 @@ mod tests {
     use super::*;
     use pretty_assertions::assert_eq;
 
+    #[test]
+    fn compile_function_handles_optional_regular_and_variadic_parameters() {
+        let function = Value {
+            name: Some("emit".into()),
+            parameters: Some(vec![
+                Value {
+                    name: Some("target[optional]".into()),
+                    vtype: Some(Type::Multiple(vec!["string".into(), "hash".into()])),
+                    desc: Some("Target.".into()),
+                    ..Value::default()
+                },
+                Value {
+                    name: Some("label".into()),
+                    vtype: Some(Type::Single("string".into())),
+                    desc: Some("Label.".into()),
+                    ..Value::default()
+                },
+                Value {
+                    name: Some("...".into()),
+                    vtype: Some(Type::Single("any".into())),
+                    desc: Some("Payload.".into()),
+                    ..Value::default()
+                },
+            ]),
+            ..Value::default()
+        };
+        let mut out = String::new();
+
+        compile_function(&mut out, &function, &vec![]).unwrap();
+
+        assert_eq!(
+            out,
+            "---@param target [string, hash]|nil Target.\n\
+             ---@param label string Label.\n\
+             ---@param ... any Payload.\n\
+             function emit(target, label, ...) end\n"
+        );
+    }
+
+    #[test]
+    fn compile_callback_combines_nested_parameter_and_return_types() {
+        let callback = Value {
+            name: Some("callback".into()),
+            vtype: Some(Type::Single(TYPE_FUNCTION.into())),
+            parameters: Some(vec![
+                Value {
+                    name: Some("result[optional]".into()),
+                    vtype: Some(Type::Single("number".into())),
+                    ..Value::default()
+                },
+                Value {
+                    name: Some("...".into()),
+                    vtype: Some(Type::Single("any".into())),
+                    ..Value::default()
+                },
+            ]),
+            returns: Some(vec![
+                Value {
+                    vtype: Some(Type::Single("boolean".into())),
+                    ..Value::default()
+                },
+                Value::default(),
+                Value {
+                    vtype: Some(Type::Single("string".into())),
+                    ..Value::default()
+                },
+            ]),
+            ..Value::default()
+        };
+        let mut out = String::new();
+
+        compile_parameter(&mut out, &callback).unwrap();
+
+        assert_eq!(
+            out,
+            "---@param callback fun(result: number|nil, ...: any): boolean|string\n"
+        );
+    }
+
+    #[test]
+    fn compile_table_qualifies_nested_members_and_separates_fields() {
+        let table = Value {
+            name: Some("root".into()),
+            vtype: Some(Type::Single(TYPE_TABLE.into())),
+            members: Some(vec![Value {
+                name: Some("child".into()),
+                vtype: Some(Type::Single(TYPE_TABLE.into())),
+                members: Some(vec![
+                    Value {
+                        name: Some("value".into()),
+                        vtype: Some(Type::Multiple(vec!["number".into(), "string".into()])),
+                        desc: Some("Stored value.".into()),
+                        ..Value::default()
+                    },
+                    Value {
+                        name: Some("ignored".into()),
+                        ..Value::default()
+                    },
+                    Value {
+                        name: Some("run".into()),
+                        vtype: Some(Type::Single(TYPE_FUNCTION.into())),
+                        ..Value::default()
+                    },
+                ]),
+                ..Value::default()
+            }]),
+            ..Value::default()
+        };
+        let mut out = String::new();
+
+        compile_table(&mut out, &table, &vec![]).unwrap();
+
+        assert_eq!(
+            out,
+            "---@class root : table\n\
+             root = {}\n\n\
+             ---@class child : table\n\
+             ---@field public value [number, string] Stored value.\n\
+             root.child = {}\n\n\
+             function root.child.run() end\n"
+        );
+    }
+
     const DEFOLD_ASTAR_EXAMPLE: &str = include_str!("../fixtures/astar.script_api");
 
     #[test]

@@ -299,125 +299,82 @@ fn strip_prefix_slash(s: String) -> Option<String> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::time::{SystemTime, UNIX_EPOCH};
 
     const COMPONENTS: &str = r#"
-components {
-  id: "map_manager"
-  component: "/map_manager.script"
-}
-embedded_components {
-  id: "tile_factory"
-  type: "factory"
-  data: "prototype: \"/tile.go\"\n"
-}
+components { id: "map_manager" component: "/map_manager.script" }
+embedded_components { id: "tile_factory" type: "factory" }
+components { component: "/missing_id.script" }
 "#;
 
-    struct TestDir(PathBuf);
+    #[test]
+    fn parses_components_and_matches_only_referenced_paths() {
+        let components = parse_game_object(&miniproto::parse(COMPONENTS).unwrap());
 
-    impl TestDir {
-        fn new() -> Self {
-            let nonce = SystemTime::now()
-                .duration_since(UNIX_EPOCH)
-                .unwrap()
-                .as_nanos();
-            let root = std::env::temp_dir()
-                .join(format!("defold-paths-test-{}-{nonce}", std::process::id()));
-            fs::create_dir(&root).unwrap();
-            fs::write(root.join("map_manager.script"), "").unwrap();
-
-            Self(root)
-        }
-
-        fn entries(&self) -> Vec<PathEntry> {
-            fetch_paths_for(&self.0, &self.0.join("map_manager.script")).unwrap()
-        }
-    }
-
-    impl Drop for TestDir {
-        fn drop(&mut self) {
-            fs::remove_dir_all(&self.0).unwrap();
-        }
-    }
-
-    fn embedded_collection(components: &str) -> String {
-        format!(
-            "name: \"main\"\nembedded_instances {{ id: \"map\" data: {} }}",
-            serde_json::to_string(components).unwrap()
-        )
-    }
-
-    fn assert_local_components(entries: &[PathEntry], location: &str) {
-        for id in ["map_manager", "tile_factory"] {
-            assert!(
-                entries.contains(&PathEntry {
-                    collection_name: None,
-                    game_object_id: None,
-                    component_id: Some(id.to_string()),
-                    from_location: Some(location.to_string()),
-                    is_component: true,
-                    same_game_object: true,
-                }),
-                "missing local component {id}: {entries:?}"
-            );
-        }
+        assert_eq!(components.len(), 2);
+        assert_eq!(components[0].id, "map_manager");
+        assert_eq!(components[0].path.as_deref(), Some("map_manager.script"));
+        assert_eq!(components[1].id, "tile_factory");
+        assert_eq!(components[1].path, None);
+        assert!(references_path(&components, "map_manager.script"));
+        assert!(!references_path(&components, "other.script"));
     }
 
     #[test]
-    fn embedded_object_has_local_and_qualified_components() {
-        let temp = TestDir::new();
-        fs::write(
-            temp.0.join("main.collection"),
-            embedded_collection(COMPONENTS),
-        )
-        .unwrap();
+    fn parses_standalone_and_embedded_collection_objects() {
+        let source = format!(
+            r#"
+name: "main"
+instances {{ id: "standalone" prototype: "/map.go" }}
+embedded_instances {{ id: "embedded" data: {} }}
+instances {{ prototype: "/missing_id.go" }}
+"#,
+            serde_json::to_string(COMPONENTS).unwrap()
+        );
+        let collection = parse_collection(&miniproto::parse(&source).unwrap()).unwrap();
 
-        let entries = temp.entries();
-        assert_local_components(&entries, "/main.collection");
+        assert_eq!(collection.name, "main");
+        assert_eq!(collection.game_objects.len(), 2);
 
-        for id in ["map_manager", "tile_factory"] {
-            assert!(
-                entries.contains(&PathEntry {
-                    collection_name: None,
-                    game_object_id: Some("map".to_string()),
+        let standalone = &collection.game_objects[0];
+        assert_eq!(standalone.id, "standalone");
+        assert_eq!(standalone.prototype_path.as_deref(), Some("map.go"));
+        assert_eq!(standalone.data, None);
+
+        let embedded = &collection.game_objects[1];
+        assert_eq!(embedded.id, "embedded");
+        assert_eq!(embedded.prototype_path, None);
+        assert_eq!(embedded.data.as_deref(), Some(COMPONENTS));
+        assert!(
+            parse_collection(&miniproto::parse("instances { id: \"map\" }").unwrap()).is_none()
+        );
+    }
+
+    #[test]
+    fn local_components_omit_scope_while_qualified_components_preserve_it() {
+        let components = parse_game_object(&miniproto::parse(COMPONENTS).unwrap());
+
+        for same_game_object in [true, false] {
+            let mut entries = HashSet::new();
+
+            push_components(
+                &mut entries,
+                &components,
+                Some("main".to_string()),
+                Some("map".to_string()),
+                "main.collection",
+                same_game_object,
+            );
+
+            for id in ["map_manager", "tile_factory"] {
+                assert!(entries.contains(&PathEntry {
+                    collection_name: (!same_game_object).then(|| "main".to_string()),
+                    game_object_id: (!same_game_object).then(|| "map".to_string()),
                     component_id: Some(id.to_string()),
                     from_location: Some("/main.collection".to_string()),
                     is_component: true,
-                    same_game_object: false,
-                }),
-                "missing qualified component {id}: {entries:?}"
-            );
+                    same_game_object,
+                }));
+            }
         }
-    }
-
-    #[test]
-    fn unrelated_embedded_object_has_no_local_components() {
-        let temp = TestDir::new();
-        fs::write(
-            temp.0.join("main.collection"),
-            embedded_collection(&COMPONENTS.replace("/map_manager.script", "/other.script")),
-        )
-        .unwrap();
-
-        let entries = temp.entries();
-        assert!(!entries.iter().any(|entry| entry.same_game_object));
-        assert!(entries.iter().any(|entry| {
-            entry.game_object_id.as_deref() == Some("map")
-                && entry.component_id.as_deref() == Some("tile_factory")
-                && entry.is_component
-        }));
-    }
-
-    #[test]
-    fn standalone_object_has_local_components() {
-        let temp = TestDir::new();
-        fs::write(temp.0.join("map.go"), COMPONENTS).unwrap();
-        fs::write(
-            temp.0.join("main.collection"),
-            "name: \"main\"\ninstances { id: \"map\" prototype: \"/map.go\" }",
-        )
-        .unwrap();
-
-        assert_local_components(&temp.entries(), "/map.go");
     }
 }

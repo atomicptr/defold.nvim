@@ -107,3 +107,80 @@ fn miniproto<'a>() -> impl Parser<'a, &'a str, Message> {
     })
     .then_ignore(end())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn preserves_repeated_fields_and_distinguishes_scalar_types() {
+        let message = parse(
+            r#"
+id: "first"
+enabled: true
+disabled: false
+offset: -12.5
+type: TYPE_BOX
+id: "second"
+"#,
+        )
+        .unwrap();
+
+        assert_eq!(
+            message.get("id"),
+            vec![
+                Value::String("first".into()),
+                Value::String("second".into())
+            ]
+        );
+        assert_eq!(message.first_string("id").as_deref(), Some("first"));
+        assert_eq!(message.get("enabled"), vec![Value::Bool(true)]);
+        assert_eq!(message.get("disabled"), vec![Value::Bool(false)]);
+        assert_eq!(message.get("offset"), vec![Value::Number(-12.5)]);
+        assert_eq!(message.get("type"), vec![Value::Ident("TYPE_BOX".into())]);
+        assert_eq!(message.first_string("type"), None);
+    }
+
+    #[test]
+    fn concatenates_adjacent_strings_and_decodes_embedded_messages() {
+        let message =
+            parse(r#"data: "nodes {\n" "id: \"label\"\n" "}\n" path: "a\\b\tc\r\n""#).unwrap();
+
+        let embedded = parse(&message.first_string("data").unwrap()).unwrap();
+        assert_eq!(
+            embedded.get("nodes"),
+            vec![Value::Message(Message {
+                fields: vec![("id".into(), Value::String("label".into()))],
+            })]
+        );
+        assert_eq!(message.first_string("path").as_deref(), Some("a\\b\tc\r\n"));
+    }
+
+    #[test]
+    fn keeps_nested_fields_out_of_parent_lookups() {
+        let message =
+            parse(r#"nodes { id: "direct" } layouts { nodes { id: "layout_only" } }"#).unwrap();
+
+        assert_eq!(
+            message.get("nodes"),
+            vec![Value::Message(Message {
+                fields: vec![("id".into(), Value::String("direct".into()))],
+            })]
+        );
+        assert_eq!(message.get("id").len(), 0);
+    }
+
+    #[test]
+    fn rejects_incomplete_fields_and_trailing_garbage() {
+        for source in [
+            "nodes {",
+            "nodes { id: }",
+            "id:",
+            "id: \"unterminated",
+            "nodes { id: \"root\" } }",
+            "id: \"root\" @",
+        ] {
+            assert!(parse(source).is_err(), "accepted {source:?}");
+        }
+    }
+}
