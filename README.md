@@ -109,7 +109,11 @@ vim.pack.add({
     -- (Optional) Required for path completions (nvim.cmp is also supported)
     "https://github.com/saghen/blink.cmp",
 
-    "https://github.com/atomicptr/defold.nvim",
+    {
+        src = "https://github.com/atomicptr/defold.nvim",
+        -- NOTE: Read below, this is not a standard function
+        version = stable_version "*",
+    },
 })
 
 require("defold").setup {
@@ -117,12 +121,38 @@ require("defold").setup {
 }
 ```
 
+Unlike lazy.nvim, vim.pack sadly doesn't differentiate between stable and unstable releases so I made this small
+function that just drops any semver with an "-whatever" at the end
+
+```lua
+---Disallow releases with suffixes like "1.0.0-beta1"
+---@param version string
+---@return vim.VersionRange
+local function stable_version(version)
+    local range = assert(vim.version.range(version), "Invalid version range")
+    local range_has = range.has
+
+    ---@param self vim.VersionRange
+    ---@param v string|vim.Version
+    ---@return boolean
+    range.has = function(self, v)
+        if tostring(v):find("-", 1, true) then
+            return false
+        end
+
+        return range_has(self, v)
+    end
+
+    return range
+end
+```
+
 ### Lazy.nvim
 
 ```lua
 {
     "atomicptr/defold.nvim",
-    version = '*',
+    version = "*",
     lazy = false,
 
     dependencies = {
