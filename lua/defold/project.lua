@@ -318,7 +318,7 @@ function M.setup_neovide()
 
     if os.is_windows() then
         entry = "neovide.exe"
-        asset = "neovide.exe.zip"
+        asset = "neovide-windows-x86_64.zip"
     elseif os.is_macos() then
         local architecture = "x86_64"
         if os.architecture() == "aarch64" then
