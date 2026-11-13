@@ -233,7 +233,7 @@ function M.refresh_annotations(on_change)
             end
         end
 
-        local data = sidecar.data_dir()
+        local data = os.data_dir()
 
         download.ensure({
             name = "Defold Annotations",
@@ -310,9 +310,8 @@ function M.setup_neovide()
     end
 
     local log = require "defold.logger"
-    local sidecar = require "defold.sidecar"
 
-    local data = sidecar.data_dir()
+    local data = os.data_dir()
 
     local entry = "neovide"
     local asset = "neovide-linux-x86_64.tar.gz"
@@ -407,7 +406,7 @@ function M.install_dependencies(force_redownload, on_complete)
         local dependencies = sidecar.read_game_project(vim.fs.joinpath(root, "game.project")).dependencies
         log.debug(string.format("Checking %d dependencies for %s", #dependencies, root))
 
-        local dir = vim.fs.joinpath(sidecar.data_dir(), "deps", "project", sidecar.project_id(root))
+        local dir = vim.fs.joinpath(os.data_dir(), "deps", "project", sidecar.project_id(root))
         local wanted = {}
 
         for _, url in ipairs(dependencies) do
@@ -461,34 +460,40 @@ function M.install_dependencies(force_redownload, on_complete)
 
             index = index + 1
 
-            local temp = vim.fn.tempname()
-            local archive = vim.fs.joinpath(temp, "dependency.zip")
-            local function downloaded(download_err)
-                local installed, install_err = false, download_err
+            log.info(string.format("Installing dependency: %s", url))
+            log.debug(string.format("Dependency destination: %s", target))
 
-                if not download_err then
-                    installed, install_err = pcall(function()
+            os.with_tempdir(function(temp, done)
+                local archive = vim.fs.joinpath(temp, "dependency.zip")
+
+                os.download(url, archive, function(download_err)
+                    if download_err then
+                        done(download_err)
+                        return
+                    end
+
+                    local installed, install_err = pcall(function()
                         local source = vim.fs.joinpath(temp, "unpacked")
                         sidecar.unpack(archive, source)
-                        sidecar.install_dependency(source, target)
-                        log.info(string.format("Dependency installed: %s", url))
-                    end)
-                end
 
-                if not installed then
+                        for _, skipped in ipairs(sidecar.install_dependency(source, target) or {}) do
+                            log.warn(string.format("Skipped unsafe include_dirs entry '%s' in: %s", skipped, url))
+                        end
+                    end)
+
+                    done(not installed and tostring(install_err) or nil)
+                end)
+            end, function(install_err)
+                if install_err then
                     failed = true
 
-                    log.error(string.format("Installation failed (%s): %s", url, tostring(install_err)))
+                    log.error(string.format("Installation failed (%s): %s", url, install_err))
 
                     if vim.fn.delete(target, "rf") ~= 0 then
                         log.warn(string.format("Could not remove incomplete dependency: %s", target))
                     end
-                end
-
-                log.debug(string.format("Removing temporary dependency files: %s", temp))
-
-                if vim.fn.delete(temp, "rf") ~= 0 then
-                    log.warn(string.format("Could not remove temporary dependency: %s", temp))
+                else
+                    log.info(string.format("Dependency installed: %s", url))
                 end
 
                 local advanced, advance_err = pcall(next_dependency)
@@ -496,20 +501,7 @@ function M.install_dependencies(force_redownload, on_complete)
                 if not advanced then
                     finish(tostring(advance_err))
                 end
-            end
-
-            local started, start_err = pcall(function()
-                vim.fn.mkdir(temp, "p")
-
-                log.info(string.format("Installing dependency: %s", url))
-                log.debug(string.format("Dependency destination: %s", target))
-
-                os.download(url, archive, downloaded)
             end)
-
-            if not started then
-                downloaded(tostring(start_err))
-            end
         end
 
         next_dependency()

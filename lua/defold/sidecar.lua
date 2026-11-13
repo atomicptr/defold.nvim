@@ -51,6 +51,10 @@ local downloading = false
 ---@field is_component     boolean
 ---@field same_game_object boolean
 
+---@class defold.sidecar.InputBinding
+---@field action         string
+---@field from_location? string
+
 ---@class defold.sidecar.GuiNodeEntry
 ---@field id            string
 ---@field from_location string
@@ -61,7 +65,7 @@ local downloading = false
 ---@field unpack                   fun(archive: string, target: string)
 ---@field move                     fun(source: string, target: string)
 ---@field hash                     fun(input: string): string
----@field install_dependency       fun(source: string, target: string)
+---@field install_dependency       fun(source: string, target: string): string[] Skipped unsafe include dirs
 ---@field version                  string
 ---@field set_log_level            fun(level: "debug"|"info"|"error")
 ---@field read_game_project        fun(path: string): defold.sidecar.GameProject
@@ -80,9 +84,7 @@ local downloading = false
 ---@field list_dependency_dirs     fun(game_root: string): string[]
 ---@field fetch_defold_paths_for   fun(game_root: string, filepath: string): defold.sidecar.PathEntry[]
 ---@field fetch_gui_nodes_for      fun(game_root: string, filepath: string): defold.sidecar.GuiNodeEntry[]
----@field fetch_input_bindings     fun(game_root: string): string[]
----@field data_dir                 fun(): string
----@field cache_dir                fun(): string
+---@field fetch_input_bindings     fun(game_root: string): defold.sidecar.InputBinding[]
 
 ---@param path string
 local function load(path)
@@ -270,8 +272,6 @@ function M.ensure(callback)
                     finish(tostring(load_err))
                     return
                 end
-
-                data = M.data_dir()
 
                 local bridge = "defold-nvim-bridge"
 

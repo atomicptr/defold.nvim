@@ -230,6 +230,42 @@ function M.with_tempfile(target, writer, callback)
     end
 end
 
+---@param fn       fun(dir: string, done: fun(err?: string))
+---@param callback fun(err?: string)
+function M.with_tempdir(fn, callback)
+    local log = require "defold.logger"
+
+    local dir = vim.fn.tempname()
+    local completed = false
+
+    local function done(err)
+        if completed then
+            return
+        end
+
+        completed = true
+
+        if M.file_exists(dir) and vim.fn.delete(dir, "rf") ~= 0 then
+            log.warn(string.format("Could not remove temporary directory: %s", dir))
+        end
+
+        callback(err)
+    end
+
+    local ok, err = pcall(function()
+        vim.fn.mkdir(dir, "p")
+        fn(dir, done)
+    end)
+
+    if not ok then
+        if completed then
+            error(err, 0)
+        end
+
+        done(tostring(err))
+    end
+end
+
 ---Copy a file, creating its destination directory.
 ---@param source string
 ---@param target string
@@ -295,18 +331,37 @@ function M.plugin_root()
     return res
 end
 
+---Must match the `dirs` crate, the sidecar and bridge use the same directories
+---@param kind "data"|"cache"
+---@return string
+local function base_dir(kind)
+    -- no logger here, it writes its log file into the cache dir
+    local home = vim.uv.os_homedir()
+    if not home or home == "" then
+        error "defold.nvim: Could not find the home directory"
+    end
+
+    if M.is_windows() then
+        local name = kind == "data" and "APPDATA" or "LOCALAPPDATA"
+        return vim.env[name] or error(string.format("defold.nvim: %s is not set", name))
+    end
+
+    if M.is_macos() then
+        return vim.fs.joinpath(home, "Library", kind == "data" and "Application Support" or "Caches")
+    end
+
+    local xdg = kind == "data" and vim.env.XDG_DATA_HOME or vim.env.XDG_CACHE_HOME
+    if xdg and xdg:sub(1, 1) == "/" then
+        return xdg
+    end
+
+    return vim.fs.joinpath(home, kind == "data" and ".local/share" or ".cache")
+end
+
 ---Returns `Data` directory
 ---@return string
 function M.data_dir()
-    if M.is_linux() then
-        if vim.env.XDG_DATA_HOME then
-            local dir = vim.fs.joinpath(vim.env.XDG_DATA_HOME, "defold.nvim")
-            vim.fn.mkdir(dir, "p")
-            return dir
-        end
-    end
-
-    local dir = vim.fs.joinpath(vim.fn.stdpath "data", "defold.nvim")
+    local dir = vim.fs.joinpath(base_dir "data", "defold.nvim")
     vim.fn.mkdir(dir, "p")
     return dir
 end
@@ -314,15 +369,7 @@ end
 ---Returns `Cache` directory
 ---@return string
 function M.cache_dir()
-    if M.is_linux() then
-        if vim.env.XDG_CACHE_HOME then
-            local dir = vim.fs.joinpath(vim.env.XDG_CACHE_HOME, "defold.nvim")
-            vim.fn.mkdir(dir, "p")
-            return dir
-        end
-    end
-
-    local dir = vim.fs.joinpath(vim.fn.stdpath "cache", "defold.nvim")
+    local dir = vim.fs.joinpath(base_dir "cache", "defold.nvim")
     vim.fn.mkdir(dir, "p")
     return dir
 end

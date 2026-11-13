@@ -12,25 +12,6 @@ function M.plugin_root()
     return os.plugin_root()
 end
 
-local function update_lua_lsp_paths()
-    local project = require "defold.project"
-    local lsp = require "defold.config.lsp"
-    local clients = vim.lsp.get_clients { name = "lua_ls" }
-
-    local root = project.project_root()
-    local lsp_config = lsp()
-
-    for _, client in ipairs(clients) do
-        if client.root_dir == root then
-            client.settings = vim.tbl_deep_extend("force", client.settings or {}, lsp_config)
-
-            client:notify("workspace/didChangeConfiguration", {
-                settings = client.settings,
-            })
-        end
-    end
-end
-
 ---@param opts? defold.Config
 function M.setup(opts)
     local config = require "defold.config"
@@ -57,7 +38,7 @@ function M.setup(opts)
     end
 
     -- do filetype detection before the download
-    vim.filetype.add(require("defold.config.filetype").minimal)
+    vim.filetype.add(require("defold.filetype").minimal)
 
     local sidecar = require "defold.sidecar"
     if not sidecar.is_ready() then
@@ -74,41 +55,7 @@ function M.setup(opts)
         end
     end
 
-    -- attach to lsp
-    vim.api.nvim_create_autocmd("LspAttach", {
-        callback = function(ev)
-            local ft = vim.filetype.match { buf = ev.buf }
-
-            local project = require "defold.project"
-
-            if ft == "lua" then
-                local root = project.project_root()
-
-                -- not a defold project?
-                if not root then
-                    return
-                end
-
-                -- cant connect to client?
-                local client = vim.lsp.get_client_by_id(ev.data.client_id)
-                if not client then
-                    return
-                end
-
-                local lsp = require "defold.config.lsp"
-                project.refresh_annotations(update_lua_lsp_paths)
-                local lsp_config = lsp()
-
-                log.debug(string.format("For %s, loaded lsp config %s", root, vim.inspect(lsp_config)))
-
-                client.root_dir = root
-                client.settings = vim.tbl_deep_extend("force", client.settings or {}, lsp_config)
-
-                -- load plugin, if not already loaded
-                M.load_plugin()
-            end
-        end,
-    })
+    require("defold.lsp").setup(M.load_plugin)
 
     setup_done = true
 
@@ -148,12 +95,13 @@ function M.load_plugin()
     local config = require "defold.config"
 
     -- register all filetypes
-    vim.filetype.add(require("defold.config.filetype").full)
+    vim.filetype.add(require("defold.filetype").full)
 
     local sidecar = require "defold.sidecar"
     local debugger = require "defold.debugger"
     local editor = require "defold.editor"
     local log = require "defold.logger"
+    local lsp = require "defold.lsp"
     local project = require "defold.project"
 
     log.debug "============= defold.nvim: Loaded plugin"
@@ -261,7 +209,7 @@ function M.load_plugin()
         -- when a user runs DefoldFetch I recon they also expect us to update the dependencies
         editor.send_command("fetch-libraries", true)
 
-        project.install_dependencies(opt.bang, update_lua_lsp_paths)
+        project.install_dependencies(opt.bang, lsp.update)
     end, { bang = true, nargs = 0, desc = "Fetch & create Defold project dependency annotations" })
 
     -- integrate the debugger into dap
@@ -279,17 +227,17 @@ function M.load_plugin()
     -- when a project is first opened, try to figure out the engine version
     vim.api.nvim_create_autocmd("BufEnter", {
         callback = function()
-            project.refresh_annotations(update_lua_lsp_paths)
+            project.refresh_annotations(lsp.update)
         end,
     })
 
-    project.refresh_annotations(update_lua_lsp_paths)
+    project.refresh_annotations(lsp.update)
 
     if config.state.defold.auto_fetch_dependencies then
-        project.install_dependencies(false, update_lua_lsp_paths)
+        project.install_dependencies(false, lsp.update)
     end
 
-    update_lua_lsp_paths()
+    lsp.update()
 end
 
 ---Sets Neovim as the default Defold editor

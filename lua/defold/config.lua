@@ -17,6 +17,7 @@
 ---@field moonbug?       defold.config.debugger.MoonbugConfig  Config for `moonbug`
 ---@field mobdebug?      defold.config.debugger.MobdebugConfig Config for `mobdebug`
 ---@field force_variant? defold.debugger.Variant               Load variant no matter what is inferred from project
+---@field replace_configurations? boolean Replace all Lua nvim-dap configurations (default: true)
 
 ---@class defold.config.debugger.MoonbugConfig
 ---@field port? integer The port to run moonbug at
@@ -95,6 +96,7 @@ M.state = {
         },
 
         force_variant = nil,
+        replace_configurations = true,
     },
 
     completions = {

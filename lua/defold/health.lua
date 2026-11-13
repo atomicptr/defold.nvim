@@ -23,16 +23,6 @@ function M.check()
 
     if sidecar_ok then
         vim.health.ok(string.format("Sidecar version: %s", sidecar.version))
-
-        local data_dir_ok, data_dir = pcall(sidecar.data_dir)
-        if data_dir_ok then
-            vim.health.info(string.format("Sidecar data: %s", data_dir))
-        end
-
-        local cache_dir_ok, cache_dir = pcall(sidecar.cache_dir)
-        if cache_dir_ok then
-            vim.health.info(string.format("Sidecar cache: %s", cache_dir))
-        end
     else
         vim.health.error(string.format("Sidecar unavailable: %s", sidecar))
     end
@@ -141,10 +131,7 @@ function M.check()
     if sidecar_ok and root then
         vim.health.start "Dependencies"
 
-        local ok, deps = pcall(function()
-            project.refresh_annotations()
-            return project.dependency_api_paths()
-        end)
+        local ok, deps = pcall(project.dependency_api_paths)
         if not ok then
             vim.health.warn(string.format("Could not find dependencies: %s", tostring(deps)))
         elseif #deps == 0 then

@@ -1,14 +1,14 @@
-use crate::{
-    path,
-    plugin_config::{LauncherType, PluginConfig, SocketType},
-    utils::{self, is_port_in_use},
-};
-use anyhow::{Context, Result, bail};
+use anyhow::{Context, Result, bail, ensure};
 #[cfg(target_os = "linux")]
 use defold_nvim_core::utils::classname;
-use defold_nvim_core::{focus::focus_neovim, nvim_server};
+use defold_nvim_core::{
+    editor_config::{LauncherSettings, LauncherType},
+    focus::focus_neovim,
+    nvim_server::{self, SocketType},
+    path,
+};
 use std::{
-    fs::{self},
+    fs,
     path::{Path, PathBuf},
     process::{Child, Command, Stdio},
     thread,
@@ -22,75 +22,138 @@ const ERR_TERMINAL_NOT_FOUND: &str = "Could not find any suitable terminal";
 
 const VAR_CLASSNAME: &str = "{CLASSNAME}";
 const VAR_ADDRESS: &str = "{ADDR}";
-const VAR_LINE: &str = "{LINE}";
-const VAR_FILE: &str = "{FILE}";
 
-fn report_process_errors(mut child: Child) -> Result<()> {
-    match child.try_wait()? {
-        Some(status) => {
-            let output = child.wait_with_output()?;
+const REMOTE_TIMEOUT: Duration = Duration::from_secs(2);
 
-            if !output.stdout.is_empty() {
-                tracing::debug!("Proccess Out: {}", String::from_utf8(output.stdout)?);
-            }
-
-            if !output.stderr.is_empty() {
-                tracing::error!("Proccess Err: {}", String::from_utf8(output.stderr)?);
-            }
-
-            tracing::debug!("Process exited with: {status}");
-        }
-        None => {
-            tracing::debug!("Process still running, detaching...");
-        }
-    }
-
-    Ok(())
+#[derive(Debug, PartialEq, Eq)]
+enum Remote {
+    Ok(String),
+    Unreachable,
+    Failed(String),
 }
 
-#[cfg(target_os = "linux")]
-fn apply_launcher_vars(launcher: &Terminal, var: &str, replace_with: &str) -> Terminal {
-    match launcher {
-        Terminal::Custom(term) => Terminal::Custom(CustomTerminal {
-            arguments: apply_vars(&term.arguments, var, replace_with),
-            ..term.clone()
-        }),
-        term => term.clone(),
+fn classify_remote(success: bool, stdout: &str, stderr: &str) -> Remote {
+    if success {
+        Remote::Ok(stdout.trim().to_string())
+    } else if stderr.contains("E247:") {
+        Remote::Unreachable
+    } else {
+        Remote::Failed(stderr.trim().to_string())
     }
+}
+
+fn remote_expr(nvim: &str, server: &str, expr: &str) -> Result<Remote> {
+    let mut child = Command::new(nvim)
+        .args(["--headless", "--server", server, "--remote-expr", expr])
+        .stdin(Stdio::null())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()?;
+
+    let deadline = Instant::now() + REMOTE_TIMEOUT;
+
+    while child.try_wait()?.is_none() {
+        if Instant::now() >= deadline {
+            child.kill()?;
+            child.wait()?;
+            return Ok(Remote::Failed(format!(
+                "timed out after {REMOTE_TIMEOUT:?}"
+            )));
+        }
+
+        thread::sleep(Duration::from_millis(20));
+    }
+
+    let output = child.wait_with_output()?;
+
+    Ok(classify_remote(
+        output.status.success(),
+        &String::from_utf8_lossy(&output.stdout),
+        &String::from_utf8_lossy(&output.stderr),
+    ))
+}
+
+// Deferred with a timer so we don't block the remote call
+fn open_file_expr(file: &str, line: Option<usize>) -> String {
+    let line = line.map(|line| format!("+{line} ")).unwrap_or_default();
+    let file = file.replace('\'', "''");
+
+    format!("timer_start(0, {{-> execute('drop {line}' .. fnameescape('{file}'))}})")
+}
+
+// Gives a starting/reconnecting frontend a second chance
+fn attached_uis(nvim: &str, server: &str) -> Result<Remote> {
+    let remote = remote_expr(nvim, server, "len(nvim_list_uis())")?;
+
+    if remote == Remote::Ok("0".to_string()) {
+        thread::sleep(Duration::from_millis(300));
+        return remote_expr(nvim, server, "len(nvim_list_uis())");
+    }
+
+    Ok(remote)
+}
+
+fn quit_headless(nvim: &str, server: &str) -> Result<()> {
+    remote_expr(nvim, server, "execute('qall!')")?;
+
+    for _ in 0..20 {
+        if remote_expr(nvim, server, "1")? == Remote::Unreachable {
+            return Ok(());
+        }
+
+        thread::sleep(Duration::from_millis(100));
+    }
+
+    bail!(
+        "Neovim at {server} has no window attached and could not be closed. Reattach with `nvim --server {server} --remote-ui` or close it."
+    )
+}
+
+fn check_launch(mut child: Child) -> Result<()> {
+    let deadline = Instant::now() + Duration::from_millis(500);
+
+    while Instant::now() < deadline {
+        if let Some(status) = child.try_wait()? {
+            ensure!(status.success(), "Launcher exited with {status}");
+            return Ok(());
+        }
+
+        thread::sleep(Duration::from_millis(50));
+    }
+
+    tracing::debug!("Launcher still running, detaching...");
+    Ok(())
 }
 
 fn apply_vars(args: &[String], var: &str, replace_with: &str) -> Vec<String> {
     args.iter().map(|s| s.replace(var, replace_with)).collect()
 }
 
-fn create_launcher(cfg: &PluginConfig) -> Result<Terminal> {
+fn managed_neovide() -> Option<PathBuf> {
+    let bin = path::data_dir().ok()?.join("bin");
+
+    let managed = if cfg!(target_os = "macos") {
+        bin.join("Neovide.app/Contents/MacOS/neovide")
+    } else if cfg!(target_os = "windows") {
+        bin.join("neovide.exe")
+    } else {
+        bin.join("neovide")
+    };
+
+    managed.is_file().then_some(managed)
+}
+
+fn create_launcher(cfg: &LauncherSettings) -> Result<(Terminal, LauncherType)> {
     match cfg.launcher_type {
         Some(LauncherType::Neovide) => {
-            let executable = &cfg
+            let executable = cfg
                 .executable
                 .as_ref()
-                .map(Into::into)
+                .map(PathBuf::from)
                 .or_else(|| which("neovide").ok())
-                .or_else(|| {
-                    let bin = path::data_dir().ok()?.join("bin");
-
-                    let managed = if cfg!(target_os = "macos") {
-                        bin.join("Neovide.app/Contents/MacOS/neovide")
-                    } else {
-                        bin.join(if cfg!(target_os = "windows") {
-                            "neovide.exe"
-                        } else {
-                            "neovide"
-                        })
-                    };
-
-                    managed.is_file().then_some(managed)
-                })
+                .or_else(managed_neovide)
+                .filter(|executable| executable.exists())
                 .context(ERR_NEOVIDE_NOT_FOUND)?;
-
-            if !executable.exists() {
-                bail!(ERR_NEOVIDE_NOT_FOUND);
-            }
 
             let mut args = cfg.arguments.clone().unwrap_or_default();
 
@@ -102,279 +165,80 @@ fn create_launcher(cfg: &PluginConfig) -> Result<Terminal> {
                 args.push(VAR_CLASSNAME.to_string());
             }
 
-            Ok(Terminal::Custom(CustomTerminal {
-                executable: executable
-                    .to_str()
-                    .context("could not convert path to string")?
-                    .to_string(),
-                arguments: args,
-                run_arg: Some("--neovim-bin".to_string()),
-                ..Default::default()
-            }))
+            Ok((
+                Terminal::Custom(CustomTerminal {
+                    executable: executable
+                        .to_str()
+                        .context("could not convert path to string")?
+                        .to_string(),
+                    arguments: args,
+                    run_arg: Some("--neovim-bin".to_string()),
+                    ..Default::default()
+                }),
+                LauncherType::Neovide,
+            ))
         }
         Some(LauncherType::Terminal) => {
             // terminal specified by absolute path
-            if let Some(executable) = &cfg.executable.clone().map(PathBuf::from)
-                && executable.is_absolute()
-                && executable.exists()
+            if let Some(executable) = &cfg.executable
+                && Path::new(executable).is_absolute()
+                && Path::new(executable).exists()
             {
-                let term = Terminal::Custom(CustomTerminal {
-                    executable: cfg.executable.clone().unwrap(),
-                    arguments: cfg.arguments.clone().unwrap_or_default(),
-                    ..Default::default()
-                });
+                return Ok((
+                    Terminal::Custom(CustomTerminal {
+                        executable: executable.clone(),
+                        arguments: cfg.arguments.clone().unwrap_or_default(),
+                        ..Default::default()
+                    }),
+                    LauncherType::Terminal,
+                ));
+            }
 
-                tracing::debug!("Terminal specified by absolute path {term:?}");
-
-                Ok(term)
-            } else if let Some(exe_name) = &cfg.executable
-                && let Some(term) = Terminal::find_by_name(exe_name)
+            // `arguments`/`run_arg` only apply to custom terminals
+            if let Some(name) = &cfg.executable
+                && let Some(term) = Terminal::find_by_name(name)
                 && term.is_available()
             {
-                tracing::debug!("Looking for terminal by name {exe_name} found {term:?}");
-
-                Ok(term)
-            } else {
-                tracing::debug!(
-                    "No terminal specific terminal specified or not found, looking for available one..."
-                );
-
-                if let Some(term) = Terminal::find_available() {
-                    tracing::debug!("Found {term:?}");
-
-                    Ok(term)
-                } else {
-                    bail!(ERR_TERMINAL_NOT_FOUND);
-                }
+                return Ok((term, LauncherType::Terminal));
             }
+
+            Terminal::find_available()
+                .map(|term| (term, LauncherType::Terminal))
+                .context(ERR_TERMINAL_NOT_FOUND)
         }
-        None => {
-            // lets try to create one using Neovide
-            if let Ok(term) = create_launcher(&PluginConfig {
-                launcher_type: Some(LauncherType::Neovide),
-                ..cfg.clone()
-            }) {
-                return Ok(term);
-            }
-
-            // if that doesnt work try again with terminal
-            if let Ok(term) = create_launcher(&PluginConfig {
+        None => create_launcher(&LauncherSettings {
+            launcher_type: Some(LauncherType::Neovide),
+            ..cfg.clone()
+        })
+        .or_else(|_| {
+            create_launcher(&LauncherSettings {
                 launcher_type: Some(LauncherType::Terminal),
                 ..cfg.clone()
-            }) {
-                return Ok(term);
-            }
-
-            bail!("Could neither find Neovide nor any supported terminal")
-        }
+            })
+        })
+        .context("Could neither find Neovide nor any supported terminal"),
     }
 }
 
-fn nvim_open_file_remote(nvim: &str, server: &str, file: &str, line: Option<usize>) -> Result<()> {
-    let remote_cmd = if let Some(line) = line {
-        format!("+{line} {file}")
-    } else {
-        file.to_string()
+fn launch(launcher: &Terminal, mut app: Application, addr: &str) -> Result<()> {
+    tracing::debug!("Launching new Neovim instance at {addr}");
+
+    app.args = apply_vars(&app.args, VAR_ADDRESS, addr);
+
+    let launcher = match launcher {
+        Terminal::Custom(term) => Terminal::Custom(CustomTerminal {
+            arguments: apply_vars(&term.arguments, VAR_ADDRESS, addr),
+            ..term.clone()
+        }),
+        term => term.clone(),
     };
 
-    tracing::debug!("Open '{remote_cmd}' via socket: {server}");
-
-    let mut cmd = Command::new(nvim);
-
-    cmd.arg("--headless")
-        .arg("--server")
-        .arg(server)
-        .arg("--remote-send");
-
-    cmd.arg(format!("<cmd>e {remote_cmd}<CR>"));
-
-    tracing::debug!("open remote file command: {cmd:?}");
-
-    let out = cmd.output()?;
-
-    if !out.stderr.is_empty() {
-        bail!(String::from_utf8(out.stderr)?);
-    }
-
-    Ok(())
-}
-
-fn run_fsock(
-    launcher: &Terminal,
-    app: Application,
-    nvim: &str,
-    root_dir: &Path,
-    file: &str,
-    line: Option<usize>,
-) -> Result<()> {
-    let socket_file = nvim_server::fsock_path(root_dir)?;
-    let socket_file_str = socket_file
-        .to_str()
-        .context("could not convert string to path")?;
-
-    tracing::debug!("Using fsock at {socket_file:?}");
-
-    let mut app = app;
-
-    app.args = apply_vars(&app.args, VAR_ADDRESS, socket_file_str);
-
-    if socket_file.exists() {
-        if nvim_is_alive(nvim, socket_file_str) {
-            // if we couldnt communicate with the server despite existing apparently
-            // delete it and start a new instance
-            if let Err(err) = nvim_open_file_remote(
-                nvim,
-                socket_file
-                    .to_str()
-                    .context("could not convert path to string")?,
-                file,
-                line,
-            ) {
-                tracing::error!("Failed to communicate with neovim server: {err:?}");
-
-                fs::remove_file(socket_file)?;
-                report_process_errors(app.launch_with(launcher)?)?;
-            }
-
-            return Ok(());
-        }
-
-        utils::search_and_kill_process(socket_file_str);
-
-        match fs::remove_file(socket_file) {
-            Ok(()) => {}
-            Err(err) if err.kind() == std::io::ErrorKind::NotFound => {}
-            Err(err) => return Err(err.into()),
-        }
-
-        report_process_errors(app.launch_with(launcher)?)?;
-
-        return Ok(());
-    }
-
-    report_process_errors(app.launch_with(launcher)?)?;
-    Ok(())
-}
-
-fn run_netsock(
-    launcher: &Terminal,
-    mut app: Application,
-    nvim: &str,
-    root_dir: &Path,
-    file: &str,
-    line: Option<usize>,
-) -> Result<()> {
-    let port_file = nvim_server::netsock_port_file(root_dir)?;
-    let port = nvim_server::read_or_allocate_netsock_port(root_dir)?;
-
-    let socket = format!("127.0.0.1:{port}");
-
-    tracing::debug!("Trying to use netsock with port {socket}");
-
-    if is_port_in_use(port) {
-        if nvim_is_alive(nvim, &socket) {
-            // if we couldnt communicate with the server despite existing apparently
-            // delete it and start a new instance
-            if let Err(err) = nvim_open_file_remote(nvim, &socket, file, line) {
-                tracing::error!("Failed to communicate with neovim server: {err:?}");
-
-                let socket = nvim_server::allocate_new_netsock_addr(root_dir)?;
-                tracing::debug!("Trying to use netsock with port {socket}");
-
-                app.args = apply_vars(&app.args, VAR_ADDRESS, &socket);
-                report_process_errors(app.launch_with(launcher)?)?;
-            }
-
-            return Ok(());
-        }
-
-        utils::search_and_kill_process(&socket);
-
-        let socket = nvim_server::allocate_new_netsock_addr(root_dir)?;
-        tracing::debug!("Trying to use netsock with port {socket}");
-
-        app.args = apply_vars(&app.args, VAR_ADDRESS, &socket);
-        report_process_errors(app.launch_with(launcher)?)?;
-
-        return Ok(());
-    }
-
-    fs::write(port_file, port.to_string())?;
-    app.args = apply_vars(&app.args, VAR_ADDRESS, &socket);
-    report_process_errors(app.launch_with(launcher)?)?;
-
-    Ok(())
-}
-
-fn nvim_has_ui(nvim: &str, server: &str) -> Result<bool> {
-    let mut child = Command::new(nvim)
-        .args([
-            "--headless",
-            "--server",
-            server,
-            "--remote-expr",
-            "len(nvim_list_uis())",
-        ])
-        .stdin(Stdio::null())
-        .stdout(Stdio::piped())
-        .stderr(Stdio::piped())
-        .spawn()?;
-
-    let deadline = Instant::now() + Duration::from_secs(2);
-
-    while child.try_wait()?.is_none() {
-        if Instant::now() >= deadline {
-            child.kill()?;
-            child.wait()?;
-            bail!("Timed out querying attached Neovim UIs");
-        }
-
-        thread::sleep(Duration::from_millis(20));
-    }
-
-    let output = child.wait_with_output()?;
-
-    if !output.status.success() {
-        bail!(
-            "UI probe exited with {}: {}",
-            output.status,
-            String::from_utf8_lossy(&output.stderr).trim()
-        );
-    }
-
-    let count = String::from_utf8(output.stdout)?
-        .trim()
-        .parse::<usize>()
-        .context("Invalid UI count returned by Neovim")?;
-
-    Ok(count > 0)
-}
-
-fn nvim_is_alive(nvim: &str, server: &str) -> bool {
-    for attempt in 0..2 {
-        match nvim_has_ui(nvim, server) {
-            Ok(true) => return true,
-            // give a starting/reconnecting frontend a chance to attach...
-            Ok(false) if attempt == 0 => thread::sleep(Duration::from_millis(300)),
-            Ok(false) => {
-                tracing::warn!(
-                    "Neovim at {server} has no attached UI. Restarting it may lose unsaved changes."
-                );
-                return false;
-            }
-            Err(err) => {
-                tracing::error!("Neovim alive check failed at {server}: {err:#}");
-                return false;
-            }
-        }
-    }
-
-    false
+    check_launch(app.launch_with(&launcher)?)
 }
 
 pub fn run(
-    plugin_config: &PluginConfig,
-    root_dir: PathBuf,
+    settings: &LauncherSettings,
+    root_dir: &Path,
     file: &Path,
     line: Option<usize>,
 ) -> Result<()> {
@@ -383,69 +247,91 @@ pub fn run(
         .context("could not convert nvim path to string")?
         .to_string();
 
-    let launcher = match create_launcher(plugin_config)? {
+    let file = file.to_str().context("could not convert path to string")?;
+
+    let socket_type = settings
+        .socket_type
+        .unwrap_or_else(nvim_server::default_socket_type);
+
+    let addr = nvim_server::resolve_server_addr(root_dir, Some(socket_type))?;
+
+    let (launcher, launcher_type) = create_launcher(settings)?;
+    let mut launcher = match launcher {
         Terminal::Custom(mut term) => {
-            term.run_arg = plugin_config.run_arg.clone().or(term.run_arg);
+            term.run_arg = settings.run_arg.clone().or(term.run_arg);
             Terminal::Custom(term)
         }
         term => term,
     };
 
     let mut app = Application::new(&nvim)
-        .with_working_dir(&root_dir)
+        .with_working_dir(root_dir)
         .with_arg("--listen")
-        .with_arg(VAR_ADDRESS)
-        .with_arg("--remote")
-        .with_arg(VAR_LINE)
-        .with_arg(VAR_FILE);
+        .with_arg(VAR_ADDRESS);
+
+    if let Some(line) = line {
+        app = app.with_arg(&format!("+{line}"));
+    }
+
+    app = app.with_arg("--").with_arg(file);
 
     #[cfg(target_os = "linux")]
-    let launcher = {
-        let class = &classname(
+    {
+        let class = classname(
             root_dir
                 .to_str()
                 .context("could not convert path to string")?,
-        )?;
+        );
 
-        app = app.with_class(class);
+        app = app.with_class(&class);
 
         // replace the class placeholder in custom launcher arguments too
-        apply_launcher_vars(&launcher, VAR_CLASSNAME, class)
-    };
+        if let Terminal::Custom(term) = &mut launcher {
+            term.arguments = apply_vars(&term.arguments, VAR_CLASSNAME, &class);
+        }
+    }
 
-    let file_str = file.to_str().context("could not convert path to string")?;
-
-    let mut app = if let Some(line) = line {
-        app.args = apply_vars(&app.args, VAR_LINE, &format!("+{line}"));
-        app
-    } else {
-        app.args.retain(|s| *s != VAR_LINE);
-        app
-    };
-
-    app.args = apply_vars(&app.args, VAR_FILE, file_str);
-
-    // due to Neovide having both a run argument with "--neovim-bin" and using the "--" separator
-    // we kinda need to prepend this to the application
-    if matches!(plugin_config.launcher_type, Some(LauncherType::Neovide)) {
+    // Neovide passes everything after "--" to Neovim
+    if launcher_type == LauncherType::Neovide {
         app.args.insert(0, "--".to_string());
     }
 
-    if let Some(appname) = &plugin_config.appname {
+    if let Some(appname) = &settings.appname {
         app.env_vars
             .insert("NVIM_APPNAME".to_string(), appname.clone());
     }
 
-    match plugin_config.socket_type {
-        Some(SocketType::Fsock) => run_fsock(&launcher, app, &nvim, &root_dir, file_str, line)?,
-        Some(SocketType::Netsock) => run_netsock(&launcher, app, &nvim, &root_dir, file_str, line)?,
-        None => {
-            if cfg!(target_os = "linux") || cfg!(target_os = "macos") {
-                run_fsock(&launcher, app, &nvim, &root_dir, file_str, line)?;
-            } else {
-                run_netsock(&launcher, app, &nvim, &root_dir, file_str, line)?;
+    match attached_uis(&nvim, &addr)? {
+        Remote::Unreachable => {
+            if socket_type == SocketType::Fsock {
+                match fs::remove_file(&addr) {
+                    Err(err) if err.kind() != std::io::ErrorKind::NotFound => {
+                        return Err(err.into());
+                    }
+                    _ => {}
+                }
             }
+
+            launch(&launcher, app, &addr)?;
         }
+        Remote::Ok(uis) if uis == "0" => {
+            quit_headless(&nvim, &addr)?;
+            launch(&launcher, app, &addr)?;
+        }
+        Remote::Ok(_) => match remote_expr(&nvim, &addr, &open_file_expr(file, line))? {
+            Remote::Ok(_) => {}
+            Remote::Unreachable => launch(&launcher, app, &addr)?,
+            Remote::Failed(err) => bail!("Could not open {file} in Neovim at {addr}: {err}"),
+        },
+        Remote::Failed(err) if socket_type == SocketType::Netsock => {
+            tracing::warn!("{addr} is not a usable Neovim server: {err}");
+            launch(
+                &launcher,
+                app,
+                &nvim_server::allocate_netsock_addr(root_dir)?,
+            )?;
+        }
+        Remote::Failed(err) => bail!("Neovim at {addr} is not responding: {err}"),
     }
 
     if let Err(err) = focus_neovim(root_dir) {
@@ -453,4 +339,38 @@ pub fn run(
     }
 
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn classifies_remote_results() {
+        assert_eq!(classify_remote(true, "2\n", ""), Remote::Ok("2".into()));
+        assert_eq!(
+            classify_remote(
+                false,
+                "",
+                "E247: Failed to connect to '/tmp/x': connection refused. Send expression failed."
+            ),
+            Remote::Unreachable
+        );
+        assert_eq!(
+            classify_remote(
+                false,
+                "",
+                "Lua: Vim(qall):E37: No write since last change\n"
+            ),
+            Remote::Failed("Lua: Vim(qall):E37: No write since last change".into())
+        );
+    }
+
+    #[test]
+    fn open_file_expr_escapes_filename_as_literal_string() {
+        assert_eq!(
+            open_file_expr("/a b/it's|x.lua", Some(12)),
+            "timer_start(0, {-> execute('drop +12 ' .. fnameescape('/a b/it''s|x.lua'))})"
+        );
+    }
 }

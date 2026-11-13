@@ -199,6 +199,9 @@ local config = {
         -- Override detection: "native", "moonbug", "mobdebug", or "local" (keep your own setup)
         force_variant = nil,
 
+        -- Replace all Lua nvim-dap configurations, set to false to keep yours next to ours (default: true)
+        replace_configurations = true,
+
         -- When using moonbug, you need to install the `defold-moonbug` Defold extension
         moonbug = {
             port = 8888,

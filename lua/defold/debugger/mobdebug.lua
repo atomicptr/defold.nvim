@@ -20,7 +20,6 @@ end
 function M.setup(on_ready)
     local log = require "defold.logger"
     local os = require "defold.os"
-    local sidecar = require "defold.sidecar"
     local download = require "defold.download"
 
     local path = M.get_path()
@@ -32,7 +31,7 @@ function M.setup(on_ready)
         return
     end
 
-    local data = sidecar.data_dir()
+    local data = os.data_dir()
 
     local archive = "tar.gz"
     local filename = "mobdap"
@@ -91,7 +90,7 @@ function M.register()
         end)
     end
 
-    dap.configurations.lua = {
+    require("defold.debugger").set_configurations(dap, {
         {
             name = "defold.nvim: Debugger",
             type = "defold_nvim_mobdebug",
@@ -109,7 +108,7 @@ function M.register()
 
             port = config.state.debugger.mobdebug.port or 18172,
         },
-    }
+    })
 
     dap.listeners.after["event_mobdap_waiting_for_connection"].defold_nvim_start_game = function()
         log.debug "debugger: connected"

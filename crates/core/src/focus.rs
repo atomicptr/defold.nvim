@@ -1,202 +1,203 @@
-use std::path::PathBuf;
+use std::{
+    env,
+    path::{Path, PathBuf},
+    process::Command,
+};
 
 use anyhow::{Context, Result, bail};
-use std::process::Command;
 use which::which;
-
-use strum::IntoEnumIterator;
 
 use crate::{game_project::GameProject, utils::classname};
 
-#[derive(Debug)]
-enum SwitcherType {
+#[derive(Debug, Clone, PartialEq, Eq)]
+enum Target {
     Class(String),
     Title(String),
     AppName(String),
 }
 
-impl SwitcherType {
-    fn value(&self) -> String {
-        match self {
-            SwitcherType::Class(c) => c.clone(),
-            SwitcherType::Title(t) => t.clone(),
-            SwitcherType::AppName(a) => a.clone(),
-        }
-    }
-}
-
-#[derive(Debug, strum::EnumIter)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum Switcher {
-    #[cfg(target_os = "linux")]
     HyprCtl,
-
-    #[cfg(target_os = "linux")]
     SwayMsg,
-
-    #[cfg(target_os = "linux")]
     WmCtrl,
-
-    #[cfg(target_os = "linux")]
     XDoTool,
-
-    #[cfg(target_os = "macos")]
     OsaScript,
 }
 
 impl Switcher {
-    fn path(&self) -> Option<PathBuf> {
-        #[cfg(target_os = "linux")]
+    fn executable(self) -> &'static str {
         match self {
-            Switcher::HyprCtl => which("hyprctl").ok(),
-            Switcher::SwayMsg => which("swaymsg").ok(),
-            Switcher::WmCtrl => which("wmctrl").ok(),
-            Switcher::XDoTool => which("xdotool").ok(),
+            Switcher::HyprCtl => "hyprctl",
+            Switcher::SwayMsg => "swaymsg",
+            Switcher::WmCtrl => "wmctrl",
+            Switcher::XDoTool => "xdotool",
+            Switcher::OsaScript => "osascript",
         }
-        #[cfg(target_os = "macos")]
-        match self {
-            Switcher::OsaScript => which("osascript").ok(),
-        }
-        #[cfg(target_os = "windows")]
-        None
-    }
-
-    fn from_env() -> Option<Self> {
-        Self::iter().find(|sw| sw.path().is_some())
     }
 }
 
-fn switch(switcher_type: SwitcherType) -> Result<()> {
-    tracing::info!("Switching to {switcher_type:?}");
+fn candidates() -> Vec<Switcher> {
+    let has = |name| env::var_os(name).is_some_and(|value| !value.is_empty());
 
-    let Some(switcher) = Switcher::from_env() else {
-        tracing::error!("No supported focus switcher found, do nothing...");
-        return Ok(());
-    };
+    let mut switchers = Vec::new();
 
-    #[cfg(target_os = "linux")]
-    return match switcher {
-        Switcher::HyprCtl => run_switch_cmd(
-            Command::new(switcher.path().unwrap())
-                .arg("dispatch")
-                .arg(format!(
-                    r#"hl.dsp.focus {{ window = "{}" }}"#,
-                    match switcher_type {
-                        SwitcherType::Class(class) => format!("class:{class}"),
-                        SwitcherType::Title(title) => format!("title:{title}"),
-                        _ => bail!("Unsupported switcher type {switcher_type:?} for {switcher:?}"),
-                    }
-                )),
-            Some("ok"),
-        ),
-        Switcher::SwayMsg => run_switch_cmd(
-            Command::new(switcher.path().unwrap()).arg(format!(
-                "[{}={}] focus",
-                match switcher_type {
-                    SwitcherType::Class(_) => "class".to_string(),
-                    SwitcherType::Title(_) => "title".to_string(),
-                    _ => bail!("Unsupported switcher type {switcher_type:?} for {switcher:?}"),
-                },
-                switcher_type.value(),
-            )),
-            None,
-        ),
-        Switcher::WmCtrl => {
-            let mut cmd = Command::new(switcher.path().unwrap());
+    if cfg!(target_os = "macos") {
+        switchers.push(Switcher::OsaScript);
+    }
 
-            if matches!(switcher_type, SwitcherType::Class(_)) {
-                cmd.arg("-x");
-            }
+    if has("HYPRLAND_INSTANCE_SIGNATURE") {
+        switchers.push(Switcher::HyprCtl);
+    }
 
-            cmd.arg("-a").arg(switcher_type.value());
+    if has("SWAYSOCK") {
+        switchers.push(Switcher::SwayMsg);
+    }
 
-            run_switch_cmd(&mut cmd, None)
-        }
-        Switcher::XDoTool => run_switch_cmd(
-            Command::new(switcher.path().unwrap())
-                .arg("search")
-                .arg(match switcher_type {
-                    SwitcherType::Class(_) => "--class".to_string(),
-                    SwitcherType::Title(_) => "--title".to_string(),
-                    _ => bail!("Unsupported switcher type {switcher_type:?} for {switcher:?}"),
-                })
-                .arg(switcher_type.value())
-                .arg("windowactivate"),
-            None,
-        ),
-    };
+    // also covers XWayland windows
+    if has("DISPLAY") {
+        switchers.push(Switcher::WmCtrl);
+        switchers.push(Switcher::XDoTool);
+    }
 
-    #[cfg(target_os = "macos")]
-    return match switcher {
-        Switcher::OsaScript => {
-            run_switch_cmd(Command::new(switcher.path().unwrap())
-                .arg("-e")
-                .arg(match switcher_type {
-                    SwitcherType::AppName(app_name) => format!("tell application \"System Events\" to tell process \"{app_name}\" to set frontmost to true"),
-                    _ => bail!("Unsupported switcher type {switcher_type:?} for {switcher:?}"),
-                }), None)
-        }
-    };
-
-    #[cfg(target_os = "windows")]
-    return Ok(());
+    switchers
 }
 
-fn run_switch_cmd(cmd: &mut Command, expected_response: Option<&str>) -> Result<()> {
-    tracing::debug!("Executing switch cmd: {cmd:?}");
+fn switch_args(switcher: Switcher, target: &Target) -> Option<Vec<String>> {
+    let args = match (switcher, target) {
+        (Switcher::HyprCtl, Target::Class(class)) => {
+            vec![
+                "dispatch".into(),
+                format!(r#"hl.dsp.focus {{ window = "class:{class}" }}"#),
+            ]
+        }
+        (Switcher::HyprCtl, Target::Title(title)) => {
+            vec![
+                "dispatch".into(),
+                format!(r#"hl.dsp.focus {{ window = "title:{title}" }}"#),
+            ]
+        }
+        (Switcher::SwayMsg, Target::Class(class)) => vec![format!("[class=\"{class}\"] focus")],
+        (Switcher::SwayMsg, Target::Title(title)) => vec![format!("[title=\"{title}\"] focus")],
+        (Switcher::WmCtrl, Target::Class(class)) => vec!["-x".into(), "-a".into(), class.clone()],
+        (Switcher::WmCtrl, Target::Title(title)) => vec!["-a".into(), title.clone()],
+        (Switcher::XDoTool, Target::Class(class)) => {
+            vec![
+                "search".into(),
+                "--class".into(),
+                class.clone(),
+                "windowactivate".into(),
+            ]
+        }
+        (Switcher::XDoTool, Target::Title(title)) => {
+            vec![
+                "search".into(),
+                "--title".into(),
+                title.clone(),
+                "windowactivate".into(),
+            ]
+        }
+        (Switcher::OsaScript, Target::AppName(app)) => vec![
+            "-e".into(),
+            format!(
+                "tell application \"System Events\" to tell process {} to set frontmost to true",
+                serde_json::to_string(app).ok()?
+            ),
+        ],
+        _ => return None,
+    };
 
-    let output = cmd.output()?;
+    Some(args)
+}
+
+fn run(executable: &Path, switcher: Switcher, args: &[String]) -> Result<()> {
+    let output = Command::new(executable).args(args).output()?;
+
     if !output.status.success() {
         bail!(
-            "Focus command failed ({}): {}",
+            "{} failed ({}): {}",
+            switcher.executable(),
             output.status,
             String::from_utf8_lossy(&output.stderr).trim()
         );
     }
 
-    if let Some(expected) = expected_response {
-        let response = String::from_utf8_lossy(&output.stdout);
-        if response.trim() != expected {
-            bail!("Focus command failed: {}", response.trim());
+    // hyprctl reports dispatch failures on stdout
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    if switcher == Switcher::HyprCtl && stdout.trim() != "ok" {
+        bail!("hyprctl failed: {}", stdout.trim());
+    }
+
+    Ok(())
+}
+
+fn switch(target: &Target) -> Result<()> {
+    tracing::info!("Switching to {target:?}");
+
+    let mut errors = Vec::new();
+
+    for switcher in candidates() {
+        let Some(args) = switch_args(switcher, target) else {
+            continue;
+        };
+
+        let Ok(executable) = which(switcher.executable()) else {
+            continue;
+        };
+
+        match run(&executable, switcher, &args) {
+            Ok(()) => return Ok(()),
+            Err(err) => errors.push(err.to_string()),
         }
     }
 
-    Ok(())
+    if errors.is_empty() {
+        tracing::warn!("No supported focus switcher found, do nothing...");
+        return Ok(());
+    }
+
+    bail!("Could not switch focus: {}", errors.join("; "))
 }
 
-pub fn focus_neovim(root_dir: PathBuf) -> Result<()> {
-    if !root_dir.join("game.project").exists() {
-        bail!("Could not find game.project file in {root_dir:?}: Not a valid Defold directory");
+fn ensure_project(root_dir: &Path) -> Result<PathBuf> {
+    let game_project = root_dir.join("game.project");
+
+    if !game_project.exists() {
+        bail!(
+            "Could not find game.project file in {}: Not a valid Defold directory",
+            root_dir.display()
+        );
     }
 
-    if cfg!(target_os = "linux") {
-        let class = classname(
-            root_dir
-                .to_str()
-                .context("could not convert path to string")?,
-        )?;
-
-        return switch(SwitcherType::Class(class));
-    }
-
-    tracing::error!("Focus switching to Neovim is not support on current platform");
-
-    Ok(())
+    Ok(game_project)
 }
 
-pub fn focus_game(root_dir: PathBuf) -> Result<()> {
-    if !root_dir.join("game.project").exists() {
-        bail!("Could not find game.project file in {root_dir:?}: Not a valid Defold directory");
+pub fn focus_neovim(root_dir: &Path) -> Result<()> {
+    ensure_project(root_dir)?;
+
+    if !cfg!(target_os = "linux") {
+        tracing::debug!("Focus switching to Neovim is not supported on the current platform");
+        return Ok(());
     }
 
-    let game_project = GameProject::load_from_path(&root_dir.join("game.project"))?;
+    let class = classname(
+        root_dir
+            .to_str()
+            .context("could not convert path to string")?,
+    );
+
+    switch(&Target::Class(class))
+}
+
+pub fn focus_game(root_dir: &Path) -> Result<()> {
+    let title = GameProject::load_from_path(&ensure_project(root_dir)?)?.title;
 
     if cfg!(target_os = "linux") {
-        return switch(SwitcherType::Title(game_project.title));
+        switch(&Target::Title(title))
     } else if cfg!(target_os = "macos") {
-        return switch(SwitcherType::AppName(game_project.title));
+        switch(&Target::AppName(title))
+    } else {
+        tracing::debug!("Focus switching to the game is not supported on the current platform");
+        Ok(())
     }
-
-    tracing::error!("Focus switching to the Game is not support on current platform");
-
-    Ok(())
 }

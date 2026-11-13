@@ -36,6 +36,25 @@ function M.infer_variant()
     return "native"
 end
 
+---@param dap        table
+---@param configs    dap.Configuration[]
+function M.set_configurations(dap, configs)
+    if require("defold.config").state.debugger.replace_configurations then
+        dap.configurations.lua = configs
+        return
+    end
+
+    local result = {}
+
+    for _, existing in ipairs(dap.configurations.lua or {}) do
+        if not tostring(existing.type or ""):match "^defold_nvim_" then
+            table.insert(result, existing)
+        end
+    end
+
+    dap.configurations.lua = vim.list_extend(result, configs)
+end
+
 function M.setup()
     local config = require "defold.config"
     local variant = config.state.debugger.force_variant or M.infer_variant()
