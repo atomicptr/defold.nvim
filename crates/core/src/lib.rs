@@ -11,5 +11,6 @@ mod miniproto;
 pub mod nvim_server;
 pub mod path;
 pub mod project;
+pub mod resources;
 pub mod script_api;
 pub mod utils;

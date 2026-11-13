@@ -7,7 +7,6 @@ use defold_nvim_core::{focus, game_project::GameProject};
 use mlua::Value::{self};
 use mlua::prelude::*;
 use std::path::PathBuf;
-use std::str::FromStr;
 use std::{
     fs::{self},
     path::absolute,
@@ -128,8 +127,6 @@ fn register_exports(lua: &Lua) -> LuaResult<LuaTable> {
         lua.create_function(start_native_debugger)?,
     )?;
     exports.set("project_id", lua.create_function(project_id)?)?;
-    exports.set("data_dir", lua.create_function(data_dir)?)?;
-    exports.set("cache_dir", lua.create_function(cache_dir)?)?;
 
     Ok(exports)
 }
@@ -207,8 +204,9 @@ fn resolve_nvim_server_addr(
     let root = absolute(game_root)?;
     let socket_type = socket_type
         .as_deref()
-        .map(nvim_server::SocketType::parse)
-        .transpose()?;
+        .map(str::parse::<nvim_server::SocketType>)
+        .transpose()
+        .map_err(LuaError::external)?;
 
     let addr = nvim_server::resolve_server_addr(&root, socket_type)?;
     Ok(addr)
@@ -216,14 +214,14 @@ fn resolve_nvim_server_addr(
 
 #[instrument(level = "debug", err(Debug), skip_all)]
 fn focus_neovim(_lua: &Lua, game_root: String) -> LuaResult<()> {
-    focus::focus_neovim(absolute(game_root)?)?;
+    focus::focus_neovim(&absolute(game_root)?)?;
 
     Ok(())
 }
 
 #[instrument(level = "debug", err(Debug), skip_all)]
 fn focus_game(_lua: &Lua, game_root: String) -> LuaResult<()> {
-    focus::focus_game(absolute(game_root)?)?;
+    focus::focus_game(&absolute(game_root)?)?;
 
     Ok(())
 }
@@ -236,12 +234,12 @@ fn move_file(_lua: &Lua, (source, target): (PathBuf, PathBuf)) -> LuaResult<()> 
     Ok(utils::move_file(&source, &target)?)
 }
 
-#[allow(clippy::unnecessary_wraps)]
+#[allow(clippy::unnecessary_wraps, clippy::needless_pass_by_value)]
 fn hash(_lua: &Lua, input: String) -> LuaResult<String> {
     Ok(utils::sha3(&input))
 }
 
-fn install_dependency(_lua: &Lua, (source, target): (PathBuf, PathBuf)) -> LuaResult<()> {
+fn install_dependency(_lua: &Lua, (source, target): (PathBuf, PathBuf)) -> LuaResult<Vec<String>> {
     Ok(project::install_dependency(&source, &target)?)
 }
 
@@ -253,7 +251,7 @@ fn editor_version(_lua: &Lua, game_root: String) -> LuaResult<String> {
 #[instrument(level = "debug", err(Debug), skip_all)]
 fn project_id(_lua: &Lua, game_root: String) -> LuaResult<String> {
     let game_root = absolute(game_root)?;
-    Ok(utils::project_id(&game_root.display().to_string())?)
+    Ok(utils::project_id(&game_root.display().to_string()))
 }
 
 #[instrument(level = "debug", err(Debug), skip_all)]
@@ -271,51 +269,18 @@ fn list_dependency_dirs(_lua: &Lua, game_root: String) -> LuaResult<Vec<String>>
 }
 
 #[instrument(level = "debug", err(Debug), skip_all)]
-fn fetch_defold_paths_for(lua: &Lua, (root_dir, filepath): (String, String)) -> LuaResult<Value> {
-    let root_dir = PathBuf::from_str(&root_dir).context("could not convert path to string")?;
-
-    if !root_dir.exists() {
-        return Err(LuaError::external(format!(
-            "could not find project root: {}",
-            root_dir.display()
-        )));
-    }
-
-    let filepath = PathBuf::from_str(&filepath).context("could not convert path to string")?;
-
-    if !filepath.exists() {
-        return Err(LuaError::external(format!(
-            "could not find file: {}",
-            filepath.display()
-        )));
-    }
-
-    let path_entries = defold_paths::fetch_paths_for(&root_dir, &filepath)?;
-    let res = lua.to_value(&path_entries)?;
-
-    Ok(res)
+fn fetch_defold_paths_for(lua: &Lua, (root_dir, filepath): (PathBuf, PathBuf)) -> LuaResult<Value> {
+    lua.to_value(&defold_paths::fetch_paths_for(&root_dir, &filepath)?)
 }
 
 #[instrument(level = "debug", err(Debug), skip_all)]
-fn fetch_gui_nodes_for(lua: &Lua, (root_dir, filepath): (String, String)) -> LuaResult<Value> {
-    let nodes = defold_gui::fetch_nodes_for(&PathBuf::from(root_dir), &PathBuf::from(filepath))?;
-    lua.to_value(&nodes)
+fn fetch_gui_nodes_for(lua: &Lua, (root_dir, filepath): (PathBuf, PathBuf)) -> LuaResult<Value> {
+    lua.to_value(&defold_gui::fetch_nodes_for(&root_dir, &filepath)?)
 }
 
-fn fetch_input_bindings(lua: &Lua, root_dir: String) -> LuaResult<Value> {
-    let root_dir = PathBuf::from_str(&root_dir).context("could not convert path to string")?;
-
-    if !root_dir.exists() {
-        return Err(LuaError::external(format!(
-            "could not find project root: {}",
-            root_dir.display()
-        )));
-    }
-
-    let bindings = defold_inputs::fetch_input_bindings(&root_dir)?;
-    let res = lua.to_value(&bindings)?;
-
-    Ok(res)
+#[instrument(level = "debug", err(Debug), skip_all)]
+fn fetch_input_bindings(lua: &Lua, root_dir: PathBuf) -> LuaResult<Value> {
+    lua.to_value(&defold_inputs::fetch_input_bindings(&root_dir)?)
 }
 
 #[instrument(level = "debug", err(Debug), skip_all)]
@@ -328,20 +293,4 @@ fn start_native_debugger(
         port,
         address.as_deref().unwrap_or("127.0.0.1"),
     )?)
-}
-
-fn data_dir(_lua: &Lua, _: ()) -> LuaResult<String> {
-    let dir = path::data_dir()?
-        .to_str()
-        .context("could not convert to string")?
-        .to_string();
-    Ok(dir)
-}
-
-fn cache_dir(_lua: &Lua, _: ()) -> LuaResult<String> {
-    let dir = path::cache_dir()?
-        .to_str()
-        .context("could not convert to string")?
-        .to_string();
-    Ok(dir)
 }

@@ -11,7 +11,7 @@ function M.register()
         port = os.getenv "MOONBUG_PORT" or config.state.debugger.moonbug.port or 8888,
     }
 
-    dap.configurations.lua = {
+    require("defold.debugger").set_configurations(dap, {
         {
             type = "defold_nvim_moonbug",
             request = "attach",
@@ -29,7 +29,7 @@ function M.register()
             name = "defold.nvim: Attach",
             project_root_dir = "${workspaceFolder}",
         },
-    }
+    })
 end
 
 return M

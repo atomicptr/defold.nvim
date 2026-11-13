@@ -104,7 +104,8 @@ impl Value {
 fn split_lines(input: &str, line_width: usize, first_line_cutoff: usize) -> Vec<String> {
     let mut result = Vec::new();
 
-    let first_line_options = textwrap::Options::new(line_width - first_line_cutoff);
+    let first_line_options =
+        textwrap::Options::new(line_width.saturating_sub(first_line_cutoff).max(1));
     let first_line_wrapped = textwrap::wrap(input, &first_line_options);
 
     if let Some(first) = first_line_wrapped.first() {
@@ -195,6 +196,24 @@ fn compile_table(out: &mut String, table: &Value, parents: &Vec<&Value>) -> Resu
     Ok(())
 }
 
+fn write_described(out: &mut String, prefix: &str, desc: Option<&str>) -> Result<()> {
+    let Some(desc) = desc.filter(|desc| !desc.trim().is_empty()) else {
+        writeln!(out, "{}", prefix.trim_end())?;
+        return Ok(());
+    };
+
+    let lines = split_lines(desc, LINE_WRAP - 3, prefix.len());
+    writeln!(out, "{prefix}{}", lines[0])?;
+
+    for line in &lines[1..] {
+        // avoid creating "----" lines which would end the annotation
+        let separator = if line.starts_with('-') { " " } else { "" };
+        writeln!(out, "---{separator}{line}")?;
+    }
+
+    Ok(())
+}
+
 fn compile_field(out: &mut String, field: &Value) -> Result<()> {
     assert!(field.is_field());
 
@@ -208,23 +227,7 @@ fn compile_field(out: &mut String, field: &Value) -> Result<()> {
             .type_name(),
     );
 
-    if let Some(desc) = &field.desc {
-        let lines = split_lines(desc, LINE_WRAP - 3, prefix.len());
-
-        write!(out, "{prefix}")?;
-
-        if let Some(first) = lines.first() {
-            writeln!(out, "{first}")?;
-        }
-
-        for line in lines.iter().skip(1) {
-            writeln!(out, "---{line}")?;
-        }
-    } else {
-        writeln!(out, "{prefix}")?;
-    }
-
-    Ok(())
+    write_described(out, &prefix, field.desc.as_deref())
 }
 
 fn compile_function(out: &mut String, function: &Value, parents: &Vec<&Value>) -> Result<()> {
@@ -306,53 +309,29 @@ fn compile_function(out: &mut String, function: &Value, parents: &Vec<&Value>) -
 }
 
 fn compile_return(out: &mut String, ret: &Value) -> Result<()> {
-    let prefix = format!(
-        "---@return {}",
-        ret.vtype
-            .clone()
-            .expect("return must have type")
-            .type_name()
-    );
+    let Some(vtype) = &ret.vtype else {
+        return Ok(());
+    };
 
-    if let Some(desc) = &ret.desc {
-        let lines = split_lines(desc, LINE_WRAP, prefix.len() + 1);
-        write!(out, "{prefix} ")?;
-
-        if let Some(first) = lines.first() {
-            writeln!(out, "{first}")?;
-        }
-
-        for line in lines.iter().skip(1) {
-            if line.starts_with('-') {
-                writeln!(out, "--- {line}")?;
-                continue;
-            }
-            writeln!(out, "---{line}")?;
-        }
-    }
-
-    Ok(())
+    let prefix = format!("---@return {} ", vtype.type_name());
+    write_described(out, &prefix, ret.desc.as_deref())
 }
 
 fn compile_parameter(out: &mut String, param: &Value) -> Result<()> {
-    let mut prefix = format!("---@param {} ", param.param_name());
+    let prefix = format!("---@param {} ", param.param_name());
 
     if let Some(vtype) = &param.vtype
         && vtype.is_single(TYPE_FUNCTION)
     {
-        write!(
-            out,
-            "{prefix}fun({})",
-            if let Some(params) = &param.parameters {
-                params
-                    .iter()
-                    .map(|p| format!("{}: {}", p.param_name(), p.param_type()))
-                    .collect::<Vec<String>>()
-                    .join(", ")
-            } else {
-                String::new()
-            }
-        )?;
+        let params = param
+            .parameters
+            .iter()
+            .flatten()
+            .map(|p| format!("{}: {}", p.param_name(), p.param_type()))
+            .collect::<Vec<String>>()
+            .join(", ");
+
+        write!(out, "{prefix}fun({params})")?;
 
         if let Some(returns) = &param.returns {
             write!(
@@ -360,37 +339,22 @@ fn compile_parameter(out: &mut String, param: &Value) -> Result<()> {
                 ": {}",
                 returns
                     .iter()
-                    .filter_map(|r| r.vtype.clone())
-                    .map(|t| t.type_name())
+                    .filter_map(|r| r.vtype.as_ref())
+                    .map(Type::type_name)
                     .collect::<Vec<String>>()
                     .join("|")
             )?;
         }
 
         writeln!(out)?;
-    } else {
-        write!(prefix, "{} ", param.param_type(),)?;
-
-        if let Some(desc) = &param.desc {
-            let lines = split_lines(desc, LINE_WRAP - 3, prefix.len());
-            write!(out, "{prefix}")?;
-
-            if let Some(first) = lines.first() {
-                writeln!(out, "{first}")?;
-            }
-
-            for line in lines.iter().skip(1) {
-                if line.starts_with('-') {
-                    writeln!(out, "--- {line}")?;
-                    continue;
-                }
-
-                writeln!(out, "---{line}")?;
-            }
-        }
+        return Ok(());
     }
 
-    Ok(())
+    write_described(
+        out,
+        &format!("{prefix}{} ", param.param_type()),
+        param.desc.as_deref(),
+    )
 }
 
 fn parse(input: &str) -> Result<Vec<Value>> {
@@ -602,5 +566,49 @@ mod tests {
         assert_eq!(1, webview.len());
         let webview = webview.first().expect("should have one");
         assert_eq!(Some("webview".to_string()), webview.name);
+    }
+
+    #[test]
+    fn long_return_types_preserve_annotations_and_descriptions() {
+        let type_name = format!("namespace.{}", "T".repeat(97));
+        let input = format!(
+            "- name: get\n  type: function\n  returns:\n    type: {type_name}\n    desc: A returned value.\n"
+        );
+
+        let output = compile(&input).unwrap();
+
+        assert_eq!(
+            output,
+            format!(
+                "-- Generated by atomicptr/defold.nvim\n\n---@return {type_name} A\n---returned value.\nfunction get() end\n\n"
+            )
+        );
+    }
+
+    #[test]
+    fn annotations_without_descriptions_are_kept() {
+        let function = Value {
+            name: Some("set".into()),
+            vtype: Some(Type::Single(TYPE_FUNCTION.into())),
+            parameters: Some(vec![Value {
+                name: Some("value".into()),
+                vtype: Some(Type::Single("number".into())),
+                ..Default::default()
+            }]),
+            returns: Some(vec![Value {
+                vtype: Some(Type::Single("boolean".into())),
+                desc: Some(String::new()),
+                ..Default::default()
+            }]),
+            ..Default::default()
+        };
+
+        let mut out = String::new();
+        compile_function(&mut out, &function, &Vec::new()).unwrap();
+
+        assert_eq!(
+            out,
+            "---@param value number\n---@return boolean\nfunction set(value) end\n"
+        );
     }
 }

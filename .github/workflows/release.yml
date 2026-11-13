@@ -75,11 +75,11 @@ jobs:
 
       - name: build ${{ matrix.config.name }}
         if: contains(matrix.config.os, 'macos')
-        run: MACOSX_DEPLOYMENT_TARGET="13" cargo build --release
+        run: MACOSX_DEPLOYMENT_TARGET="13" cargo build --release --locked
 
       - name: build ${{ matrix.config.name }}
         if: contains(matrix.config.os, 'windows')
-        run: cargo build --release
+        run: cargo build --release --locked
 
       - name: prepare ${{ matrix.config.name }}
         run: |

@@ -1,52 +1,47 @@
 use std::{fs, path::Path, time::Duration};
 
 use anyhow::{Context, Result, bail};
+use reqwest::blocking::Client;
 use serde_json::Value;
 
 use crate::editor_commands::CommandResult;
 
-fn editor_url(port: u16) -> String {
+pub const PROBE_TIMEOUT: Duration = Duration::from_secs(1);
+
+pub const REQUEST_TIMEOUT: Duration = Duration::from_secs(5);
+
+pub const COMMAND_TIMEOUT: Duration = Duration::from_secs(120);
+
+pub fn client(timeout: Duration) -> Result<Client> {
+    Ok(Client::builder()
+        .no_proxy()
+        .redirect(reqwest::redirect::Policy::none())
+        .connect_timeout(PROBE_TIMEOUT)
+        .timeout(timeout)
+        .build()?)
+}
+
+#[must_use]
+pub fn editor_url(port: u16) -> String {
     format!("http://127.0.0.1:{port}")
 }
 
-fn openapi_url(port: u16) -> String {
-    format!("{}/openapi.json", editor_url(port))
-}
-
-fn command_url(port: u16, command: Option<String>) -> String {
-    format!(
-        "{}/command/{}",
-        editor_url(port),
-        command.unwrap_or_default()
-    )
+fn parse_port(content: &str) -> Option<u16> {
+    content.trim().parse().ok().filter(|port| *port != 0)
 }
 
 #[must_use]
 pub fn find_port(game_root: &Path) -> Option<u16> {
-    let editor_port = game_root.join(".internal").join("editor.port");
+    let content = fs::read_to_string(game_root.join(".internal").join("editor.port")).ok()?;
+    let port = parse_port(&content)?;
 
-    // editor port file doesnt exist? Editor isn't open
-    if !editor_port.exists() {
-        return None;
-    }
-
-    let content = fs::read_to_string(editor_port).ok()?;
-
-    let port: u16 = content.parse().ok()?;
-
-    if is_editor_port(port) {
-        Some(port)
-    } else {
-        None
-    }
+    is_editor_port(port).then_some(port)
 }
 
 #[must_use]
 pub fn is_editor_port(port: u16) -> bool {
-    let result = reqwest::blocking::Client::builder()
-        .no_proxy()
-        .build()
-        .and_then(|client| client.head(editor_url(port)).send());
+    let result =
+        client(PROBE_TIMEOUT).and_then(|client| Ok(client.head(editor_url(port)).send()?));
 
     match result {
         Ok(response) => {
@@ -67,17 +62,14 @@ pub fn is_editor_port(port: u16) -> bool {
 
 pub fn version(game_root: &Path) -> Result<String> {
     let internal = game_root.join(".internal");
-    let port = fs::read_to_string(internal.join("editor.port"))?;
+    let port = parse_port(&fs::read_to_string(internal.join("editor.port"))?)
+        .context("invalid editor port")?;
     let token = fs::read_to_string(internal.join("editor.token"))?;
-    query_version(port.trim().parse()?, token.trim())
+    query_version(port, token.trim())
 }
 
 fn query_version(port: u16, token: &str) -> Result<String> {
-    let response = reqwest::blocking::Client::builder()
-        .timeout(Duration::from_millis(500))
-        .redirect(reqwest::redirect::Policy::none())
-        .no_proxy()
-        .build()?
+    let response = client(PROBE_TIMEOUT)?
         .post(format!("{}/eval", editor_url(port)))
         .bearer_auth(token)
         .header("Content-Type", "text/plain")
@@ -103,12 +95,8 @@ pub(crate) fn parse_version(version: &str) -> Result<&str> {
 }
 
 pub fn list_commands(port: u16) -> Result<Vec<String>> {
-    let url = openapi_url(port);
-
-    let res = reqwest::blocking::Client::builder()
-        .no_proxy()
-        .build()?
-        .get(url)
+    let res = client(REQUEST_TIMEOUT)?
+        .get(format!("{}/openapi.json", editor_url(port)))
         .send()?;
 
     if !res.status().is_success() {
@@ -133,12 +121,8 @@ pub fn list_commands(port: u16) -> Result<Vec<String>> {
 }
 
 pub fn send_command(port: u16, cmd: &str) -> Result<CommandResult> {
-    let url = command_url(port, Some(cmd.to_string()));
-
-    let res = reqwest::blocking::Client::builder()
-        .no_proxy()
-        .build()?
-        .post(url)
+    let res = client(COMMAND_TIMEOUT)?
+        .post(format!("{}/command/{cmd}", editor_url(port)))
         .send()?;
     let status = res.status().as_u16();
 
@@ -158,8 +142,9 @@ pub fn send_command(port: u16, cmd: &str) -> Result<CommandResult> {
     Ok(result)
 }
 
+#[must_use]
 pub fn console_stream_url(port: u16) -> String {
-    format!("http://localhost:{port}/console/stream")
+    format!("{}/console/stream", editor_url(port))
 }
 
 #[cfg(test)]

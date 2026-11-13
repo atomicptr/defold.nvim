@@ -3,26 +3,23 @@ use std::{
     path::{PathBuf, absolute},
 };
 
-use anyhow::Result;
+use anyhow::{Context, Result};
 use clap::{ArgAction, Parser, Subcommand};
 use defold_nvim_core::{
     editor,
+    editor_config::{LauncherSettings, LauncherType},
     focus::{focus_game, focus_neovim},
+    nvim_server::SocketType,
     path, project, script_api,
 };
 use tracing::Level;
 use tracing_appender::rolling::never;
 
-use crate::{
-    build_game::{Severity, build_game},
-    plugin_config::{LauncherType, PluginConfig, SocketType},
-};
+use crate::build_game::{Severity, build_game};
 
 mod build_game;
 mod error_dialog;
 mod launcher;
-mod plugin_config;
-mod utils;
 
 #[derive(Parser, Debug)]
 struct Args {
@@ -171,15 +168,16 @@ fn main() -> Result<()> {
             show_error_dialog,
         } => {
             let result = launcher::run(
-                &PluginConfig {
+                &LauncherSettings {
                     launcher_type,
                     socket_type,
                     executable,
                     appname,
                     run_arg,
                     arguments,
+                    debug: None,
                 },
-                absolute(game_root_dir)?,
+                &absolute(game_root_dir)?,
                 &absolute(file)?,
                 line,
             );
@@ -193,8 +191,8 @@ fn main() -> Result<()> {
 
             result?;
         }
-        Commands::FocusNeovim { game_root_dir } => focus_neovim(absolute(game_root_dir)?)?,
-        Commands::FocusGame { game_root_dir } => focus_game(absolute(game_root_dir)?)?,
+        Commands::FocusNeovim { game_root_dir } => focus_neovim(&absolute(game_root_dir)?)?,
+        Commands::FocusGame { game_root_dir } => focus_game(&absolute(game_root_dir)?)?,
         Commands::ListDependencies { game_root_dir } => {
             let root_dir = absolute(&game_root_dir)?;
 
@@ -213,9 +211,10 @@ fn main() -> Result<()> {
             game_root_dir,
             command,
         } => {
-            if let Some(port) = editor::find_port(&absolute(game_root_dir)?) {
-                editor::send_command(port, &command)?;
-            }
+            let port = editor::find_port(&absolute(game_root_dir)?)
+                .context("Could not find editor port, is the editor open?")?;
+
+            editor::send_command(port, &command)?;
         }
         Commands::CompileScriptApi { input } => {
             if !input.exists() {
@@ -233,12 +232,10 @@ fn main() -> Result<()> {
             min_severity,
             disable_logs,
         } => {
-            let Some(port) = editor::find_port(&absolute(game_root_dir)?) else {
-                println!("Could not find editor port, is the editor open?");
-                return Ok(());
-            };
+            let port = editor::find_port(&absolute(game_root_dir)?)
+                .context("Could not find editor port, is the editor open?")?;
 
-            build_game(port, min_severity, !disable_logs)?
+            build_game(port, min_severity, !disable_logs)?;
         }
         Commands::TestErrorDialog => {
             let error = anyhow::anyhow!("This is a test error; no Neovim launch was attempted.")

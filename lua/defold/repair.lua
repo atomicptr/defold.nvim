@@ -7,17 +7,16 @@ end
 function M.schedule()
     local log = require "defold.logger"
     local os = require "defold.os"
-    local sidecar = require "defold.sidecar"
 
-    local paths = { os.data_dir(), os.cache_dir(), vim.fs.joinpath(vim.uv.os_tmpdir(), "defold.nvim") }
+    local paths = {
+        os.data_dir(),
+        os.cache_dir(),
+        vim.fs.joinpath(vim.uv.os_tmpdir(), "defold.nvim"),
 
-    if sidecar.data_dir then
-        table.insert(paths, sidecar.data_dir())
-    end
-
-    if sidecar.cache_dir then
-        table.insert(paths, sidecar.cache_dir())
-    end
+        -- locations used by older versions
+        vim.fs.joinpath(vim.fn.stdpath "data", "defold.nvim"),
+        vim.fs.joinpath(vim.fn.stdpath "cache", "defold.nvim"),
+    }
 
     os.with_tempfile(marker_path(), function(temporary, done)
         if vim.fn.writefile(paths, temporary) ~= 0 then

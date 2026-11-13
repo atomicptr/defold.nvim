@@ -209,16 +209,10 @@ function M.ensure(opts, callback)
 
     pending[key] = { callback }
 
-    local dir = vim.fn.tempname()
-    local file = vim.fs.joinpath(dir, opts.asset)
     local id = string.format("defold.nvim:%s", key)
 
     ---@param err? string
     local function finish(err)
-        if os.file_exists(dir) and vim.fn.delete(dir, "rf") ~= 0 then
-            log.warn(string.format("Could not remove temporary download: %s", dir))
-        end
-
         local result = target
         if err then
             result = nil
@@ -313,12 +307,6 @@ function M.ensure(opts, callback)
             return
         end
 
-        local created, create_err = pcall(vim.fn.mkdir, dir, "p")
-        if not created then
-            finish(tostring(create_err))
-            return
-        end
-
         log.info(string.format("Installing %s %s", opts.name, release.tag_name))
         log.debug(string.format("Selected asset for %s: %s", opts.name, asset.name))
         log.debug(string.format("Installation destination for %s: %s", opts.name, target))
@@ -331,31 +319,27 @@ function M.ensure(opts, callback)
         progress(id, opts.name, "Downloading", "running", initial_percent)
         local last_percent = -1
 
-        os.download(asset.browser_download_url, file, function(download_err)
-            if download_err then
-                finish(download_err)
-                return
-            end
-
-            progress(id, opts.name, "Installing", "running", 100)
-
-            local ok, install_err = pcall(install, opts, dir, target, release.tag_name)
-
-            if not ok then
-                finish(tostring(install_err))
-                return
-            end
-
-            finish()
-        end, function(bytes)
-            if asset.size and asset.size > 0 then
-                local percent = math.min(99, math.floor(bytes * 100 / asset.size))
-                if percent ~= last_percent then
-                    last_percent = percent
-                    progress(id, opts.name, "Downloading", "running", percent)
+        os.with_tempdir(function(dir, done)
+            os.download(asset.browser_download_url, vim.fs.joinpath(dir, opts.asset), function(download_err)
+                if download_err then
+                    done(download_err)
+                    return
                 end
-            end
-        end)
+
+                progress(id, opts.name, "Installing", "running", 100)
+
+                local ok, install_err = pcall(install, opts, dir, target, release.tag_name)
+                done(not ok and tostring(install_err) or nil)
+            end, function(bytes)
+                if asset.size and asset.size > 0 then
+                    local percent = math.min(99, math.floor(bytes * 100 / asset.size))
+                    if percent ~= last_percent then
+                        last_percent = percent
+                        progress(id, opts.name, "Downloading", "running", percent)
+                    end
+                end
+            end)
+        end, finish)
     end)
 end
 

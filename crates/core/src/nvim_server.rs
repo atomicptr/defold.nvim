@@ -1,23 +1,30 @@
 use crate::{path, utils::project_id};
-use anyhow::{Context, Result, bail};
+use anyhow::{Context, Result};
+use serde::Deserialize;
 use std::{
     fs,
     net::TcpListener,
     path::{Path, PathBuf},
+    str::FromStr,
 };
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize)]
+#[serde(rename_all = "lowercase")]
 pub enum SocketType {
     Fsock,
     Netsock,
 }
 
-impl SocketType {
-    pub fn parse(value: &str) -> Result<Self> {
+impl FromStr for SocketType {
+    type Err = String;
+
+    fn from_str(value: &str) -> Result<Self, Self::Err> {
         match value {
             "fsock" => Ok(Self::Fsock),
             "netsock" => Ok(Self::Netsock),
-            _ => bail!("Invalid socket type '{value}', expected 'fsock' or 'netsock'"),
+            _ => Err(format!(
+                "Invalid socket type '{value}', expected 'fsock' or 'netsock'"
+            )),
         }
     }
 }
@@ -31,65 +38,43 @@ pub fn default_socket_type() -> SocketType {
     }
 }
 
-pub fn runtime_dir(root_dir: &Path) -> Result<PathBuf> {
+fn runtime_dir(root_dir: &Path) -> Result<PathBuf> {
     let root_dir = root_dir
         .to_str()
         .context("could not convert root dir to string")?;
 
     let dir = path::cache_dir()?
         .join("runtime")
-        .join(project_id(root_dir)?);
+        .join(project_id(root_dir));
 
     fs::create_dir_all(&dir)?;
     Ok(dir)
 }
 
-pub fn fsock_path(root_dir: &Path) -> Result<PathBuf> {
+fn fsock_path(root_dir: &Path) -> Result<PathBuf> {
     Ok(runtime_dir(root_dir)?.join("neovim.sock"))
 }
 
-pub fn netsock_port_file(root_dir: &Path) -> Result<PathBuf> {
+fn netsock_port_file(root_dir: &Path) -> Result<PathBuf> {
     Ok(runtime_dir(root_dir)?.join("port"))
 }
 
-pub fn find_free_port() -> Result<u16> {
-    let listener = TcpListener::bind("127.0.0.1:0")?;
-    let port = listener.local_addr()?.port();
-    Ok(port)
-}
-
-pub fn read_or_allocate_netsock_port(root_dir: &Path) -> Result<u16> {
-    let port_file = netsock_port_file(root_dir)?;
-
-    if port_file.exists() {
-        match fs::read_to_string(&port_file) {
-            Ok(content) => {
-                if let Ok(port) = content.trim().parse::<u16>() {
-                    return Ok(port);
-                }
-            }
-            Err(err) => {
-                tracing::warn!(
-                    "Could not read netsock port file '{}': {err}",
-                    port_file.display()
-                );
-            }
-        }
+fn read_netsock_port(root_dir: &Path) -> Result<Option<u16>> {
+    match fs::read_to_string(netsock_port_file(root_dir)?) {
+        Ok(content) => Ok(content.trim().parse().ok()),
+        Err(err) if err.kind() == std::io::ErrorKind::NotFound => Ok(None),
+        Err(err) => Err(err.into()),
     }
-
-    allocate_new_netsock_port(root_dir)
 }
 
-pub fn allocate_new_netsock_port(root_dir: &Path) -> Result<u16> {
-    let port_file = netsock_port_file(root_dir)?;
-    let port = find_free_port()?;
-    fs::write(port_file, port.to_string())?;
-    Ok(port)
+pub fn allocate_netsock_addr(root_dir: &Path) -> Result<String> {
+    let port = TcpListener::bind("127.0.0.1:0")?.local_addr()?.port();
+    fs::write(netsock_port_file(root_dir)?, port.to_string())?;
+    Ok(netsock_addr(port))
 }
 
-pub fn allocate_new_netsock_addr(root_dir: &Path) -> Result<String> {
-    let port = allocate_new_netsock_port(root_dir)?;
-    Ok(format!("127.0.0.1:{port}"))
+fn netsock_addr(port: u16) -> String {
+    format!("127.0.0.1:{port}")
 }
 
 pub fn resolve_server_addr(root_dir: &Path, socket_type: Option<SocketType>) -> Result<String> {
@@ -98,9 +83,9 @@ pub fn resolve_server_addr(root_dir: &Path, socket_type: Option<SocketType>) -> 
             .to_str()
             .context("could not convert socket file to string")?
             .to_string()),
-        SocketType::Netsock => {
-            let port = read_or_allocate_netsock_port(root_dir)?;
-            Ok(format!("127.0.0.1:{port}"))
-        }
+        SocketType::Netsock => match read_netsock_port(root_dir)? {
+            Some(port) => Ok(netsock_addr(port)),
+            None => allocate_netsock_addr(root_dir),
+        },
     }
 }

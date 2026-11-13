@@ -1,16 +1,14 @@
 use std::{
     collections::{HashMap, HashSet},
-    fs::{self},
-    path::{Path, PathBuf},
+    path::Path,
 };
 
 use anyhow::{Context, Result};
 use serde::Serialize;
-use walkdir::{DirEntry, WalkDir};
 
 use crate::{
     miniproto::{self, Message, Value},
-    path,
+    resources,
 };
 
 #[derive(Debug)]
@@ -53,54 +51,20 @@ pub struct PathEntry {
     same_game_object: bool,
 }
 
-fn load_data(root_dir: &PathBuf) -> (CollectionsMap, GameObjectsMap) {
+fn load_data(root_dir: &Path) -> (CollectionsMap, GameObjectsMap) {
     let mut collections: CollectionsMap = HashMap::new();
     let mut game_objects: GameObjectsMap = HashMap::new();
 
-    let files = WalkDir::new(root_dir)
-        .into_iter()
-        .filter_entry(|e| !path::is_hidden(e))
-        .filter_map(Result::ok)
-        .map(DirEntry::into_path)
-        .filter(|p| p.is_file());
-
-    for file in files {
-        let ext = file.extension().and_then(|s| s.to_str());
-
-        if !matches!(ext, Some("collection" | "go")) {
-            continue;
-        }
-
-        let message = match fs::read_to_string(&file)
-            .map_err(anyhow::Error::from)
-            .and_then(|src| miniproto::parse(&src))
+    for resource in resources::load(root_dir, &["collection", "go"]) {
+        if Path::new(&resource.path)
+            .extension()
+            .is_some_and(|ext| ext == "go")
         {
-            Ok(message) => message,
-            Err(err) => {
-                tracing::error!("could not parse file {}: {err:?}", file.display());
-                continue;
-            }
-        };
-
-        let Ok(rel) = file.strip_prefix(root_dir) else {
-            continue;
-        };
-
-        let rel = rel.to_string_lossy().to_string();
-
-        match ext {
-            Some("collection") => {
-                let Some(collection) = parse_collection(&message) else {
-                    tracing::debug!("couldn't parse collection {}", file.display());
-                    continue;
-                };
-
-                collections.insert(rel, collection);
-            }
-            Some("go") => {
-                game_objects.insert(rel, parse_game_object(&message));
-            }
-            _ => {}
+            game_objects.insert(resource.path, parse_game_object(&resource.message));
+        } else if let Some(collection) = parse_collection(&resource.message) {
+            collections.insert(resource.path, collection);
+        } else {
+            tracing::debug!("couldn't parse collection {}", resource.path);
         }
     }
 
@@ -192,18 +156,24 @@ fn push_components(
     }
 }
 
-pub fn fetch_paths_for(root_dir: &PathBuf, filepath: &Path) -> Result<Vec<PathEntry>> {
-    let relpath = filepath
-        .strip_prefix(root_dir)
-        .with_context(|| format!("{} must be in {}", filepath.display(), root_dir.display()))?
-        .to_string_lossy()
-        .to_string();
+pub fn fetch_paths_for(root_dir: &Path, filepath: &Path) -> Result<Vec<PathEntry>> {
+    let relpath = resources::resource_path(root_dir, filepath)
+        .with_context(|| format!("{} must be in {}", filepath.display(), root_dir.display()))?;
 
     let (collections, game_objects) = load_data(root_dir);
+
+    Ok(infer_paths(&collections, &game_objects, &relpath))
+}
+
+fn infer_paths(
+    collections: &CollectionsMap,
+    game_objects: &GameObjectsMap,
+    relpath: &str,
+) -> Vec<PathEntry> {
     let has_multiple_collections = collections.len() > 1;
     let mut entries = HashSet::new();
 
-    for (collection_path, collection) in &collections {
+    for (collection_path, collection) in collections {
         let collection_name = has_multiple_collections.then(|| collection.name.clone());
 
         for go in &collection.game_objects {
@@ -222,7 +192,7 @@ pub fn fetch_paths_for(root_dir: &PathBuf, filepath: &Path) -> Result<Vec<PathEn
             {
                 let components = parse_game_object(&parsed);
 
-                if references_path(&components, &relpath) {
+                if references_path(&components, relpath) {
                     push_components(&mut entries, &components, None, None, collection_path, true);
                 }
 
@@ -245,7 +215,7 @@ pub fn fetch_paths_for(root_dir: &PathBuf, filepath: &Path) -> Result<Vec<PathEn
                             collection_name.clone(),
                             Some(go.id.clone()),
                             proto,
-                            references_path(comps, &relpath),
+                            references_path(comps, relpath),
                         );
                     }
                 }
@@ -260,7 +230,7 @@ pub fn fetch_paths_for(root_dir: &PathBuf, filepath: &Path) -> Result<Vec<PathEn
                     collection_name.clone(),
                     Some(go.id.clone()),
                     proto,
-                    references_path(comps, &relpath),
+                    references_path(comps, relpath),
                 );
             }
         }
@@ -268,12 +238,12 @@ pub fn fetch_paths_for(root_dir: &PathBuf, filepath: &Path) -> Result<Vec<PathEn
 
     let attached: Vec<_> = game_objects
         .iter()
-        .filter(|(_, comps)| references_path(comps, &relpath))
+        .filter(|(_, comps)| references_path(comps, relpath))
         .collect();
 
     // if our script affects more than one game object don't infer local components
     if attached.len() > 1 {
-        return Ok(entries.into_iter().collect());
+        return entries.into_iter().collect();
     }
 
     for (go_path, components) in attached {
@@ -289,7 +259,7 @@ pub fn fetch_paths_for(root_dir: &PathBuf, filepath: &Path) -> Result<Vec<PathEn
         }
     }
 
-    Ok(entries.into_iter().collect())
+    entries.into_iter().collect()
 }
 
 fn strip_prefix_slash(s: String) -> Option<String> {
@@ -376,5 +346,49 @@ instances {{ prototype: "/missing_id.go" }}
                 }));
             }
         }
+    }
+
+    #[test]
+    fn infers_local_and_collection_paths_for_a_script() {
+        let player = parse_game_object(
+            &miniproto::parse(r#"components { id: "logic" component: "/main/player.script" }"#)
+                .unwrap(),
+        );
+
+        let game_objects = HashMap::from([("main/player.go".to_string(), player)]);
+        let collections = HashMap::from([(
+            "main/main.collection".to_string(),
+            parse_collection(
+                &miniproto::parse(
+                    r#"name: "main" instances { id: "hero" prototype: "/main/player.go" }"#,
+                )
+                .unwrap(),
+            )
+            .unwrap(),
+        )]);
+
+        let entries: HashSet<_> = infer_paths(&collections, &game_objects, "main/player.script")
+            .into_iter()
+            .collect();
+
+        let entry = |game_object_id: Option<&str>,
+                     component_id: Option<&str>,
+                     from: &str,
+                     same: bool| PathEntry {
+            collection_name: None,
+            game_object_id: game_object_id.map(Into::into),
+            component_id: component_id.map(Into::into),
+            from_location: Some(from.into()),
+            is_component: component_id.is_some(),
+            same_game_object: same,
+        };
+
+        assert_eq!(
+            entries,
+            HashSet::from([
+                entry(Some("hero"), None, "/main/main.collection", false),
+                entry(None, Some("logic"), "/main/player.go", true),
+            ])
+        );
     }
 }

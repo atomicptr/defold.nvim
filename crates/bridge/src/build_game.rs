@@ -5,19 +5,33 @@ use std::{
     time::{Duration, Instant},
 };
 
-use anyhow::{Context, Result};
+use anyhow::{Context, Result, bail};
 use clap::ValueEnum;
 use defold_nvim_core::{editor, editor_commands::Issue};
 use sysinfo::System;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, ValueEnum)]
 pub enum Severity {
-    #[value(name = "information", alias = "I")]
+    #[value(name = "information", alias = "info", alias = "I")]
     Info,
     #[value(name = "warning", alias = "W")]
     Warning,
     #[value(name = "error", alias = "E")]
     Error,
+}
+
+impl Severity {
+    fn of(issue: &Issue) -> Self {
+        Severity::from_str(&issue.severity, true).unwrap_or(Severity::Error)
+    }
+
+    fn label(self) -> &'static str {
+        match self {
+            Severity::Info => "INFO",
+            Severity::Warning => "WARNING",
+            Severity::Error => "ERROR",
+        }
+    }
 }
 
 pub fn build_game(port: u16, min_severity: Severity, enable_logs: bool) -> Result<()> {
@@ -28,25 +42,16 @@ pub fn build_game(port: u16, min_severity: Severity, enable_logs: bool) -> Resul
 
     let result = editor::send_command(port, "build")?;
 
-    let issues: Vec<&Issue> = result
+    for issue in result
         .issues
         .iter()
-        .filter(|i| {
-            Severity::from_str(&i.severity, true).unwrap_or(Severity::Error) >= min_severity
-        })
-        .collect();
+        .filter(|issue| Severity::of(issue) >= min_severity)
+    {
+        eprintln!("{}", issue_to_defold_error(issue));
+    }
 
-    // if we have issues, print them out and stop
-    if !issues.is_empty() {
-        for issue in issues {
-            let Some(message) = issue_to_defold_error(issue) else {
-                continue;
-            };
-
-            eprintln!("{message}");
-        }
-
-        return Ok(());
+    if !result.success {
+        bail!("Defold build failed (status {})", result.status);
     }
 
     if !enable_logs {
@@ -66,21 +71,17 @@ pub fn build_game(port: u16, min_severity: Severity, enable_logs: bool) -> Resul
     stream_logs(&mut sys, port, target_pid)
 }
 
-fn issue_to_defold_error(issue: &Issue) -> Option<String> {
-    let severity = match issue.severity.to_lowercase().as_str() {
-        "warning" => "WARNING",
-        "info" => "INFO",
-        _ => "ERROR",
+fn issue_to_defold_error(issue: &Issue) -> String {
+    let severity = Severity::of(issue).label();
+
+    let Some(resource) = issue.resource.as_deref() else {
+        return format!("{severity}: {}", issue.message);
     };
 
-    let resource = issue.resource.as_deref()?;
     let path = resource.strip_prefix("/").unwrap_or(resource);
     let line = issue.range.as_ref().map_or(1, |r| r.start.line + 1);
 
-    Some(format!(
-        "{severity}:SCRIPT: {path}:{line}: {}",
-        issue.message
-    ))
+    format!("{severity}:SCRIPT: {path}:{line}: {}", issue.message)
 }
 
 fn find_running_dmengine_processes(sys: &mut System) -> Vec<u32> {
@@ -207,11 +208,14 @@ mod tests {
     }
 
     #[test]
-    fn issues_without_resources_are_not_reported() {
+    fn issues_without_resources_are_reported_without_location() {
         let mut issue = issue();
         issue.resource = None;
 
-        assert_eq!(issue_to_defold_error(&issue), None);
+        assert_eq!(
+            issue_to_defold_error(&issue),
+            "ERROR: Undefined variable: player"
+        );
     }
 
     #[test]
@@ -228,9 +232,7 @@ mod tests {
 
             assert_eq!(
                 issue_to_defold_error(&issue),
-                Some(format!(
-                    "ERROR:SCRIPT: {expected_path}:1: Undefined variable: player"
-                )),
+                format!("ERROR:SCRIPT: {expected_path}:1: Undefined variable: player"),
                 "resource: {resource:?}"
             );
         }
@@ -241,6 +243,7 @@ mod tests {
         for (severity, expected_severity) in [
             ("warning", "WARNING"),
             ("WaRnInG", "WARNING"),
+            ("information", "INFO"),
             ("info", "INFO"),
             ("InFo", "INFO"),
             ("error", "ERROR"),
@@ -253,9 +256,9 @@ mod tests {
 
             assert_eq!(
                 issue_to_defold_error(&issue),
-                Some(format!(
+                format!(
                     "{expected_severity}:SCRIPT: main/player.script:1: Undefined variable: player"
-                )),
+                ),
                 "severity: {severity:?}"
             );
         }
@@ -278,9 +281,9 @@ mod tests {
 
             assert_eq!(
                 issue_to_defold_error(&issue),
-                Some(format!(
+                format!(
                     "ERROR:SCRIPT: main/player.script:{expected_line}: Undefined variable: player"
-                ))
+                )
             );
         }
     }
@@ -290,8 +293,8 @@ mod tests {
         let issue = issue();
 
         assert_eq!(
-            issue_to_defold_error(&issue).as_deref(),
-            Some("ERROR:SCRIPT: main/player.script:1: Undefined variable: player")
+            issue_to_defold_error(&issue),
+            "ERROR:SCRIPT: main/player.script:1: Undefined variable: player"
         );
     }
 }

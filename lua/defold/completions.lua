@@ -262,9 +262,18 @@ local function get_input_binding_completions(root)
     ---@type defold.completions.Item[]
     local items = {}
 
+    ---@cast bindings defold.sidecar.InputBinding[]
     for _, binding in ipairs(bindings) do
+        local label = binding.action
+
+        if binding.from_location then
+            label = string.format("%s (%s)", label, binding.from_location)
+        end
+
         table.insert(items, {
-            label = binding,
+            label = label,
+            insertText = binding.action,
+            filterText = binding.action,
             kind = kinds.Property,
             icon = "󱇰",
             insertTextFormat = vim.lsp.protocol.InsertTextFormat.PlainText,

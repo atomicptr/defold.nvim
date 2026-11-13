@@ -103,7 +103,7 @@ function M.register()
         end
     end
 
-    dap.configurations.lua = {
+    require("defold.debugger").set_configurations(dap, {
         {
             type = "defold_nvim_native",
             request = "attach",
@@ -125,7 +125,7 @@ function M.register()
             end,
             stopOnEntry = false,
         },
-    }
+    })
 end
 
 return M

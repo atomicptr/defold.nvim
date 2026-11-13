@@ -1,44 +1,55 @@
-use std::{fs, path::PathBuf};
+use std::path::Path;
 
-use anyhow::{Result, bail};
-use walkdir::{DirEntry, WalkDir};
+use anyhow::Result;
+use serde::Serialize;
 
 use crate::{
-    miniproto::{self, Message, Value},
-    path,
+    game_project::GameProject,
+    miniproto::{Message, Value},
+    resources,
 };
 
-pub fn fetch_input_bindings(root_dir: &PathBuf) -> Result<Vec<String>> {
-    let bindings = WalkDir::new(root_dir)
-        .into_iter()
-        .filter_entry(|e| !path::is_hidden(e))
-        .filter_map(Result::ok)
-        .map(DirEntry::into_path)
-        .filter(|p| p.is_file())
-        .filter_map(|p| match p.extension() {
-            Some(ext) if ext.to_string_lossy() == "input_binding" => Some(p),
-            _ => None,
-        })
-        .collect::<Vec<_>>();
+const DEFAULT_GAME_BINDING: &str = "/input/game.input_binding";
 
-    let Some(binding_file) = bindings.first() else {
-        bail!(
-            "could not find .input_binding file in {}",
-            root_dir.display()
-        );
-    };
+#[derive(Debug, Serialize, PartialEq, Eq, PartialOrd, Ord)]
+pub struct InputBinding {
+    pub action: String,
 
-    let data = fs::read_to_string(binding_file)?;
-
-    let message = miniproto::parse(&data)?;
-
-    Ok(parse_bindings(&message))
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub from_location: Option<String>,
 }
 
-fn parse_bindings(message: &Message) -> Vec<String> {
-    let mut bindings = Vec::new();
+fn game_binding_source(game_binding: Option<&str>) -> String {
+    let binding = game_binding.unwrap_or(DEFAULT_GAME_BINDING);
+    let binding = binding.strip_suffix('c').unwrap_or(binding);
 
-    for v in [
+    binding.trim_start_matches('/').to_string()
+}
+
+pub fn fetch_input_bindings(root_dir: &Path) -> Result<Vec<InputBinding>> {
+    let project = GameProject::load_from_path(&root_dir.join("game.project"))?;
+    let active = game_binding_source(project.game_binding.as_deref());
+
+    let files = resources::load(root_dir, &["input_binding"]);
+
+    if let Some(file) = files.iter().find(|file| file.path == active) {
+        return Ok(collect_bindings(&file.message, None));
+    }
+
+    // the active file isn't part of the project (e.g. /builtins), so offer all of them
+    let mut bindings: Vec<_> = files
+        .iter()
+        .flat_map(|file| collect_bindings(&file.message, Some(&format!("/{}", file.path))))
+        .collect();
+
+    bindings.sort();
+    Ok(bindings)
+}
+
+fn collect_bindings(message: &Message, from_location: Option<&str>) -> Vec<InputBinding> {
+    let mut actions = Vec::new();
+
+    for value in [
         "key_trigger",
         "mouse_trigger",
         "gamepad_trigger",
@@ -48,29 +59,34 @@ fn parse_bindings(message: &Message) -> Vec<String> {
     .into_iter()
     .flat_map(|key| message.get(key))
     {
-        let Value::Message(value) = v else {
+        let Value::Message(value) = value else {
             continue;
         };
 
-        let Some(action) = value
+        if let Some(action) = value
             .first_string("action")
             .filter(|action| !action.is_empty())
-        else {
-            continue;
-        };
-
-        bindings.push(action);
+        {
+            actions.push(action);
+        }
     }
 
-    bindings.sort();
-    bindings.dedup();
+    actions.sort();
+    actions.dedup();
 
-    bindings
+    actions
+        .into_iter()
+        .map(|action| InputBinding {
+            action,
+            from_location: from_location.map(str::to_string),
+        })
+        .collect()
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::miniproto;
 
     #[test]
     fn collects_actions_from_all_trigger_types_without_duplicates() {
@@ -88,9 +104,24 @@ mouse_trigger { input: MOUSE_BUTTON_2 }
         )
         .unwrap();
 
+        let actions: Vec<_> = collect_bindings(&message, None)
+            .into_iter()
+            .map(|binding| binding.action)
+            .collect();
+
+        assert_eq!(actions, ["click", "interact", "pause", "text", "touch"]);
+    }
+
+    #[test]
+    fn resolves_game_binding_source() {
+        assert_eq!(game_binding_source(None), "input/game.input_binding");
         assert_eq!(
-            parse_bindings(&message),
-            ["click", "interact", "pause", "text", "touch"]
+            game_binding_source(Some("/controls/main.input_bindingc")),
+            "controls/main.input_binding"
+        );
+        assert_eq!(
+            game_binding_source(Some("/builtins/input/all.input_bindingc")),
+            "builtins/input/all.input_binding"
         );
     }
 }

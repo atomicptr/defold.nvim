@@ -16,6 +16,9 @@ pub struct GameProject {
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub library: Option<Library>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub game_binding: Option<String>,
 }
 
 impl GameProject {
@@ -60,10 +63,17 @@ impl TryFrom<String> for GameProject {
             });
         }
 
+        let game_binding = proj
+            .section(Some("input"))
+            .and_then(|input| input.get("game_binding"))
+            .map(|binding| binding.trim().to_string())
+            .filter(|binding| !binding.is_empty());
+
         Ok(GameProject {
             title,
             dependencies,
             library,
+            game_binding,
         })
     }
 }
@@ -93,6 +103,7 @@ mod tests {
 
         assert_eq!(project.dependencies.len(), 0);
         assert!(project.library.is_none());
+        assert!(project.game_binding.is_none());
 
         let project = GameProject::try_from(
             "[project]\ntitle = Minimal\n[library]\nother = ignored".to_string(),
@@ -125,7 +136,10 @@ dependencies#1 = https://example.com/dependency1.zip
 dependencies#2 = https://example.com/dependency2.zip
 
 [library]
-include_dirs = my_fancy_game";
+include_dirs = my_fancy_game
+
+[input]
+game_binding = /input/my.input_bindingc";
 
         let g: GameProject = input
             .to_string()
@@ -141,6 +155,7 @@ include_dirs = my_fancy_game";
             ],
             g.dependencies
         );
+        assert_eq!(g.game_binding.as_deref(), Some("/input/my.input_bindingc"));
         assert!(g.library.is_some());
         assert_eq!(1, g.library.as_ref().unwrap().include_dirs.len());
         assert_eq!(

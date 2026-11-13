@@ -3,7 +3,7 @@ use std::{
     path::Path,
 };
 
-use anyhow::{Context, Result};
+use anyhow::Result;
 use fs_extra::{dir, file};
 use sha3::{Digest, Sha3_256};
 
@@ -16,15 +16,14 @@ pub fn sha3(str: &str) -> String {
     hex::encode(result)
 }
 
-pub fn project_id(root_dir: &str) -> Result<String> {
-    Ok(sha3(root_dir)
-        .get(0..8)
-        .context("could not create project id")?
-        .to_string())
+#[must_use]
+pub fn project_id(root_dir: &str) -> String {
+    sha3(root_dir)[..8].to_string()
 }
 
-pub fn classname(root_dir: &str) -> Result<String> {
-    Ok(format!("com.defold.nvim.p{}", project_id(root_dir)?))
+#[must_use]
+pub fn classname(root_dir: &str) -> String {
+    format!("com.defold.nvim.p{}", project_id(root_dir))
 }
 
 // Apparently fs::rename doesnt work on tmpfs
@@ -92,6 +91,7 @@ pub fn unpack(archive: &Path, target: &Path) -> Result<()> {
     Ok(())
 }
 
+#[must_use]
 pub fn version() -> String {
     env!("CARGO_PKG_VERSION").to_string()
 }
