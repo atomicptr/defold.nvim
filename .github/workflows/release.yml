@@ -94,6 +94,8 @@ jobs:
       - name: upload ${{ matrix.config.name }}
         uses: softprops/action-gh-release@v2
         with:
+          prerelease: ${{ contains(github.ref_name, '-') }}
+          make_latest: ${{ !contains(github.ref_name, '-') }}
           files: |
             ${{ matrix.config.dist.sidecar }}
             ${{ matrix.config.dist.bridge }}
