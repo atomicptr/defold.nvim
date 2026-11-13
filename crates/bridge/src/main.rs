@@ -175,7 +175,7 @@ fn main() -> Result<()> {
                     appname,
                     run_arg,
                     arguments,
-                    debug: None,
+                    ..Default::default()
                 },
                 &absolute(game_root_dir)?,
                 &absolute(file)?,

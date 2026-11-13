@@ -188,6 +188,12 @@ local config = {
         -- arguments passed to the `executable` (or neovide)
         arguments = nil,
 
+        -- Environment overrides in the generated runner (default: {})
+        env = {
+            -- Find user-installed tools when launched from Defold (Linux/macOS)
+            PATH = string.format("%s:%s", vim.fn.expand("~/.local/bin"), vim.env.PATH),
+        },
+
         -- choose file based sockets (fsock, unix only) or network based sockets (netsock) or use nil for the default
         socket_type = nil,
     },

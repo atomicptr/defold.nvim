@@ -3,21 +3,25 @@
 ---@field auto_fetch_dependencies? boolean Automatically fetch dependencies on launch
 ---@field hot_reload_enabled?      boolean Enable hot reloading when saving scripts in Neovim
 
+---@alias defold.config.EnvScalar string|number|boolean
+---@alias defold.config.EnvValue defold.config.EnvScalar|defold.config.EnvScalar[]|table<string|integer, defold.config.EnvScalar>
+
 ---@class defold.config.Launcher Settings for the Neovim launcher run by Defold
----@field type         "neovide"|"terminal" Neovim launcher run by Defold
----@field executable?  string               Executable to be used by the launcher, nil means we're trying to figure this out ourselves
----@field socket_type? "fsock"|"netsock"    Run Neovims RPC protocol over file socket or network. Nil means it will be picked automatic (fsock on Unix, network on Windows)
----@field run_arg?     string               (Custom Terminal only) Argument to specify how the command is run usually "-e"
----@field arguments?   table<string>        Extra arguments passed to the `executable` (or neovide)
----@field appname?     string               Sets `NVIM_APPNAME` to run the editor in a special configuration
----@field debug?       boolean              Enable debug settings for the bridge cli
+---@field type         "neovide"|"terminal"                  Neovim launcher run by Defold
+---@field executable?  string                                Executable to be used by the launcher, nil means we're trying to figure this out ourselves
+---@field socket_type? "fsock"|"netsock"                     Run Neovims RPC protocol over file socket or network. Nil means it will be picked automatic (fsock on Unix, network on Windows)
+---@field run_arg?     string                                (Custom Terminal only) Argument to specify how the command is run usually "-e"
+---@field arguments?   table<string>                         Extra arguments passed to the `executable` (or neovide)
+---@field env?         table<string, defold.config.EnvValue> Environment overrides for the generated runner
+---@field appname?     string                                Sets `NVIM_APPNAME` to run the editor in a special configuration
+---@field debug?       boolean                               Enable debug settings for the bridge cli
 
 ---@class defold.config.Debugger Settings for the integrated debugger
----@field enable?        boolean                               Enable the debugger
----@field moonbug?       defold.config.debugger.MoonbugConfig  Config for `moonbug`
----@field mobdebug?      defold.config.debugger.MobdebugConfig Config for `mobdebug`
----@field force_variant? defold.debugger.Variant               Load variant no matter what is inferred from project
----@field replace_configurations? boolean Replace all Lua nvim-dap configurations (default: true)
+---@field enable?                 boolean                               Enable the debugger
+---@field moonbug?                defold.config.debugger.MoonbugConfig  Config for `moonbug`
+---@field mobdebug?               defold.config.debugger.MobdebugConfig Config for `mobdebug`
+---@field force_variant?          defold.debugger.Variant               Load variant no matter what is inferred from project
+---@field replace_configurations? boolean                               Replace all Lua nvim-dap configurations (default: true)
 
 ---@class defold.config.debugger.MoonbugConfig
 ---@field port? integer The port to run moonbug at
@@ -80,6 +84,7 @@ M.state = {
         type = "neovide",
         executable = nil,
         arguments = nil,
+        env = {},
     },
 
     debugger = {
