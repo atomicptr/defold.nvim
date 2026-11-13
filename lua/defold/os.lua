@@ -335,15 +335,20 @@ end
 ---@param kind "data"|"cache"
 ---@return string
 local function base_dir(kind)
-    -- no logger here, it writes its log file into the cache dir
+    -- NOTE: no logger here, it writes its log file into the cache dir
     local home = vim.uv.os_homedir()
     if not home or home == "" then
         error "defold.nvim: Could not find the home directory"
     end
 
     if M.is_windows() then
-        local name = kind == "data" and "APPDATA" or "LOCALAPPDATA"
-        return vim.env[name] or error(string.format("defold.nvim: %s is not set", name))
+        local local_app_data = vim.env.LOCALAPPDATA
+
+        if not local_app_data or local_app_data == "" then
+            error "defold.nvim: LOCALAPPDATA is not set"
+        end
+
+        return local_app_data
     end
 
     if M.is_macos() then
@@ -369,7 +374,13 @@ end
 ---Returns `Cache` directory
 ---@return string
 function M.cache_dir()
-    local dir = vim.fs.joinpath(base_dir "cache", "defold.nvim")
+    local name = "defold.nvim"
+
+    if M.is_windows() then
+        name = "defold.nvim-cache"
+    end
+
+    local dir = vim.fs.joinpath(base_dir "cache", name)
     vim.fn.mkdir(dir, "p")
     return dir
 end
