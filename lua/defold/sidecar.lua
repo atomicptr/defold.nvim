@@ -119,7 +119,7 @@ end
 ---@param ...      defold.sidecar.WorkerValue
 function M.worker_call(method, callback, ...)
     if not library_path then
-        callback(nil, "Defold sidecar is not loaded")
+        callback(nil, "sidecar is not loaded")
         return
     end
 
@@ -249,7 +249,7 @@ function M.ensure(callback)
             local data = os.data_dir()
 
             download.ensure({
-                name = "Defold sidecar",
+                name = "defold.nvim: sidecar",
                 owner = "atomicptr",
                 repo = "defold.nvim",
                 version = version,
@@ -280,7 +280,7 @@ function M.ensure(callback)
                 end
 
                 download.ensure({
-                    name = "Defold bridge",
+                    name = "defold.nvim: bridge",
                     owner = "atomicptr",
                     repo = "defold.nvim",
                     version = version,
