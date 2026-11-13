@@ -263,7 +263,14 @@ fn render_runner_script(
             &quote_all(&settings.bridge_post_cli_args(), quote)?,
         );
 
-    Ok(format!("{header}{exports}{command}"))
+    let script = format!("{header}{exports}{command}");
+
+    if batch {
+        // make sure .bat files are using "\r\n" file endings
+        Ok(script.replace("\r\n", "\n").replace('\n', "\r\n"))
+    } else {
+        Ok(script)
+    }
 }
 
 fn create_runner(bridge_path: &Path, settings: &LauncherSettings) -> Result<PathBuf> {
@@ -513,7 +520,7 @@ mod tests {
             ("EMPTY", ""),
         ]);
         let script = render_runner_script(template, quote_batch, "bridge.exe", &settings).unwrap();
-        assert!(script.starts_with("@echo off\nsetlocal DisableDelayedExpansion\nchcp 65001 >nul\nset \"EMPTY=\"\nset \"VALUE=100%% %%PATH%% !x! ^ & | < > ( ) {ENV_BATCH}\\\"\n\"bridge.exe\""));
+        assert!(script.starts_with("@echo off\r\nsetlocal DisableDelayedExpansion\r\nchcp 65001 >nul\r\nset \"EMPTY=\"\r\nset \"VALUE=100%% %%PATH%% !x! ^ & | < > ( ) {ENV_BATCH}\\\"\r\n\"bridge.exe\""));
         let empty =
             render_runner_script(template, quote_batch, "bridge.exe", &with_env(&[])).unwrap();
         assert!(!empty.contains("setlocal"));
@@ -532,6 +539,26 @@ mod tests {
             )
             .unwrap_err();
             assert!(!error.to_string().contains("secret"));
+        }
+    }
+
+    #[test]
+    fn batch_runner_uses_crlf_regardless_of_template_line_endings() {
+        let template = include_str!("../assets/run_windows.bat").replace("\r\n", "\n");
+
+        for settings in [with_env(&[]), with_env(&[("VALUE", "café 日本語 & |")])] {
+            let lf = render_runner_script(&template, quote_batch, "bridge.exe", &settings).unwrap();
+            let crlf = render_runner_script(
+                &template.replace('\n', "\r\n"),
+                quote_batch,
+                "bridge.exe",
+                &settings,
+            )
+            .unwrap();
+
+            assert_eq!(lf, crlf);
+            assert!(lf.ends_with("\r\n"));
+            assert!(!lf.replace("\r\n", "").contains(['\r', '\n']));
         }
     }
 
@@ -554,7 +581,7 @@ mod tests {
         )
         .unwrap();
         fs::write(&runner, script).unwrap();
-        fs::write(&wrapper, "@echo off\nchcp 437 >nul\ncall run.bat\n").unwrap();
+        fs::write(&wrapper, "@echo off\r\nchcp 437 >nul\r\ncall run.bat\r\n").unwrap();
         let output = std::process::Command::new("cmd.exe")
             .args(["/D", "/V:ON", "/C"])
             .arg("legacy.bat")
