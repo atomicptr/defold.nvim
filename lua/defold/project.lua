@@ -11,9 +11,6 @@ M._annotations_state = nil
 ---@type string?
 M._project_root = nil
 
----@type integer?
-M._editor_port = nil
-
 ---Find the nearest project root
 ---@param source string|integer File path or buffer number.
 ---@return string|nil
@@ -31,8 +28,7 @@ function M.resolve_resource(resource_path, root_dir)
     local root = root_dir or M.find_root(vim.fn.getcwd())
     root = root and vim.uv.fs_realpath(vim.fs.abspath(root))
 
-    local project_stat = root and vim.uv.fs_stat(vim.fs.joinpath(root, "game.project"))
-    if not project_stat or project_stat.type ~= "file" then
+    if not root or not M.is_defold_project(root) then
         return nil, nil, "could not find the Defold project"
     end
 
@@ -66,7 +62,7 @@ function M.project_root(report_error)
             return nil
         end
 
-        local log = require "defold.service.logger"
+        local log = require "defold.logger"
         log.error "Could not find game.project file, not a Defold project?"
         return nil
     end
@@ -86,15 +82,12 @@ function M.is_buffer_in_project(bufnr)
 end
 
 ---Returns true if we are in a defold project
+---@param root_dir? string
 ---@return boolean
-function M.is_defold_project()
-    local root_dir = M.project_root()
-
-    if not root_dir then
-        return false
-    end
-
-    return require("defold.service.os").file_exists(vim.fs.joinpath(root_dir, "game.project"))
+function M.is_defold_project(root_dir)
+    root_dir = root_dir or M.project_root()
+    local stat = root_dir and vim.uv.fs_stat(vim.fs.joinpath(root_dir, "game.project"))
+    return stat ~= nil and stat.type == "file"
 end
 
 ---@return boolean
@@ -111,7 +104,7 @@ end
 ---@param socket_type "fsock"|"netsock"|nil
 ---@return string|nil
 function M.ensure_nvim_server(socket_type)
-    local log = require "defold.service.logger"
+    local log = require "defold.logger"
 
     for _, arg in ipairs(vim.v.argv) do
         -- if neovim was started with `--listen` flag we don't need to try to start a new server
@@ -170,32 +163,28 @@ function M.editor_port()
         return nil
     end
 
-    if M._editor_port and sidecar.is_editor_port(M._editor_port) then
-        return M._editor_port
-    end
-
-    M._editor_port = M.get_editor_port(root)
-    if not M._editor_port then
+    local port = M.get_editor_port(root)
+    if not port then
         return nil
     end
 
-    local log = require "defold.service.logger"
+    local log = require "defold.logger"
 
-    log.debug(string.format("Found editor port at: %s", M._editor_port))
+    log.debug(string.format("Found editor port at: %s", port))
 
-    if not sidecar.is_editor_port(M._editor_port) then
-        log.error(string.format("Found editor port %s but the editor doesn't respond", M._editor_port))
+    if not sidecar.is_editor_port(port) then
+        log.error(string.format("Found editor port %s but the editor doesn't respond", port))
         return nil
     end
 
-    return M._editor_port
+    return port
 end
 
 ---@param on_change? fun() Called after annotations become available or change
 function M.refresh_annotations(on_change)
     local sidecar = require "defold.sidecar"
-    local log = require "defold.service.logger"
-    local os = require "defold.service.os"
+    local log = require "defold.logger"
+    local os = require "defold.os"
     local download = require "defold.download"
 
     local root = M.project_root()
@@ -225,10 +214,14 @@ function M.refresh_annotations(on_change)
                 version = value
                 M._annotations_state.version = version
 
-                local saved, err = pcall(os.write, file, version .. "\n")
-                if not saved then
-                    log.error(string.format("Could not cache Defold editor version: %s", tostring(err)))
-                end
+                os.with_tempfile(file, function(temporary, done)
+                    os.write(temporary, string.format("%s\n", version))
+                    done()
+                end, function(err)
+                    if err then
+                        log.error(string.format("Could not cache Defold editor version: %s", err))
+                    end
+                end)
             else
                 local read, lines = pcall(vim.fn.readfile, file)
                 if read then
@@ -307,7 +300,7 @@ end
 
 ---Install managed Neovide only when the configured launcher needs it.
 function M.setup_neovide()
-    local os = require "defold.service.os"
+    local os = require "defold.os"
 
     ---@type defold.config.Launcher
     local launcher = require("defold.config").state.launcher
@@ -316,7 +309,7 @@ function M.setup_neovide()
         return
     end
 
-    local log = require "defold.service.logger"
+    local log = require "defold.logger"
     local sidecar = require "defold.sidecar"
 
     local data = sidecar.data_dir()
@@ -357,7 +350,7 @@ function M.setup_neovide()
 end
 
 function M.dependency_api_paths()
-    local log = require "defold.service.logger"
+    local log = require "defold.logger"
     local sidecar = require "defold.sidecar"
 
     local root_dir = M.project_root(true)
@@ -382,9 +375,9 @@ end
 ---@param force_redownload boolean
 ---@param on_complete?     fun()
 function M.install_dependencies(force_redownload, on_complete)
-    local log = require "defold.service.logger"
+    local log = require "defold.logger"
     local sidecar = require "defold.sidecar"
-    local os = require "defold.service.os"
+    local os = require "defold.os"
 
     local root = M.project_root(true)
     if not root then

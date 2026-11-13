@@ -3,7 +3,7 @@ local M = {}
 ---@return string|nil
 function M.get_path()
     local config = require "defold.config"
-    local os = require "defold.service.os"
+    local os = require "defold.os"
 
     if config.state.debugger.mobdebug.mobdap_executable then
         return config.state.debugger.mobdebug.mobdap_executable
@@ -18,8 +18,8 @@ end
 
 ---@param on_ready? fun(path: string)
 function M.setup(on_ready)
-    local log = require "defold.service.logger"
-    local os = require "defold.service.os"
+    local log = require "defold.logger"
+    local os = require "defold.os"
     local sidecar = require "defold.sidecar"
     local download = require "defold.download"
 
@@ -75,7 +75,7 @@ function M.setup(on_ready)
 end
 
 function M.register()
-    local log = require "defold.service.logger"
+    local log = require "defold.logger"
     local config = require "defold.config"
     local dap = require "dap"
     local project = require "defold.project"

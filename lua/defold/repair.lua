@@ -5,8 +5,8 @@ local function marker_path()
 end
 
 function M.schedule()
-    local log = require "defold.service.logger"
-    local os = require "defold.service.os"
+    local log = require "defold.logger"
+    local os = require "defold.os"
     local sidecar = require "defold.sidecar"
 
     local paths = { os.data_dir(), os.cache_dir(), vim.fs.joinpath(vim.uv.os_tmpdir(), "defold.nvim") }
@@ -19,16 +19,28 @@ function M.schedule()
         table.insert(paths, sidecar.cache_dir())
     end
 
-    if vim.fn.writefile(paths, marker_path()) ~= 0 then
-        log.fatal "Could not schedule defold.nvim repair"
-    end
+    os.with_tempfile(marker_path(), function(temporary, done)
+        if vim.fn.writefile(paths, temporary) ~= 0 then
+            done "Could not write repair marker"
+            return
+        end
 
-    vim.notify("defold.nvim: Repair scheduled, please restart ALL Neovim instances to continue", vim.log.levels.WARN)
+        done()
+    end, function(err)
+        if err then
+            log.fatal(string.format("Could not schedule defold.nvim repair: %s", err))
+        end
+
+        vim.notify(
+            "defold.nvim: Repair scheduled, please restart ALL Neovim instances to continue",
+            vim.log.levels.WARN
+        )
+    end)
 end
 
 function M.apply_pending()
-    local log = require "defold.service.logger"
-    local os = require "defold.service.os"
+    local log = require "defold.logger"
+    local os = require "defold.os"
 
     if not os.file_exists(marker_path()) then
         return
@@ -41,7 +53,7 @@ function M.apply_pending()
 
     for _, path in ipairs(vim.fn.readfile(marker_path())) do
         if os.file_exists(path) and vim.fn.delete(path, "rf") ~= 0 then
-            log.fatal(string.format "Could not remove %s, close Neovim and try again")
+            log.fatal(string.format("Could not remove %s, close Neovim and try again", path))
         end
     end
 

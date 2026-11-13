@@ -3,7 +3,7 @@ local M = {}
 ---List all available Defold commands
 ---@return string[]
 function M.list_commands()
-    local log = require "defold.service.logger"
+    local log = require "defold.logger"
     local project = require "defold.project"
 
     local port = project.editor_port()
@@ -30,7 +30,7 @@ end
 ---@param dont_report_error boolean|nil
 ---@return defold.sidecar.CommandResult|nil
 function M.send_command(command, dont_report_error)
-    local log = require "defold.service.logger"
+    local log = require "defold.logger"
     local project = require "defold.project"
 
     local port = project.editor_port()
@@ -58,33 +58,25 @@ function M.send_command(command, dont_report_error)
         return
     end
 
-    log.error(
-        string.format(
-            "Could not execute comannd '%s', because: %s",
-            command,
-            string.format("%d: Something went wrong!", (res and res.status) or 0)
-        )
-    )
+    log.error(string.format("Could not execute command '%s', because: %s", command, tostring(res)))
 end
 
----@param severity? defold.sidecar.IssueSeverity
----@return integer
-local function issue_severity_value(severity)
-    if severity == "information" then
-        return 1
-    elseif severity == "warning" then
-        return 2
-    elseif severity == "error" then
-        return 3
-    end
+local severity_map = {
+    information = { rank = 1, type = "I" },
+    warning = { rank = 2, type = "W" },
+    error = { rank = 3, type = "E" },
+}
 
-    return 3 -- unknown will also be treated as error
+---@param severity? defold.sidecar.IssueSeverity
+---@return { rank: integer, type: string }
+local function issue_severity(severity)
+    return severity_map[severity or "error"] or severity_map.error
 end
 
 ---Opens the Neovim Quickfix list from a command result
 ---If there are no issues this is a no-op
----@param result defold.sidecar.CommandResult|nil
----@param min_severity? defold.sidecar.IssueSeverity
+---@param result        defold.sidecar.CommandResult|nil
+---@param min_severity?  defold.sidecar.IssueSeverity
 ---@param open_quickfix? boolean
 function M.open_quickfix_from_command_result(result, min_severity, open_quickfix)
     local config = require "defold.config"
@@ -99,22 +91,21 @@ function M.open_quickfix_from_command_result(result, min_severity, open_quickfix
         open_quickfix = config.state.quickfix.open_list
     end
 
-    local min_severity_value = issue_severity_value(min_severity or config.state.quickfix.min_severity)
+    local project = require "defold.project"
+    local root = project.project_root()
+    local min_severity_value = issue_severity(min_severity or config.state.quickfix.min_severity).rank
     local items = {}
 
-    ---@type table<defold.sidecar.IssueSeverity, string>
-    local severity_map = {
-        error = "E",
-        warning = "W",
-        info = "I",
-    }
-
     for _, issue in ipairs(result.issues) do
-        if issue_severity_value(issue.severity) >= min_severity_value then
+        local severity = issue_severity(issue.severity)
+        if severity.rank >= min_severity_value then
             local filepath = issue.resource
 
-            if filepath and filepath:sub(1, 1) == "/" then
-                filepath = filepath:sub(2)
+            if filepath then
+                filepath = filepath:gsub("^/+", "")
+                if root then
+                    filepath = vim.fs.joinpath(root, filepath)
+                end
             end
 
             local lnum = 1
@@ -130,7 +121,7 @@ function M.open_quickfix_from_command_result(result, min_severity, open_quickfix
                 lnum = lnum,
                 col = col,
                 text = issue.message,
-                type = severity_map[issue.severity] or "E",
+                type = severity.type,
             })
         end
     end

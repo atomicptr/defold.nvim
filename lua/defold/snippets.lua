@@ -7,24 +7,23 @@ local styles = {
     PascalCase = true,
 }
 
----@param name string
+---@param name  string
 ---@param style defold.snippets.NamingStyle
----@return string
+---@return string? name
+---@return string? error
 local function format_name(name, style)
-    local log = require "defold.service.logger"
-
     if not styles[style] then
-        log.fatal(string.format("Unknown Defold snippet naming style: %s", tostring(style)))
+        return nil, string.format("Unknown Defold snippet naming style: %s", tostring(style))
     end
 
     if style ~= "preserve" then
         local separated = name:gsub("(%u)(%u%l)", "%1_%2"):gsub("([%l%d])(%u)", "%1_%2")
         local words = {}
 
-        for word in separated:gmatch "[%a%d]+" do
-            word = word:lower()
+        for token in separated:gmatch "[%a%d]+" do
+            local word = token:lower()
             if style ~= "snake_case" then
-                word = word:sub(1, 1):upper() .. word:sub(2)
+                word = string.format("%s%s", word:sub(1, 1):upper(), word:sub(2))
             end
 
             table.insert(words, word)
@@ -34,10 +33,45 @@ local function format_name(name, style)
     end
 
     if not name:match "^[%a_][%w_]*$" then
-        log.fatal(string.format("Cannot generate a class name from: %s", name))
+        return nil, string.format("Cannot generate a class name from: %s", name)
     end
 
     return name
+end
+
+---Build a class name from a project-relative filename and explicit naming options.
+---@param relative string
+---@param options  defold.config.Snippets
+---@return string? name
+---@return string? error
+function M.class_name_from_relative(relative, options)
+    local parts = {}
+
+    for part in string.format("%s/", relative):gmatch "(.-)/" do
+        table.insert(parts, part)
+    end
+
+    local basename = table.remove(parts):gsub("%.[^.]+$", "")
+    local class_name, err = format_name(basename, options.class_naming_style)
+    if not class_name then
+        return nil, err
+    end
+
+    if not options.use_namespaces then
+        return class_name
+    end
+
+    for index, part in ipairs(parts) do
+        local namespace, namespace_err = format_name(part, options.namespace_naming_style)
+        if not namespace then
+            return nil, namespace_err
+        end
+
+        parts[index] = namespace
+    end
+
+    table.insert(parts, class_name)
+    return table.concat(parts, ".")
 end
 
 ---Build the configured class name for a file in the loaded project
@@ -46,7 +80,7 @@ end
 function M.class_name_from_buffer(bufnr)
     local config = require "defold.config"
     local project = require "defold.project"
-    local log = require "defold.service.logger"
+    local log = require "defold.logger"
 
     local root = project.project_root()
     if not root then
@@ -59,20 +93,12 @@ function M.class_name_from_buffer(bufnr)
         log.fatal "Buffer is outside the Defold project"
     end
 
-    local parts = vim.split(relative, "/", { plain = true })
-    local basename = table.remove(parts):gsub("%.[^.]+$", "")
-    local class_name = format_name(basename, config.state.snippets.class_naming_style)
-
-    if not config.state.snippets.use_namespaces then
-        return class_name
+    local class_name, err = M.class_name_from_relative(relative, config.state.snippets)
+    if not class_name then
+        log.fatal(err)
     end
 
-    for index, part in ipairs(parts) do
-        parts[index] = format_name(part, config.state.snippets.namespace_naming_style)
-    end
-
-    table.insert(parts, class_name)
-    return table.concat(parts, ".")
+    return class_name
 end
 
 function M.install()
@@ -89,7 +115,7 @@ function M.install()
 
     local script = require "defold.script"
     local project = require "defold.project"
-    local os = require "defold.service.os"
+    local os = require "defold.os"
     local snippets = {}
 
     luasnip.env_namespace("DEFOLD", {

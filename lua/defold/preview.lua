@@ -45,7 +45,7 @@ function M.get_file(resource_path, callback, opts)
 
     local project = require "defold.project"
     local sidecar = require "defold.sidecar"
-    local osm = require "defold.service.os"
+    local osm = require "defold.os"
 
     local root, resource, resolve_err = project.resolve_resource(resource_path, opts.root_dir)
     if not root or not resource then

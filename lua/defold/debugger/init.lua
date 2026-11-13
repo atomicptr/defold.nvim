@@ -10,7 +10,7 @@ local M = {}
 function M.infer_variant()
     local project = require "defold.project"
     local sidecar = require "defold.sidecar"
-    local log = require "defold.service.logger"
+    local log = require "defold.logger"
 
     local root = project.project_root(false)
     if not root then
@@ -51,7 +51,7 @@ function M.register_nvim_dap()
         return
     end
 
-    local log = require "defold.service.logger"
+    local log = require "defold.logger"
     local project = require "defold.project"
 
     local dap_installed, dap = pcall(require, "dap")

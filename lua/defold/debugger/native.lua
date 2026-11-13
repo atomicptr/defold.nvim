@@ -19,7 +19,7 @@ end
 ---@param callback       fun(port: integer)
 ---@param session_config defold.debugger.NativeConfiguration
 local function launch(callback, session_config)
-    local log = require "defold.service.logger"
+    local log = require "defold.logger"
     local project = require "defold.project"
     local editor = require "defold.editor"
     local config = require "defold.config"
@@ -73,7 +73,7 @@ local function launch(callback, session_config)
 end
 
 function M.register()
-    local log = require "defold.service.logger"
+    local log = require "defold.logger"
     local dap = require "dap"
     local project = require "defold.project"
 

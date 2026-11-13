@@ -34,7 +34,7 @@ local pending = {}
 ---@param tag        string|nil
 ---@param callback   fun(release: defold.download.Release|nil, err?: string)
 local function fetch_release(owner, repository, tag, callback)
-    local os = require "defold.service.os"
+    local os = require "defold.os"
     local url = string.format("https://api.github.com/repos/%s/%s/releases/latest", owner, repository)
 
     if tag then
@@ -82,10 +82,15 @@ end
 ---@param path    string
 ---@param version string
 local function save_version(path, version)
-    local os = require "defold.service.os"
+    local os = require "defold.os"
 
     vim.fn.mkdir(vim.fs.dirname(path), "p")
-    os.write(path, version .. "\n")
+    os.with_tempfile(path, function(temporary, done)
+        os.write(temporary, string.format("%s\n", version))
+        done()
+    end, function(err)
+        assert(not err, err)
+    end)
 end
 
 ---@param destination string|(fun(version: string): string)
@@ -104,8 +109,8 @@ end
 ---@param target  string
 ---@param version string
 local function install(opts, dir, target, version)
-    local os = require "defold.service.os"
-    local log = require "defold.service.logger"
+    local os = require "defold.os"
+    local log = require "defold.logger"
     local sidecar = require "defold.sidecar"
 
     local source = vim.fs.joinpath(dir, opts.asset)
@@ -128,8 +133,12 @@ local function install(opts, dir, target, version)
     elseif opts.archive then
         sidecar.move(source, target)
     else
-        os.copy(source, target .. ".tmp")
-        assert(vim.uv.fs_rename(target .. ".tmp", target))
+        os.with_tempfile(target, function(temporary, done)
+            os.copy(source, temporary)
+            done()
+        end, function(err)
+            assert(not err, err)
+        end)
     end
 
     if opts.executable and not os.is_windows() then
@@ -144,8 +153,8 @@ end
 ---@param opts     defold.download.Options
 ---@param callback defold.download.Callback
 function M.ensure(opts, callback)
-    local os = require "defold.service.os"
-    local log = require "defold.service.logger"
+    local os = require "defold.os"
+    local log = require "defold.logger"
 
     for _, path in ipairs(opts.local_paths or {}) do
         if os.file_exists(path) then
@@ -206,15 +215,8 @@ function M.ensure(opts, callback)
 
     ---@param err? string
     local function finish(err)
-        local temporary_paths = { dir }
-        if target then
-            table.insert(temporary_paths, target .. ".tmp")
-        end
-
-        for _, path in ipairs(temporary_paths) do
-            if os.file_exists(path) and vim.fn.delete(path, "rf") ~= 0 then
-                log.warn(string.format("Could not remove temporary download: %s", path))
-            end
+        if os.file_exists(dir) and vim.fn.delete(dir, "rf") ~= 0 then
+            log.warn(string.format("Could not remove temporary download: %s", dir))
         end
 
         local result = target

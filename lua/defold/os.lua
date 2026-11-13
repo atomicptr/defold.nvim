@@ -63,7 +63,7 @@ end
 ---@param callback     fun(err?: string)
 ---@param on_progress? fun(bytes: integer)
 function M.download(url, to_path, callback, on_progress)
-    local log = require "defold.service.logger"
+    local log = require "defold.logger"
     local command
 
     if M.is_windows() then
@@ -234,7 +234,7 @@ end
 ---@param source string
 ---@param target string
 function M.copy(source, target)
-    local log = require "defold.service.logger"
+    local log = require "defold.logger"
 
     vim.fn.mkdir(vim.fs.dirname(target), "p")
     local ok, err = vim.uv.fs_copyfile(source, target)
@@ -247,7 +247,7 @@ end
 ---@param path    string
 ---@param content string
 function M.write(path, content)
-    local log = require "defold.service.logger"
+    local log = require "defold.logger"
 
     local file, err = io.open(path, "w")
     if not file then
@@ -282,7 +282,7 @@ end
 ---Find the root dir of our plugin
 ---@return string
 function M.plugin_root()
-    local log = require "defold.service.logger"
+    local log = require "defold.logger"
 
     local script_path = debug.getinfo(1, "S").source
 
@@ -291,7 +291,7 @@ function M.plugin_root()
         return ""
     end
 
-    local res = vim.fs.dirname(vim.fs.dirname(vim.fs.dirname(vim.fs.dirname(string.sub(script_path, 2)))))
+    local res = vim.fs.dirname(vim.fs.dirname(vim.fs.dirname(string.sub(script_path, 2))))
     return res
 end
 
@@ -334,7 +334,7 @@ function M.read_to_string(path)
     local file = io.open(path, "r")
 
     if not file then
-        local log = require "defold.service.logger"
+        local log = require "defold.logger"
         log.error(string.format("Could not open file for reading: %s", path))
         return nil
     end

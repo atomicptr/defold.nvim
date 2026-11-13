@@ -30,7 +30,7 @@ local downloading = false
 ---@field resource? string
 ---@field range?    defold.sidecar.Range
 
----@alias defold.sidecar.IssueSeverity "error"|"warning"|"info"
+---@alias defold.sidecar.IssueSeverity "error"|"warning"|"information"
 ---@alias defold.sidecar.WorkerValue nil|boolean|number|string
 ---@alias defold.sidecar.WorkerCallback fun(result: defold.sidecar.WorkerValue, err?: string)
 ---@alias defold.sidecar.WorkerCall fun(fn: string, cb: defold.sidecar.WorkerCallback, ...: defold.sidecar.WorkerValue)
@@ -86,7 +86,7 @@ local downloading = false
 
 ---@param path string
 local function load(path)
-    local log = require "defold.service.logger"
+    local log = require "defold.logger"
     library_path = path
 
     if not package.loaded.defold_nvim_sidecar then
@@ -169,7 +169,7 @@ end
 
 ---@param callback? fun() Called after the sidecar and bridge are ready
 function M.ensure(callback)
-    local log = require "defold.service.logger"
+    local log = require "defold.logger"
 
     if ready then
         if callback then
@@ -182,7 +182,7 @@ function M.ensure(callback)
         return
     end
 
-    local os = require "defold.service.os"
+    local os = require "defold.os"
     local download = require "defold.download"
 
     if callback then

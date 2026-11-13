@@ -8,7 +8,7 @@ local plugin_loaded = false
 
 ---@return string
 function M.plugin_root()
-    local os = require "defold.service.os"
+    local os = require "defold.os"
     return os.plugin_root()
 end
 
@@ -36,7 +36,7 @@ function M.setup(opts)
     local config = require "defold.config"
 
     if config.state.game_runner.mode == nil then
-        local os = require "defold.service.os"
+        local os = require "defold.os"
 
         -- Use editor commands on Windows instead of :make.
         config.state.game_runner.mode = os.is_windows() and "send" or "make"
@@ -65,7 +65,7 @@ function M.setup(opts)
         return
     end
 
-    local log = require "defold.service.logger"
+    local log = require "defold.logger"
 
     if config.state.debug then
         local ok, err = pcall(sidecar.set_log_level, "debug")
@@ -153,7 +153,7 @@ function M.load_plugin()
     local sidecar = require "defold.sidecar"
     local debugger = require "defold.debugger"
     local editor = require "defold.editor"
-    local log = require "defold.service.logger"
+    local log = require "defold.logger"
     local project = require "defold.project"
 
     log.debug "============= defold.nvim: Loaded plugin"
@@ -178,7 +178,11 @@ function M.load_plugin()
     if config.state.defold.hot_reload_enabled then
         vim.api.nvim_create_autocmd("BufWritePost", {
             pattern = { "*.lua", "*.script", "*.gui_script" },
-            callback = function()
+            callback = function(ev)
+                if not project.is_buffer_in_project(ev.buf) then
+                    return
+                end
+
                 local res = editor.send_command("hot-reload", true)
 
                 if config.state.quickfix.enable then
@@ -209,7 +213,6 @@ function M.load_plugin()
 
     -- add the :Defold command for interacting with the editor
     vim.api.nvim_create_user_command("Defold", function()
-        local cmds = {}
         local options = {}
 
         local commands = editor.list_commands()
@@ -224,19 +227,18 @@ function M.load_plugin()
             local is_debugger_command = string.find(cmd, "debugger")
 
             if not is_debugger_command then
-                table.insert(cmds, cmd)
                 table.insert(options, cmd)
             end
         end
 
         vim.ui.select(options, {
             prompt = "Select a command to run:",
-        }, function(choice, idx)
+        }, function(choice)
             if not choice then
                 return
             end
 
-            editor.send_command(cmds[idx])
+            editor.send_command(choice)
         end)
     end, { nargs = 0, desc = "Select a command to run" })
 
@@ -272,10 +274,10 @@ function M.load_plugin()
     end
 
     -- add snippets
-    require("defold.service.snippets").install()
+    require("defold.snippets").install()
 
     -- add icons
-    require("defold.service.icons").install()
+    require("defold.icons").install()
 
     -- when a project is first opened, try to figure out the engine version
     vim.api.nvim_create_autocmd("BufEnter", {
@@ -297,7 +299,7 @@ end
 function M.setup_default_editor()
     local config = require "defold.config"
     local project = require "defold.project"
-    local log = require "defold.service.logger"
+    local log = require "defold.logger"
 
     local port = project.editor_port()
 

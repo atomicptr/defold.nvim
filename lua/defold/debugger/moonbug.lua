@@ -1,7 +1,7 @@
 local M = {}
 
 function M.register()
-    local log = require "defold.service.logger"
+    local log = require "defold.logger"
     local config = require "defold.config"
     local dap = require "dap"
 

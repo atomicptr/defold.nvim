@@ -17,27 +17,32 @@ local function level2string(level)
 end
 
 local function log(level, message)
-    local osm = require "defold.service.os"
-
-    local logdir = vim.fs.joinpath(osm.cache_dir(), "logs")
-    vim.fn.mkdir(logdir, "p")
-
-    local log_file = vim.fs.joinpath(logdir, "plugin.log")
-    local timestamp = os.date "%Y-%m-%d %H:%M:%S"
-    local level_str = level2string(level)
-
-    local log_message = string.format("[%s] %s: %s\n", level_str, timestamp, message)
-
     -- if important enough, log to notification system
     if level >= M.notify_level then
         vim.notify(string.format("defold.nvim: %s", message), level)
     end
 
-    -- log message to log file
-    local file = io.open(log_file, "a")
+    -- Persistence is best-effort and must never mask the original error.
+    local file
+    pcall(function()
+        local osm = require "defold.os"
+        local logdir = vim.fs.joinpath(osm.cache_dir(), "logs")
+        vim.fn.mkdir(logdir, "p")
+
+        local log_file = vim.fs.joinpath(logdir, "plugin.log")
+        local timestamp = os.date "%Y-%m-%d %H:%M:%S"
+        local log_message = string.format("[%s] %s: %s\n", level2string(level), timestamp, message)
+
+        file = io.open(log_file, "a")
+        if file then
+            file:write(log_message)
+        end
+    end)
+
     if file then
-        file:write(log_message)
-        file:close()
+        pcall(function()
+            file:close()
+        end)
     end
 end
 

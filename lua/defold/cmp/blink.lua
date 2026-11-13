@@ -37,8 +37,15 @@ function M:enabled()
         return true
     end
 
-    -- make sure we're in a string node
-    return node:type() == "string"
+    while node do
+        if node:type() == "string" then
+            return true
+        end
+
+        node = node:parent()
+    end
+
+    return false
 end
 
 ---@return string[]
@@ -46,29 +53,31 @@ function M:get_trigger_characters()
     return { '"', "'", "/", ":", "#" }
 end
 
----@param entry defold.sidecar.PathEntry
+---@param entry                defold.sidecar.PathEntry
+---@param omit_collection_name? boolean
 ---@return lsp.CompletionItem
-local function completion_item_from_entry(entry)
+local function completion_item_from_entry(entry, omit_collection_name)
     local blink_types = require "blink.cmp.types"
 
+    local collection_name = not omit_collection_name and entry.collection_name or nil
     local path = ""
 
-    if entry.game_object_id and entry.collection_name then
-        path = path .. entry.collection_name .. ":"
+    if entry.game_object_id and collection_name then
+        path = string.format("%s:", collection_name)
     end
 
     if entry.game_object_id then
-        path = path .. "/" .. entry.game_object_id
+        path = string.format("%s/%s", path, entry.game_object_id)
     end
 
     if entry.component_id then
-        path = path .. "#" .. entry.component_id
+        path = string.format("%s#%s", path, entry.component_id)
     end
 
     local label = path
 
     if entry.from_location then
-        label = label .. " (" .. entry.from_location .. ")"
+        label = string.format("%s (%s)", label, entry.from_location)
     end
 
     ---@type lsp.CompletionItem
@@ -85,7 +94,7 @@ local function completion_item_from_entry(entry)
         sortText = string.format(
             "%s|%s:/%s#%s",
             entry.same_game_object and "a" or "b",
-            entry.collection_name or "a",
+            collection_name or "a",
             entry.game_object_id or "a",
             entry.component_id or "a"
         ),
@@ -97,7 +106,7 @@ end
 ---@return lsp.CompletionItem[]
 local function get_script_completions(filename, root)
     local sidecar = require "defold.sidecar"
-    local log = require "defold.service.logger"
+    local log = require "defold.logger"
 
     local path_entries_ok, path_entries = pcall(sidecar.fetch_defold_paths_for, root, filename)
     if not path_entries_ok then
@@ -117,8 +126,7 @@ local function get_script_completions(filename, root)
 
         -- if item has a collection name, add also the version without it
         if entry.collection_name then
-            entry.collection_name = nil
-            table.insert(items, completion_item_from_entry(entry))
+            table.insert(items, completion_item_from_entry(entry, true))
         end
     end
 
@@ -131,7 +139,7 @@ end
 local function get_gui_completions(filename, root)
     local blink_types = require "blink.cmp.types"
     local sidecar = require "defold.sidecar"
-    local log = require "defold.service.logger"
+    local log = require "defold.logger"
 
     local nodes_ok, nodes = pcall(sidecar.fetch_gui_nodes_for, root, filename)
     if not nodes_ok then
@@ -163,7 +171,7 @@ local function get_input_binding_completions(root)
     local blink_types = require "blink.cmp.types"
 
     local sidecar = require "defold.sidecar"
-    local log = require "defold.service.logger"
+    local log = require "defold.logger"
 
     local bindings_ok, bindings = pcall(sidecar.fetch_input_bindings, root)
     if not bindings_ok then
@@ -219,7 +227,7 @@ function M:get_completions(ctx, callback)
 end
 
 function M.register()
-    local log = require "defold.service.logger"
+    local log = require "defold.logger"
 
     local cmp_ok, cmp = pcall(require, "blink.cmp")
     if not cmp_ok then
