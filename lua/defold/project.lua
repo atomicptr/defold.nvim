@@ -14,6 +14,43 @@ M._project_root = nil
 ---@type integer?
 M._editor_port = nil
 
+---Find the nearest project root
+---@param source string|integer File path or buffer number.
+---@return string|nil
+function M.find_root(source)
+    return vim.fs.root(source, { "game.project" })
+end
+
+---Resolve a Defold resource path relative to a project root dir
+---@param resource_path string Project-relative path
+---@param root_dir?     string Project root, otherwise will be discovered from cwd
+---@return string|nil root
+---@return string|nil resource
+---@return string|nil err
+function M.resolve_resource(resource_path, root_dir)
+    local root = root_dir or M.find_root(vim.fn.getcwd())
+    root = root and vim.uv.fs_realpath(vim.fs.abspath(root))
+
+    local project_stat = root and vim.uv.fs_stat(vim.fs.joinpath(root, "game.project"))
+    if not project_stat or project_stat.type ~= "file" then
+        return nil, nil, "could not find the Defold project"
+    end
+
+    local path = vim.fs.joinpath(root, (resource_path:gsub("^/+", "")))
+    local resolved_path = vim.uv.fs_realpath(path)
+    local stat = resolved_path and vim.uv.fs_stat(resolved_path)
+    if not stat or stat.type ~= "file" then
+        return nil, nil, "resource is not a file"
+    end
+
+    local resource = vim.fs.relpath(root, resolved_path)
+    if not resource then
+        return nil, nil, "resource is outside the Defold project"
+    end
+
+    return root, resource
+end
+
 ---Returns the game project root (or nil if we can't find it)
 ---@param report_error boolean?
 ---@return string?
@@ -22,7 +59,7 @@ function M.project_root(report_error)
         return M._project_root
     end
 
-    local root = vim.fs.root(0, { "game.project" })
+    local root = M.find_root(0)
 
     if not root then
         if not report_error then
@@ -111,11 +148,22 @@ function M.ensure_nvim_server(socket_type)
     return nil
 end
 
+---@param root string
+---@return integer|nil
+function M.get_editor_port(root)
+    local ok, lines = pcall(vim.fn.readfile, vim.fs.joinpath(root, ".internal", "editor.port"))
+    local port = ok and tonumber(lines[1]) or nil
+    if not port or port % 1 ~= 0 or port < 1 or port > 65535 then
+        return nil
+    end
+
+    return port
+end
+
 ---Find the Defold editor port for the current project
 ---@return integer|nil
 function M.editor_port()
     local sidecar = require "defold.sidecar"
-    local os = require "defold.service.os"
 
     local root = M.project_root()
     if not root then
@@ -126,24 +174,16 @@ function M.editor_port()
         return M._editor_port
     end
 
-    local editor_port_file = vim.fs.joinpath(root, ".internal", "editor.port")
-
-    -- no editor available
-    if not os.file_exists(editor_port_file) then
-        return nil
-    end
-
-    local port_string = os.read_to_string(editor_port_file)
-    if not port_string then
+    M._editor_port = M.get_editor_port(root)
+    if not M._editor_port then
         return nil
     end
 
     local log = require "defold.service.logger"
 
-    M._editor_port = tonumber(port_string)
     log.debug(string.format("Found editor port at: %s", M._editor_port))
 
-    if not M._editor_port or not sidecar.is_editor_port(M._editor_port) then
+    if not sidecar.is_editor_port(M._editor_port) then
         log.error(string.format("Found editor port %s but the editor doesn't respond", M._editor_port))
         return nil
     end

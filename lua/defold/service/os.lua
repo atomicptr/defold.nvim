@@ -176,6 +176,60 @@ function M.fetch_json(url, callback)
     end)
 end
 
+---Create a temp file and rename it onto the target on success
+---@param target   string
+---@param writer   fun(temporary: string, done: fun(err?: string))
+---@param callback fun(err?: string)
+function M.with_tempfile(target, writer, callback)
+    local fd, temporary = vim.uv.fs_mkstemp(string.format("%s.XXXXXX", target))
+    if not fd then
+        callback(tostring(temporary))
+        return
+    end
+
+    local completed = false
+
+    local function done(err)
+        if completed then
+            return
+        end
+
+        completed = true
+
+        if not err then
+            local renamed, rename_err = vim.uv.fs_rename(temporary, target)
+            if renamed then
+                callback()
+                return
+            end
+
+            err = tostring(rename_err)
+        end
+
+        local removed, cleanup_err, cleanup_code = vim.uv.fs_unlink(temporary)
+        if not removed and cleanup_code ~= "ENOENT" then
+            err = string.format("%s: cleanup failed: %s", err, cleanup_err)
+        end
+
+        callback(err)
+    end
+
+    local closed, close_err = vim.uv.fs_close(fd)
+    if not closed then
+        done(tostring(close_err))
+        return
+    end
+
+    local ok, writer_err = pcall(writer, temporary, done)
+    if not ok then
+        if completed then
+            error(writer_err, 0)
+        end
+
+        done(tostring(writer_err))
+    end
+end
+
 ---Copy a file, creating its destination directory.
 ---@param source string
 ---@param target string
@@ -209,11 +263,16 @@ function M.write(path, content)
 end
 
 ---@param path      string
----@param threshold integer Seconds
+---@param threshold number Seconds (fractional values allowed).
 ---@return boolean
 function M.was_updated_within(path, threshold)
     local stat = vim.uv.fs_stat(path)
-    return stat ~= nil and vim.fn.localtime() - stat.mtime.sec < threshold
+    if not stat then
+        return false
+    end
+
+    local age = vim.fn.localtime() - stat.mtime.sec
+    return age >= 0 and age < threshold
 end
 
 function M.file_exists(path)
