@@ -190,7 +190,10 @@ fn set_default_editor(
     lua: &Lua,
     (port, bridge_path, launcher_settings): (u16, String, LuaValue),
 ) -> LuaResult<()> {
-    let launcher_settings = lua.from_value(launcher_settings)?;
+    let launcher_settings = lua.from_value_with(
+        launcher_settings,
+        mlua::serde::DeserializeOptions::new().detect_mixed_tables(true),
+    )?;
     editor_config::set_default_editor(port, &PathBuf::from(bridge_path), &launcher_settings)?;
 
     Ok(())

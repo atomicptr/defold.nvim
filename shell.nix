@@ -11,5 +11,6 @@ pkgs.mkShell {
     openssl.dev
   ];
 
+  RUST_LOG = "info,defold_nvim=debug";
   RUST_BACKTRACE = "1";
 }
