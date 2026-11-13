@@ -125,6 +125,17 @@ fn check_launch(mut child: Child) -> Result<()> {
     Ok(())
 }
 
+fn nvim_args(file: &str, line: Option<usize>) -> Vec<String> {
+    let mut args = vec!["--listen".to_string(), VAR_ADDRESS.to_string()];
+
+    if let Some(line) = line {
+        args.push(format!("+{line}"));
+    }
+
+    args.push(file.to_string());
+    args
+}
+
 fn apply_vars(args: &[String], var: &str, replace_with: &str) -> Vec<String> {
     args.iter().map(|s| s.replace(var, replace_with)).collect()
 }
@@ -264,16 +275,8 @@ pub fn run(
         term => term,
     };
 
-    let mut app = Application::new(&nvim)
-        .with_working_dir(root_dir)
-        .with_arg("--listen")
-        .with_arg(VAR_ADDRESS);
-
-    if let Some(line) = line {
-        app = app.with_arg(&format!("+{line}"));
-    }
-
-    app = app.with_arg("--").with_arg(file);
+    let mut app = Application::new(&nvim).with_working_dir(root_dir);
+    app.args = nvim_args(file, line);
 
     #[cfg(target_os = "linux")]
     {
@@ -364,6 +367,18 @@ mod tests {
             ),
             Remote::Failed("Lua: Vim(qall):E37: No write since last change".into())
         );
+    }
+
+    #[test]
+    fn nvim_args_keep_file_before_appended_launcher_flags() {
+        let file = r"C:\Users\Docker\My Project\main\testa.script";
+
+        assert_eq!(
+            nvim_args(file, Some(12)),
+            ["--listen", VAR_ADDRESS, "+12", file]
+        );
+
+        assert_eq!(nvim_args(file, None), ["--listen", VAR_ADDRESS, file]);
     }
 
     #[test]
