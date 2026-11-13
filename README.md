@@ -102,9 +102,11 @@ defold.nvim is replacing these variables in the arguments list
 vim.pack.add({
     -- (Optional) Required when using the debugger
     "https://github.com/mfussenegger/nvim-dap",
+
     -- (Optional) Required when using snippets
     "https://github.com/L3MON4D3/LuaSnip",
-    -- (Optional) Required for path completions
+
+    -- (Optional) Required for path completions (nvim.cmp is also supported)
     "https://github.com/saghen/blink.cmp",
 
     "https://github.com/atomicptr/defold.nvim",
@@ -130,7 +132,7 @@ require("defold").setup {
         -- (Optional) Required when using snippets
         "L3MON4D3/LuaSnip",
 
-        -- (Optional) Required for path completions
+        -- (Optional) Required for path completions (nvim.cmp is also supported)
         "saghen/blink.cmp",
     },
 
@@ -212,6 +214,23 @@ local config = {
 
             -- Add custom port for the debugger (default: 18172)
             custom_port = 18172,
+        },
+    },
+
+    completions = {
+        enable = true,
+
+        blink_cmp = {
+            enable = true,
+        },
+
+        nvim_cmp = {
+            enable = true ,
+        },
+
+        -- uses completefunc
+        native = {
+            enable = true,
         },
     },
 

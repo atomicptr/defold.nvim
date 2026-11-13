@@ -267,11 +267,8 @@ function M.load_plugin()
     -- integrate the debugger into dap
     debugger.register_nvim_dap()
 
-    -- integrate completions into blink
-    if config.state.completions.enable then
-        local cmp = require "defold.cmp.blink"
-        cmp.register()
-    end
+    -- integrate supported completion systems
+    require("defold.completions").register()
 
     -- add snippets
     require("defold.snippets").install()

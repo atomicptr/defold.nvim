@@ -27,7 +27,13 @@
 ---@field port?              integer  Custom port for the debugger (default: 18172)
 
 ---@class defold.config.Completions Settings for Defold completions
----@field enable? boolean Enable Defold completions
+---@field enable?    boolean                             Enable automatic Defold completion integrations
+---@field blink_cmp? defold.config.CompletionIntegration
+---@field nvim_cmp?  defold.config.CompletionIntegration
+---@field native?    defold.config.CompletionIntegration
+
+---@class defold.config.CompletionIntegration
+---@field enable? boolean Enable this integration (default true)
 
 ---@alias defold.snippets.NamingStyle "preserve"|"snake_case"|"Ada_Case"|"PascalCase"
 
@@ -93,6 +99,18 @@ M.state = {
 
     completions = {
         enable = true,
+
+        blink_cmp = {
+            enable = true,
+        },
+
+        nvim_cmp = {
+            enable = true,
+        },
+
+        native = {
+            enable = true,
+        },
     },
 
     snippets = {
