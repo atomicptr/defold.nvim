@@ -1,6 +1,6 @@
 [package]
 name = "defold-nvim-sidecar"
-version = "0.14.0-beta2"
+version = "0.14.0-beta3"
 edition = "2024"
 
 [lib]

@@ -610,36 +610,56 @@ mod tests {
 
     #[cfg(unix)]
     #[test]
-    fn bash_runner_preserves_literal_values_and_inherits_environment() {
+    fn posix_runners_preserve_literal_values_and_inherit_environment() {
+        use std::os::unix::ffi::OsStrExt;
+
+        let cwd = std::env::current_dir().unwrap().canonicalize().unwrap();
         let value = "it's $HOME `printf BAD` $(printf BAD) \\\n\"quoted\" {ENV}";
         let settings = with_env(&[("DEFOLD_TEST_VALUE", value), ("DEFOLD_TEST_EMPTY", "")]);
-        let script = render_runner_script(
+
+        for template in [
             include_str!("../assets/run_linux.sh"),
-            quote_posix,
-            "capture",
-            &settings,
-        )
-        .unwrap();
-        let script = format!(
-            "capture() {{ printf '%s\\0' \"$DEFOLD_TEST_VALUE\" \"${{DEFOLD_TEST_EMPTY-unset}}\" \"$DEFOLD_TEST_INHERITED\" \"$@\"; }}\n{script}"
-        );
-        let output = std::process::Command::new("bash")
-            .args(["-c", &script, "runner", "a b.lua", "12"])
-            .env("DEFOLD_TEST_VALUE", "old")
-            .env("DEFOLD_TEST_INHERITED", "inherited")
-            .output()
-            .unwrap();
-        assert!(
-            output.status.success(),
-            "{}",
-            String::from_utf8_lossy(&output.stderr)
-        );
-        let values: Vec<_> = output.stdout.split(|b| *b == 0).collect();
-        assert_eq!(values[0], value.as_bytes());
-        assert_eq!(values[1], b"");
-        assert_eq!(values[2], b"inherited");
-        assert_eq!(values[values.len() - 3], b"a b.lua");
-        assert_eq!(values[values.len() - 2], b"12");
+            include_str!("../assets/run_macos.sh"),
+        ] {
+            assert!(template.starts_with("#!/bin/sh\n"));
+
+            let script = render_runner_script(template, quote_posix, "capture", &settings).unwrap();
+            let script = format!(
+                "capture() {{ printf '%s\\0' \"$DEFOLD_TEST_VALUE\" \"${{DEFOLD_TEST_EMPTY-unset}}\" \"$DEFOLD_TEST_INHERITED\" \"$@\"; }}\n{script}"
+            );
+
+            // An empty line number must not produce an argument
+            for (line, line_args) in [("12", &["12"][..]), ("", &[][..])] {
+                let output = std::process::Command::new("/bin/sh")
+                    .args(["-c", &script, "runner", "a b.lua", line])
+                    .env("DEFOLD_TEST_VALUE", "old")
+                    .env("DEFOLD_TEST_INHERITED", "inherited")
+                    .output()
+                    .unwrap();
+                assert!(
+                    output.status.success(),
+                    "{}",
+                    String::from_utf8_lossy(&output.stderr)
+                );
+
+                let mut expected: Vec<&[u8]> = vec![
+                    value.as_bytes(),
+                    b"",
+                    b"inherited",
+                    b"launch-neovim",
+                    b"--show-error-dialog",
+                    b"--launcher-type",
+                    b"neovide",
+                    cwd.as_os_str().as_bytes(),
+                    b"a b.lua",
+                ];
+                expected.extend(line_args.iter().map(|arg| arg.as_bytes()));
+                expected.push(b"");
+
+                let values: Vec<_> = output.stdout.split(|b| *b == 0).collect();
+                assert_eq!(values, expected);
+            }
+        }
     }
 
     #[test]
@@ -725,7 +745,7 @@ mod tests {
 
         assert_eq!(
             script.lines().nth(1).unwrap(),
-            r#"'/my dir/bridge' --debug launch-neovim --show-error-dialog '--launcher-type' 'neovide' '--executable' '/My Apps/neovide' "$(realpath .)" "$1" $2 '--' 'a b' ''"#
+            r#"'/my dir/bridge' --debug launch-neovim --show-error-dialog '--launcher-type' 'neovide' '--executable' '/My Apps/neovide' "$(pwd -P)" "$1" $2 '--' 'a b' ''"#
         );
 
         let script = render_runner_script(
