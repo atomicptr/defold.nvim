@@ -1,6 +1,6 @@
 [package]
 name = "defold-nvim-bridge"
-version = "0.14.0-beta5"
+version = "0.14.0-beta6"
 edition = "2024"
 
 [dependencies]

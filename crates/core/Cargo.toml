@@ -1,6 +1,6 @@
 [package]
 name = "defold-nvim-core"
-version = "0.14.0-beta5"
+version = "0.14.0-beta6"
 edition = "2024"
 
 [dependencies]
@@ -26,7 +26,7 @@ textwrap = { version = "0.16.4", default-features = false, features = [
     "unicode-width",
     "smawk",
 ] }
-chumsky = "0.13.0"
+chumsky = "0.14.1"
 
 [target.'cfg(target_os = "macos")'.dependencies]
 dmg = "0.1.2"
