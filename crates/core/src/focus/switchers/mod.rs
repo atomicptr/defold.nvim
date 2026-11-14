@@ -1,0 +1,9 @@
+pub mod gdbus;
+pub mod hyprctl;
+pub mod kdotool;
+pub mod niri;
+pub mod osascript;
+pub mod swaymsg;
+pub mod wlrctl;
+pub mod wmctrl;
+pub mod xdotool;

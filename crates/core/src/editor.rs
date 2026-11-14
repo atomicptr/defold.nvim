@@ -111,7 +111,7 @@ pub fn list_commands(port: u16) -> Result<Vec<String>> {
     if let Some(list) = enum_values.as_array() {
         let commands = list
             .iter()
-            .filter_map(|v| v.as_str().map(|s| s.to_string()))
+            .filter_map(|v| v.as_str().map(ToString::to_string))
             .collect();
 
         Ok(commands)

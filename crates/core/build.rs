@@ -18,5 +18,5 @@ fn main() {
     )
     .expect("could not write {dest_path:?}");
 
-    println!("cargo:warning=Set {dest_path:?} to {version}");
+    println!("cargo:warning=Set {} to {version}", dest_path.display());
 }

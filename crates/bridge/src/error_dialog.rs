@@ -1,4 +1,4 @@
-use std::path::Path;
+use std::{fmt::Write, path::Path};
 
 use native_dialog::{DialogBuilder, MessageLevel};
 
@@ -15,7 +15,8 @@ fn launch_error_message(error: &anyhow::Error, log_path: Option<&Path>) -> Strin
     let mut message = format!("Could not open Neovim.\n\n{error:#}");
 
     if let Some(log_path) = log_path {
-        message.push_str(&format!("\n\nLog: {}", log_path.display()));
+        write!(message, "\n\nLog: {}", log_path.display())
+            .expect("writing to a String cannot fail");
     }
 
     message

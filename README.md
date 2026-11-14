@@ -93,6 +93,27 @@ defold.nvim is replacing these variables in the arguments list
 - **{ADDR}** - The address (netsock) or path to the socket (fsock)
 - **{NVIM}** - Path to the Neovim executable
 
+### Focus Switching
+
+Switch focus between Neovim and the game. The switcher is detected automatically, but you can also use your own:
+
+- Note for GNOME: You need the [Window Calls](https://extensions.gnome.org/extension/4724/window-calls/) extension
+
+```lua
+focus = {
+    -- set to false to disable focus switching
+    enable = true,
+
+    -- "auto", "custom" or a specific switcher like "hyprctl"
+    type = "custom",
+    executable = "my-focus-script",
+
+    -- {CLASS} is the class of the Neovim window (Linux), {TITLE} the game title, leave one unset to skip it
+    nvim_arguments = { "--class", "{CLASS}" },
+    game_arguments = { "--title", "{TITLE}" },
+}
+```
+
 ## Install
 
 ### vim.pack (recommended)
@@ -226,6 +247,12 @@ local config = {
 
         -- choose file based sockets (fsock, unix only) or network based sockets (netsock) or use nil for the default
         socket_type = nil,
+    },
+
+    -- Switch focus between Neovim and the game, see: Focus Switching
+    focus = {
+        enable = true,
+        type = "auto",
     },
 
     debugger = {

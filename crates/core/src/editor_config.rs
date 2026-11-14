@@ -8,7 +8,7 @@ use std::{
     str::FromStr,
 };
 
-use crate::{editor, nvim_server::SocketType, path};
+use crate::{editor, focus::Focus, nvim_server::SocketType, path};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize)]
 #[serde(rename_all = "lowercase")]
@@ -26,6 +26,8 @@ pub struct LauncherSettings {
     pub run_arg: Option<String>,
     pub arguments: Option<Vec<String>>,
     pub appname: Option<String>,
+    #[serde(skip)]
+    pub focus: Focus,
     #[serde(default, deserialize_with = "deserialize_env")]
     pub env: BTreeMap<String, String>,
     pub debug: Option<bool>,
@@ -142,6 +144,8 @@ impl LauncherSettings {
             }
         }
 
+        args.extend(self.focus.cli_args());
+
         args
     }
 
@@ -174,7 +178,7 @@ fn quote_posix(value: &str) -> Result<String> {
 /// Trailing backslashes are doubled, otherwise `\"` would be read as a literal quote.
 fn quote_batch(value: &str) -> Result<String> {
     if value.contains(['"', '\n', '\r']) {
-        bail!("Launcher arguments can't contain quotes or newlines on Windows: {value}");
+        bail!("Launcher and focus settings can't contain quotes or newlines on Windows: {value}");
     }
 
     let trailing = value.len() - value.trim_end_matches('\\').len();
@@ -369,7 +373,7 @@ mod tests {
 
     #[test]
     fn deserializes_environment_settings() {
-        for json in [r#"{}"#, r#"{"env":{}}"#] {
+        for json in ["{}", r#"{"env":{}}"#] {
             let settings: LauncherSettings = serde_json::from_str(json).unwrap();
             assert_eq!(render_env(&settings.env, false).unwrap(), "");
         }

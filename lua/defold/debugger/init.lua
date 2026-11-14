@@ -100,7 +100,7 @@ function M.register_nvim_dap()
         local sidecar = require "defold.sidecar"
         local rootdir = project.project_root()
 
-        local ok, err = pcall(sidecar.focus_neovim, rootdir)
+        local ok, err = pcall(sidecar.focus_neovim, rootdir, config.state.focus)
         if not ok then
             log.debug(string.format("Could not focus neovim: %s", err))
         end
@@ -117,7 +117,7 @@ function M.register_nvim_dap()
         local sidecar = require "defold.sidecar"
         local rootdir = project.project_root()
 
-        local ok, err = pcall(sidecar.focus_game, rootdir)
+        local ok, err = pcall(sidecar.focus_game, rootdir, config.state.focus)
         if not ok then
             log.debug(string.format("Could not focus game: %s", err))
         end
