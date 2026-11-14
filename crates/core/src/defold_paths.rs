@@ -90,7 +90,10 @@ fn parse_collection(message: &Message) -> Option<Collection> {
 
             game_objects.push(GameObjectRef {
                 id,
-                prototype_path: go.first_string("prototype").and_then(strip_prefix_slash),
+                prototype_path: go
+                    .first_string("prototype")
+                    .as_deref()
+                    .and_then(strip_prefix_slash),
                 data: go.first_string("data"),
             });
         }
@@ -116,6 +119,7 @@ fn parse_game_object(message: &Message) -> Vec<Component> {
                 id,
                 path: component
                     .first_string("component")
+                    .as_deref()
                     .and_then(strip_prefix_slash),
             });
         }
@@ -131,8 +135,8 @@ fn references_path(components: &[Component], path: &str) -> bool {
 fn push_components(
     entries: &mut HashSet<PathEntry>,
     components: &[Component],
-    collection_name: Option<String>,
-    game_object_id: Option<String>,
+    collection_name: Option<&str>,
+    game_object_id: Option<&str>,
     from_location: &str,
     same_game_object: bool,
 ) {
@@ -141,12 +145,12 @@ fn push_components(
             collection_name: if same_game_object {
                 None
             } else {
-                collection_name.clone()
+                collection_name.map(ToString::to_string)
             },
             game_object_id: if same_game_object {
                 None
             } else {
-                game_object_id.clone()
+                game_object_id.map(ToString::to_string)
             },
             component_id: Some(comp.id.clone()),
             from_location: Some(format!("/{from_location}")),
@@ -212,8 +216,8 @@ fn infer_paths(
                         push_components(
                             &mut entries,
                             comps,
-                            collection_name.clone(),
-                            Some(go.id.clone()),
+                            collection_name.as_deref(),
+                            Some(&go.id),
                             proto,
                             references_path(comps, relpath),
                         );
@@ -227,8 +231,8 @@ fn infer_paths(
                 push_components(
                     &mut entries,
                     comps,
-                    collection_name.clone(),
-                    Some(go.id.clone()),
+                    collection_name.as_deref(),
+                    Some(&go.id),
                     proto,
                     references_path(comps, relpath),
                 );
@@ -262,7 +266,7 @@ fn infer_paths(
     entries.into_iter().collect()
 }
 
-fn strip_prefix_slash(s: String) -> Option<String> {
+fn strip_prefix_slash(s: &str) -> Option<String> {
     s.strip_prefix("/").map(ToString::to_string)
 }
 
@@ -329,8 +333,8 @@ instances {{ prototype: "/missing_id.go" }}
             push_components(
                 &mut entries,
                 &components,
-                Some("main".to_string()),
-                Some("map".to_string()),
+                Some("main"),
+                Some("map"),
                 "main.collection",
                 same_game_object,
             );

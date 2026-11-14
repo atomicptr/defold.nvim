@@ -4,11 +4,11 @@ use std::{
 };
 
 use anyhow::{Context, Result};
-use clap::{ArgAction, Parser, Subcommand};
+use clap::{ArgAction, Args as ClapArgs, Parser, Subcommand};
 use defold_nvim_core::{
     editor,
     editor_config::{LauncherSettings, LauncherType},
-    focus::{focus_game, focus_neovim},
+    focus::{Focus, focus_game, focus_neovim},
     nvim_server::SocketType,
     path, project, script_api,
 };
@@ -28,6 +28,36 @@ struct Args {
 
     #[command(subcommand)]
     cmd: Commands,
+}
+
+#[derive(ClapArgs, Debug)]
+#[allow(clippy::struct_field_names)]
+struct FocusArgs {
+    /// "auto" (default), "custom", a switcher name or "off"
+    #[arg(long = "focus-type")]
+    focus_type: Option<String>,
+
+    /// Executable for "custom" or the path of the switcher
+    #[arg(long = "focus-executable", allow_hyphen_values = true)]
+    focus_executable: Option<String>,
+
+    /// Argument for the custom focus executable
+    #[arg(
+        long = "focus-argument",
+        allow_hyphen_values = true,
+        requires = "focus_executable"
+    )]
+    focus_arguments: Vec<String>,
+}
+
+impl FocusArgs {
+    fn into_focus(self) -> Result<Focus> {
+        Focus::from_cli(
+            self.focus_type.as_deref(),
+            self.focus_executable,
+            self.focus_arguments,
+        )
+    }
 }
 
 #[derive(Subcommand, Debug)]
@@ -53,6 +83,9 @@ enum Commands {
         #[arg(long = "run-arg", allow_hyphen_values = true)]
         run_arg: Option<String>,
 
+        #[command(flatten)]
+        focus: FocusArgs,
+
         #[clap(value_name = "GAME_ROOT_DIR")]
         game_root_dir: String,
 
@@ -69,11 +102,17 @@ enum Commands {
     FocusNeovim {
         #[clap(value_name = "GAME_ROOT_DIR", index = 1)]
         game_root_dir: String,
+
+        #[command(flatten)]
+        focus: FocusArgs,
     },
     /// Focus the game
     FocusGame {
         #[clap(value_name = "GAME_ROOT_DIR", index = 1)]
         game_root_dir: String,
+
+        #[command(flatten)]
+        focus: FocusArgs,
     },
     /// List dependencies of game
     ListDependencies {
@@ -161,6 +200,7 @@ fn main() -> Result<()> {
             executable,
             appname,
             run_arg,
+            focus,
             arguments,
             game_root_dir,
             file,
@@ -175,6 +215,7 @@ fn main() -> Result<()> {
                     appname,
                     run_arg,
                     arguments,
+                    focus: focus.into_focus()?,
                     ..Default::default()
                 },
                 &absolute(game_root_dir)?,
@@ -191,8 +232,14 @@ fn main() -> Result<()> {
 
             result?;
         }
-        Commands::FocusNeovim { game_root_dir } => focus_neovim(&absolute(game_root_dir)?)?,
-        Commands::FocusGame { game_root_dir } => focus_game(&absolute(game_root_dir)?)?,
+        Commands::FocusNeovim {
+            game_root_dir,
+            focus,
+        } => focus_neovim(&absolute(game_root_dir)?, &focus.into_focus()?)?,
+        Commands::FocusGame {
+            game_root_dir,
+            focus,
+        } => focus_game(&absolute(game_root_dir)?, &focus.into_focus()?)?,
         Commands::ListDependencies { game_root_dir } => {
             let root_dir = absolute(&game_root_dir)?;
 
@@ -238,7 +285,7 @@ fn main() -> Result<()> {
             build_game(port, min_severity, !disable_logs)?;
         }
         Commands::TestErrorDialog => {
-            let error = anyhow::anyhow!("This is a test error; no Neovim launch was attempted.")
+            let error = anyhow::anyhow!("The cake is a lie, and so is this error message!")
                 .context("Testing the launch error dialog");
 
             error_dialog::show(&error, Some(&logs.join("bridge.log")))?;

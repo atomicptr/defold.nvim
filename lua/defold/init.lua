@@ -15,6 +15,7 @@ end
 ---@param opts? defold.Config
 function M.setup(opts)
     local config = require "defold.config"
+    local log = require "defold.logger"
 
     if config.state.game_runner.mode == nil then
         local os = require "defold.os"
@@ -33,6 +34,22 @@ function M.setup(opts)
         config.state.game_runner.mode = "send"
     end
 
+    -- only warn for user provided options, setup is re-run without them after downloading the sidecar
+    local focus = config.state.focus
+    if opts and opts.focus and focus.enable then
+        if focus.type ~= "custom" and (focus.nvim_arguments or focus.game_arguments) then
+            log.warn 'focus.nvim_arguments and focus.game_arguments are only used with focus.type = "custom"'
+        end
+
+        if focus.type == "auto" and focus.executable then
+            log.warn 'focus.executable is ignored with focus.type = "auto"'
+        end
+
+        if focus.type == "custom" and (focus.executable or "") == "" then
+            log.warn 'focus.type = "custom" requires focus.executable, falling back to "auto"'
+        end
+    end
+
     if setup_done or plugin_loaded then
         return
     end
@@ -45,8 +62,6 @@ function M.setup(opts)
         sidecar.ensure(M.setup)
         return
     end
-
-    local log = require "defold.logger"
 
     if config.state.debug then
         local ok, err = pcall(sidecar.set_log_level, "debug")
@@ -253,10 +268,13 @@ function M.setup_default_editor()
     end
 
     local sidecar = require "defold.sidecar"
-    local ok, err = pcall(sidecar.set_default_editor, port, sidecar.bridge_path, config.state.launcher)
+    local ok, err =
+        pcall(sidecar.set_default_editor, port, sidecar.bridge_path, config.state.launcher, config.state.focus)
 
     if not ok then
         log.error(string.format("Could not set default editor because: %s", err))
+    elseif err then
+        log.warn(string.format('Invalid focus config, falling back to "auto": %s', err))
     end
 end
 

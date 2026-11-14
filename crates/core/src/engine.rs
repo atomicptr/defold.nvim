@@ -26,7 +26,7 @@ pub fn start_native_debugger(url: &str, port: u16, address: &str) -> Result<u16>
         .retry(reqwest::retry::never())
         .build()?;
 
-    wait_for_engine(&client, base.join("ping")?)?;
+    wait_for_engine(&client, &base.join("ping")?)?;
 
     let payload = debugger_payload(port, address)?;
 
@@ -52,7 +52,7 @@ pub fn start_native_debugger(url: &str, port: u16, address: &str) -> Result<u16>
     Ok(port)
 }
 
-fn wait_for_engine(client: &Client, ping_url: Url) -> Result<()> {
+fn wait_for_engine(client: &Client, ping_url: &Url) -> Result<()> {
     let deadline = Instant::now() + Duration::from_secs(5);
 
     loop {
@@ -127,17 +127,35 @@ fn encode_bytes_field(output: &mut Vec<u8>, field_number: u8, bytes: &[u8]) {
 
     let mut length = bytes.len();
     while length >= 128 {
-        output.push((length as u8 & 0x7f) | 0x80);
+        output.push((length.to_le_bytes()[0] & 0x7f) | 0x80);
         length >>= 7;
     }
 
-    output.push(length as u8);
+    output.push(length.to_le_bytes()[0]);
     output.extend_from_slice(bytes);
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn encodes_lengths_at_varint_boundaries() {
+        for (length, prefix) in [
+            (0, &[0x00][..]),
+            (127, &[0x7f][..]),
+            (128, &[0x80, 0x01][..]),
+            (16383, &[0xff, 0x7f][..]),
+            (16384, &[0x80, 0x80, 0x01][..]),
+        ] {
+            let bytes = vec![42; length];
+            let mut encoded = Vec::new();
+            encode_bytes_field(&mut encoded, 1, &bytes);
+
+            let expected = [b"\x0a".as_slice(), prefix, bytes.as_slice()].concat();
+            assert_eq!(encoded, expected, "length {length}");
+        }
+    }
 
     #[test]
     fn encodes_exact_wire_schema() {

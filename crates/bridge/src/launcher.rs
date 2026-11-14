@@ -337,7 +337,7 @@ pub fn run(
         Remote::Failed(err) => bail!("Neovim at {addr} is not responding: {err}"),
     }
 
-    if let Err(err) = focus_neovim(root_dir) {
+    if let Err(err) = focus_neovim(root_dir, &settings.focus) {
         tracing::error!("Could not switch focus to neovim {err:?}");
     }
 

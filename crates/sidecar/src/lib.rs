@@ -188,15 +188,24 @@ fn send_command(lua: &Lua, (port, cmd): (u16, String)) -> LuaResult<Value> {
 #[instrument(level = "debug", err(Debug), skip_all)]
 fn set_default_editor(
     lua: &Lua,
-    (port, bridge_path, launcher_settings): (u16, String, LuaValue),
-) -> LuaResult<()> {
-    let launcher_settings = lua.from_value_with(
+    (port, bridge_path, launcher_settings, focus_settings): (u16, String, LuaValue, LuaValue),
+) -> LuaResult<Option<String>> {
+    let mut launcher_settings: editor_config::LauncherSettings = lua.from_value_with(
         launcher_settings,
         mlua::serde::DeserializeOptions::new().detect_mixed_tables(true),
     )?;
+
+    let focus_error = match resolve_focus(lua, focus_settings, focus::Subject::Neovim) {
+        Ok(focus) => {
+            launcher_settings.focus = focus;
+            None
+        }
+        Err(err) => Some(err.to_string()),
+    };
+
     editor_config::set_default_editor(port, &PathBuf::from(bridge_path), &launcher_settings)?;
 
-    Ok(())
+    Ok(focus_error)
 }
 
 #[instrument(level = "debug", err(Debug), skip_all)]
@@ -216,17 +225,29 @@ fn resolve_nvim_server_addr(
 }
 
 #[instrument(level = "debug", err(Debug), skip_all)]
-fn focus_neovim(_lua: &Lua, game_root: String) -> LuaResult<()> {
-    focus::focus_neovim(&absolute(game_root)?)?;
+fn focus_neovim(lua: &Lua, (game_root, settings): (String, LuaValue)) -> LuaResult<()> {
+    let focus = resolve_focus(lua, settings, focus::Subject::Neovim)?;
+    focus::focus_neovim(&absolute(game_root)?, &focus)?;
 
     Ok(())
 }
 
 #[instrument(level = "debug", err(Debug), skip_all)]
-fn focus_game(_lua: &Lua, game_root: String) -> LuaResult<()> {
-    focus::focus_game(&absolute(game_root)?)?;
+fn focus_game(lua: &Lua, (game_root, settings): (String, LuaValue)) -> LuaResult<()> {
+    let focus = resolve_focus(lua, settings, focus::Subject::Game)?;
+    focus::focus_game(&absolute(game_root)?, &focus)?;
 
     Ok(())
+}
+
+fn resolve_focus(lua: &Lua, config: LuaValue, subject: focus::Subject) -> LuaResult<focus::Focus> {
+    let config: focus::FocusConfig = if config.is_nil() {
+        focus::FocusConfig::default()
+    } else {
+        lua.from_value(config)?
+    };
+
+    Ok(config.resolve(subject))
 }
 
 fn unpack(_lua: &Lua, (archive, target): (PathBuf, PathBuf)) -> LuaResult<()> {

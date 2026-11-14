@@ -16,6 +16,24 @@
 ---@field appname?     string                                Sets `NVIM_APPNAME` to run the editor in a special configuration
 ---@field debug?       boolean                               Enable debug settings for the bridge cli
 
+---@alias defold.config.FocusSwitcher
+---|"gdbus"
+---|"hyprctl"
+---|"kdotool"
+---|"niri"
+---|"osascript"
+---|"swaymsg"
+---|"wlrctl"
+---|"wmctrl"
+---|"xdotool"
+
+---@class defold.config.Focus Settings for switching focus between Neovim and the game
+---@field enable?         boolean                                      Enable focus switching (default: true)
+---@field type?           "auto"|"custom"|defold.config.FocusSwitcher  Focus switcher, "auto" detects it from the session (default: "auto")
+---@field executable?     string                                       Executable for "custom", or the path of the selected switcher
+---@field nvim_arguments? string[]                                     ("custom" only) Arguments to focus Neovim, supports {CLASS}. nil disables Neovim switching
+---@field game_arguments? string[]                                     ("custom" only) Arguments to focus the game, supports {TITLE} and {APP}. nil disables game switching
+
 ---@class defold.config.Debugger Settings for the integrated debugger
 ---@field enable?                 boolean                               Enable the debugger
 ---@field moonbug?                defold.config.debugger.MoonbugConfig  Config for `moonbug`
@@ -61,6 +79,7 @@
 ---@class defold.Config Settings for defold.nvim
 ---@field defold?               defold.config.Editor      Settings for the Defold Game Engine
 ---@field launcher?             defold.config.Launcher    Settings for the Neovim launcher run by Defold
+---@field focus?                defold.config.Focus       Settings for switching focus between Neovim and the game
 ---@field debugger?             defold.config.Debugger    Settings for the integrated debugger
 ---@field completions?          defold.config.Completions Settings for Defold completions
 ---@field snippets?             defold.config.Snippets    Settings for Defold snippets
@@ -85,6 +104,14 @@ M.state = {
         executable = nil,
         arguments = nil,
         env = {},
+    },
+
+    focus = {
+        enable = true,
+        type = "auto",
+        executable = nil,
+        nvim_arguments = nil,
+        game_arguments = nil,
     },
 
     debugger = {

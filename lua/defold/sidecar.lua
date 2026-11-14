@@ -72,13 +72,13 @@ local downloading = false
 ---@field is_editor_port           fun(port: integer): boolean
 ---@field list_commands            fun(port: integer): table<string, string>
 ---@field send_command             fun(port: integer, cmd: string): defold.sidecar.CommandResult
----@field set_default_editor       fun(port: integer, bridge_path: string, launcher_config: defold.config.Launcher)
+---@field set_default_editor       fun(port: integer, bridge_path: string, launcher_config: defold.config.Launcher, focus_config?: defold.config.Focus): string? Invalid focus config error
 ---@field bridge_path              string Selected executable, available after ensure completes.
 ---@field start_native_debugger    fun(url: string, port: integer, address?: string): integer
 ---@field worker_call              defold.sidecar.WorkerCall
 ---@field resolve_nvim_server_addr fun(game_root: string, socket_type: "fsock"|"netsock"|nil): string
----@field focus_neovim             fun(game_root: string)
----@field focus_game               fun(game_root: string)
+---@field focus_neovim             fun(game_root: string, focus_config?: defold.config.Focus)
+---@field focus_game               fun(game_root: string, focus_config?: defold.config.Focus)
 ---@field editor_version           fun(game_root: string): string
 ---@field project_id               fun(game_root: string): string
 ---@field list_dependency_dirs     fun(game_root: string): string[]
