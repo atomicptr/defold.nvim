@@ -8,7 +8,7 @@ use mlua::Value::{self};
 use mlua::prelude::*;
 use std::path::PathBuf;
 use std::{
-    fs::{self},
+    fs::{self, OpenOptions},
     path::absolute,
     sync::OnceLock,
 };
@@ -29,6 +29,12 @@ fn defold_nvim_sidecar(lua: &Lua) -> LuaResult<LuaTable> {
 
         fs::create_dir_all(&log_dir).expect("could not create logs dir");
 
+        let logfile = OpenOptions::new()
+            .create(true)
+            .append(true)
+            .open(log_dir.join("sidecar.log"))
+            .expect("could not open log file");
+
         let (filter, handle) = reload::Layer::new(LevelFilter::INFO);
         LOG_RELOAD_HANDLE
             .set(handle)
@@ -38,7 +44,7 @@ fn defold_nvim_sidecar(lua: &Lua) -> LuaResult<LuaTable> {
             .with_ansi(false)
             .with_file(true)
             .with_line_number(true)
-            .with_writer(tracing_appender::rolling::never(log_dir, "sidecar.log"));
+            .with_writer(logfile);
 
         tracing_subscriber::registry()
             .with(filter)
