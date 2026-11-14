@@ -6,13 +6,10 @@ use std::{
 use anyhow::{Context, Result, bail};
 use walkdir::WalkDir;
 
-use crate::{game_project::GameProject, path, script_api, utils::project_id as ident};
+use crate::{game_project::GameProject, path, script_api};
 
 pub fn list_dependency_dirs(game_root: &Path) -> Result<Vec<PathBuf>> {
-    let dir = path::data_dir()?
-        .join("deps")
-        .join("project")
-        .join(ident(&game_root.display().to_string()));
+    let dir = path::project_paths(game_root)?.deps;
 
     let entries = match fs::read_dir(dir) {
         Ok(entries) => entries,

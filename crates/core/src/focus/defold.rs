@@ -1,6 +1,6 @@
 use std::path::{Path, PathBuf};
 
-use anyhow::{Context, Result, bail};
+use anyhow::{Result, bail};
 
 use super::{Focus, Subject, switcher::switch, window::Window};
 use crate::{game_project::GameProject, utils::classname};
@@ -28,11 +28,7 @@ pub fn focus_neovim(root_dir: &Path, focus: &Focus) -> Result<()> {
 
     // the launcher only assigns a class on Linux
     let class = if cfg!(target_os = "linux") {
-        Some(classname(
-            root_dir
-                .to_str()
-                .context("could not convert path to string")?,
-        ))
+        Some(classname(root_dir)?)
     } else {
         None
     };

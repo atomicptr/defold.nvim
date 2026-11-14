@@ -1,22 +1,14 @@
 local M = {}
 
 local function marker_path()
-    return vim.fs.joinpath(vim.fn.stdpath "data", "repair-defold.nvim")
+    return vim.fs.joinpath(require("defold.os").data_dir(), "repair")
 end
 
 function M.schedule()
     local log = require "defold.logger"
     local os = require "defold.os"
 
-    local paths = {
-        os.data_dir(),
-        os.cache_dir(),
-        vim.fs.joinpath(vim.uv.os_tmpdir(), "defold.nvim"),
-
-        -- locations used by older versions
-        vim.fs.joinpath(vim.fn.stdpath "data", "defold.nvim"),
-        vim.fs.joinpath(vim.fn.stdpath "cache", "defold.nvim"),
-    }
+    local paths = { os.data_dir(), os.cache_dir() }
 
     os.with_tempfile(marker_path(), function(temporary, done)
         if vim.fn.writefile(paths, temporary) ~= 0 then
@@ -37,6 +29,7 @@ function M.schedule()
     end)
 end
 
+---@return boolean|nil repaired
 function M.apply_pending()
     local log = require "defold.logger"
     local os = require "defold.os"
@@ -56,7 +49,8 @@ function M.apply_pending()
         end
     end
 
-    if vim.fn.delete(marker_path()) ~= 0 then
+    -- the marker lives inside the data dir, so it is usually gone by now
+    if os.file_exists(marker_path()) and vim.fn.delete(marker_path()) ~= 0 then
         log.fatal "Could not clear Defold repair marker"
     end
 

@@ -197,10 +197,7 @@ function M.refresh_annotations(on_change)
         return
     end
 
-    local dir = vim.fs.joinpath(os.data_dir(), sidecar.project_id(root))
-    vim.fn.mkdir(dir, "p")
-
-    local file = vim.fs.joinpath(dir, "editor_version")
+    local file = vim.fs.joinpath(sidecar.project_paths(root).data, "editor_version")
 
     M._annotations_state = { on_change = on_change }
 
@@ -236,7 +233,7 @@ function M.refresh_annotations(on_change)
         local data = os.data_dir()
 
         download.ensure({
-            name = "Defold Annotations",
+            name = version and string.format("Defold %s Annotations", version) or "Defold Annotations",
             owner = "defold",
             repo = "defold",
             asset = "ref-doc.zip",
@@ -248,9 +245,9 @@ function M.refresh_annotations(on_change)
                     log.fatal(string.format("Invalid Defold version: %s", tag))
                 end
 
-                return vim.fs.joinpath(data, "deps", "defold", parsed)
+                return vim.fs.joinpath(data, "annotations", parsed)
             end,
-            version_path = vim.fs.joinpath(data, "meta", "defold_annotations_version"),
+            version_path = vim.fs.joinpath(data, "versions", "annotations"),
 
             archive = true,
             install = function(source, target)
@@ -336,7 +333,7 @@ function M.setup_neovide()
         asset = asset,
 
         path = vim.fs.joinpath(data, "bin", entry),
-        version_path = vim.fs.joinpath(data, "meta", "neovide_version"),
+        version_path = vim.fs.joinpath(data, "versions", "neovide"),
 
         archive = true,
         entry = entry,
@@ -406,7 +403,7 @@ function M.install_dependencies(force_redownload, on_complete)
         local dependencies = sidecar.read_game_project(vim.fs.joinpath(root, "game.project")).dependencies
         log.debug(string.format("Checking %d dependencies for %s", #dependencies, root))
 
-        local dir = vim.fs.joinpath(os.data_dir(), "deps", "project", sidecar.project_id(root))
+        local dir = sidecar.project_paths(root).deps
         local wanted = {}
 
         for _, url in ipairs(dependencies) do

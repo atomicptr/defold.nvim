@@ -54,7 +54,7 @@ function M.get_file(resource_path, callback, opts)
     end
 
     local ok, dir = pcall(function()
-        local path = vim.fs.joinpath(osm.cache_dir(), "previews", sidecar.project_id(root))
+        local path = vim.fs.joinpath(sidecar.project_paths(root).cache, "previews")
         vim.fn.mkdir(path, "p")
         return vim.fs.abspath(path)
     end)

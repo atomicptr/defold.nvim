@@ -438,8 +438,11 @@ the issue. If it didn't, please be sure to include the health check if you repor
 
 There are also logs available, you can find the paths inside `:checkhealth defold`.
 
-- **System > Cache Dir**: The location of the plugin logs
-- **Sidecar > Sidecar Cache Dir**: The location of the sidecar (Neovim native extension) and bridge (Tool that calls Neovim instances)
+- **Environment > Plugin data**: Everything defold.nvim manages, downloaded tools, annotations and per project data like dependencies
+- **Environment > Plugin logs**: The location of the logs
+- **Environment > Plugin cache**: Disposable files like image previews
+
+Project specific files are stored in `projects/<project id>` inside these directories, the file `root` inside the data directory contains the (normalized) path of the project.
 
 To repair/re-install all managed defold.nvim state:
 

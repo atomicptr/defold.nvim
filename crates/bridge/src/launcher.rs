@@ -141,7 +141,7 @@ fn apply_vars(args: &[String], var: &str, replace_with: &str) -> Vec<String> {
 }
 
 fn managed_neovide() -> Option<PathBuf> {
-    let bin = path::data_dir().ok()?.join("bin");
+    let bin = path::bin_dir().ok()?;
 
     let managed = if cfg!(target_os = "macos") {
         bin.join("Neovide.app/Contents/MacOS/neovide")
@@ -280,11 +280,7 @@ pub fn run(
 
     #[cfg(target_os = "linux")]
     {
-        let class = classname(
-            root_dir
-                .to_str()
-                .context("could not convert path to string")?,
-        );
+        let class = classname(root_dir)?;
 
         app = app.with_class(&class);
 

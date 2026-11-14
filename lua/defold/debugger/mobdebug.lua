@@ -54,7 +54,7 @@ function M.setup(on_ready)
         asset = string.format("mobdap-%s-%s.%s", os.name(), architecture, archive),
 
         path = vim.fs.joinpath(data, "bin", filename),
-        version_path = vim.fs.joinpath(data, "meta", "mobdap_version"),
+        version_path = vim.fs.joinpath(data, "versions", "mobdap"),
 
         archive = true,
         entry = filename,

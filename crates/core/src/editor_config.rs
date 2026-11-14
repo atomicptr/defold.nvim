@@ -278,7 +278,7 @@ fn render_runner_script(
 }
 
 fn create_runner(bridge_path: &Path, settings: &LauncherSettings) -> Result<PathBuf> {
-    let dir = path::data_dir()?.join("bin");
+    let dir = path::bin_dir()?;
     fs::create_dir_all(&dir)?;
 
     let (quote, script_name): (fn(&str) -> Result<String>, _) = if cfg!(target_os = "windows") {
