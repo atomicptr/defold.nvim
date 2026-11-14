@@ -1,5 +1,6 @@
 use std::{
-    env, fs,
+    env,
+    fs::{self, OpenOptions},
     path::{PathBuf, absolute},
 };
 
@@ -13,7 +14,6 @@ use defold_nvim_core::{
     path, project, script_api,
 };
 use tracing::Level;
-use tracing_appender::rolling::never;
 
 use crate::build_game::{Severity, build_game};
 
@@ -168,7 +168,10 @@ fn main() -> Result<()> {
 
     fs::create_dir_all(&logs)?;
 
-    let (logfile, _logfile_guard) = tracing_appender::non_blocking(never(&logs, "bridge.log"));
+    let logfile = OpenOptions::new()
+        .create(true)
+        .append(true)
+        .open(logs.join("bridge.log"))?;
 
     tracing_subscriber::fmt()
         .with_file(true)

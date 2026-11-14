@@ -1,10 +1,10 @@
 use std::{
+    fmt::Write,
     fs::{self, File},
     path::Path,
 };
 
 use anyhow::Result;
-use fs_extra::{dir, file};
 use sha3::{Digest, Sha3_256};
 
 use crate::path;
@@ -13,33 +13,60 @@ use crate::path;
 pub fn sha3(str: &str) -> String {
     let mut hasher = Sha3_256::new();
     hasher.update(str.as_bytes());
-    let result = hasher.finalize();
 
-    hex::encode(result)
+    hasher
+        .finalize()
+        .iter()
+        .fold(String::with_capacity(64), |mut out, byte| {
+            let _ = write!(out, "{byte:02x}");
+            out
+        })
 }
 
 pub fn classname(game_root: &Path) -> Result<String> {
     Ok(format!("com.defold.nvim.p{}", path::project_id(game_root)?))
 }
 
-// Apparently fs::rename doesnt work on tmpfs
 pub fn move_file(from: &Path, to: &Path) -> Result<()> {
     if let Some(parent) = to.parent() {
         fs::create_dir_all(parent)?;
     }
 
-    if from.is_dir() {
-        if to.exists() {
-            fs::remove_dir_all(to)?;
-        }
+    let is_dir = from.is_dir();
 
-        dir::move_dir(
-            from,
-            to,
-            &dir::CopyOptions::new().overwrite(true).copy_inside(true),
-        )?;
+    if is_dir && to.exists() {
+        fs::remove_dir_all(to)?;
+    }
+
+    if fs::rename(from, to).is_ok() {
+        return Ok(());
+    }
+
+    // fs::rename fails across filesystems (e.g. from a tmpfs temp dir), so fall back to copy + delete
+    if is_dir {
+        copy_dir(from, to)?;
+        fs::remove_dir_all(from)?;
     } else {
-        file::move_file(from, to, &file::CopyOptions::new().overwrite(true))?;
+        fs::copy(from, to)?;
+        fs::remove_file(from)?;
+    }
+
+    Ok(())
+}
+
+fn copy_dir(from: &Path, to: &Path) -> Result<()> {
+    fs::create_dir_all(to)?;
+
+    for entry in fs::read_dir(from)? {
+        let entry = entry?;
+        let source = entry.path();
+        let destination = to.join(entry.file_name());
+
+        if source.is_dir() {
+            copy_dir(&source, &destination)?;
+        } else {
+            fs::copy(&source, &destination)?;
+        }
     }
 
     Ok(())
@@ -66,11 +93,7 @@ pub fn unpack(archive: &Path, target: &Path) -> Result<()> {
                 let destination = target.join(entry.file_name());
                 let kind = entry.file_type()?;
                 if kind.is_dir() {
-                    dir::copy(
-                        entry.path(),
-                        destination,
-                        &dir::CopyOptions::new().copy_inside(true),
-                    )?;
+                    copy_dir(&entry.path(), &destination)?;
                 } else if kind.is_file() {
                     fs::copy(entry.path(), destination)?;
                 }
