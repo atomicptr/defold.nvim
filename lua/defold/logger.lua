@@ -26,10 +26,7 @@ local function log(level, message)
     local file
     pcall(function()
         local osm = require "defold.os"
-        local logdir = vim.fs.joinpath(osm.cache_dir(), "logs")
-        vim.fn.mkdir(logdir, "p")
-
-        local log_file = vim.fs.joinpath(logdir, "plugin.log")
+        local log_file = vim.fs.joinpath(osm.logs_dir(), "plugin.log")
         local timestamp = os.date "%Y-%m-%d %H:%M:%S"
         local log_message = string.format("[%s] %s: %s\n", level2string(level), timestamp, message)
 

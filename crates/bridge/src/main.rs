@@ -164,7 +164,7 @@ fn main() -> Result<()> {
         }
     };
 
-    let logs = path::cache_dir()?.join("logs");
+    let logs = path::logs_dir()?;
 
     fs::create_dir_all(&logs)?;
 

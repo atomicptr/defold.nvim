@@ -43,6 +43,11 @@ local downloading = false
 ---@field line      integer
 ---@field character integer
 
+---@class defold.sidecar.ProjectPaths
+---@field data  string Project data directory
+---@field deps  string Installed project dependencies
+---@field cache string
+
 ---@class defold.sidecar.PathEntry
 ---@field collection_name? string
 ---@field game_object_id?  string
@@ -80,7 +85,7 @@ local downloading = false
 ---@field focus_neovim             fun(game_root: string, focus_config?: defold.config.Focus)
 ---@field focus_game               fun(game_root: string, focus_config?: defold.config.Focus)
 ---@field editor_version           fun(game_root: string): string
----@field project_id               fun(game_root: string): string
+---@field project_paths            fun(game_root: string): defold.sidecar.ProjectPaths
 ---@field list_dependency_dirs     fun(game_root: string): string[]
 ---@field fetch_defold_paths_for   fun(game_root: string, filepath: string): defold.sidecar.PathEntry[]
 ---@field fetch_gui_nodes_for      fun(game_root: string, filepath: string): defold.sidecar.GuiNodeEntry[]
@@ -249,14 +254,14 @@ function M.ensure(callback)
             local data = os.data_dir()
 
             download.ensure({
-                name = "defold.nvim: sidecar",
+                name = "Sidecar",
                 owner = "atomicptr",
                 repo = "defold.nvim",
                 version = version,
                 asset = string.format("%s-%s", platform, filename),
 
                 path = vim.fs.joinpath(data, "lib", filename),
-                version_path = vim.fs.joinpath(data, "meta", "sidecar_version"),
+                version_path = vim.fs.joinpath(data, "versions", "sidecar"),
 
                 local_paths = {
                     vim.fs.joinpath(root, "target", "debug", filename),
@@ -280,7 +285,7 @@ function M.ensure(callback)
                 end
 
                 download.ensure({
-                    name = "defold.nvim: bridge",
+                    name = "Bridge",
                     owner = "atomicptr",
                     repo = "defold.nvim",
                     version = version,
@@ -288,7 +293,7 @@ function M.ensure(callback)
                     executable = true,
 
                     path = vim.fs.joinpath(data, "bin", bridge),
-                    version_path = vim.fs.joinpath(data, "meta", "defold-nvim-bridge_version"),
+                    version_path = vim.fs.joinpath(data, "versions", "bridge"),
 
                     local_paths = {
                         vim.fs.joinpath(root, "target", "debug", bridge),

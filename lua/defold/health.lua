@@ -10,6 +10,7 @@ function M.check()
     vim.health.info(string.format("Platform: %s / %s", platform, os.architecture()))
     vim.health.info(string.format("Plugin root: %s", os.plugin_root()))
     vim.health.info(string.format("Plugin data: %s", os.data_dir()))
+    vim.health.info(string.format("Plugin logs: %s", os.logs_dir()))
     vim.health.info(string.format("Plugin cache: %s", os.cache_dir()))
 
     vim.health.start "Runtime tools"
@@ -54,6 +55,14 @@ function M.check()
         vim.health.ok(string.format("Project root: %s", root))
 
         if sidecar_ok then
+            local ok, paths = pcall(sidecar.project_paths, root)
+            if ok then
+                vim.health.info(string.format("Project data: %s", paths.data))
+                vim.health.info(string.format("Project cache: %s", paths.cache))
+            else
+                vim.health.error(string.format("Could not resolve project directories: %s", tostring(paths)))
+            end
+
             local port = project.editor_port()
             if port then
                 vim.health.ok(string.format("Editor port: %d", port))
@@ -140,7 +149,7 @@ function M.check()
             for _, dep in ipairs(deps) do
                 local dirname = vim.fs.basename(dep)
 
-                if vim.fs.basename(vim.fs.dirname(dep)) == "defold" then
+                if vim.fs.basename(vim.fs.dirname(dep)) == "annotations" then
                     vim.health.ok(string.format("Defold annotations %s: %s", dirname, dep))
                 else
                     for _, lib in ipairs(vim.fn.readdir(dep)) do

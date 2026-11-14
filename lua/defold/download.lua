@@ -66,7 +66,7 @@ local function progress(id, title, message, status, percent)
         id = id,
         kind = "progress",
         source = "defold.nvim",
-        title = title,
+        title = string.format("defold.nvim: %s", title),
         status = status,
         percent = percent,
     })

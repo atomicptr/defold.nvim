@@ -7,6 +7,8 @@ use anyhow::Result;
 use fs_extra::{dir, file};
 use sha3::{Digest, Sha3_256};
 
+use crate::path;
+
 #[must_use]
 pub fn sha3(str: &str) -> String {
     let mut hasher = Sha3_256::new();
@@ -16,14 +18,8 @@ pub fn sha3(str: &str) -> String {
     hex::encode(result)
 }
 
-#[must_use]
-pub fn project_id(root_dir: &str) -> String {
-    sha3(root_dir)[..8].to_string()
-}
-
-#[must_use]
-pub fn classname(root_dir: &str) -> String {
-    format!("com.defold.nvim.p{}", project_id(root_dir))
+pub fn classname(game_root: &Path) -> Result<String> {
+    Ok(format!("com.defold.nvim.p{}", path::project_id(game_root)?))
 }
 
 // Apparently fs::rename doesnt work on tmpfs

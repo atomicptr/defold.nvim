@@ -1,4 +1,4 @@
-use crate::{path, utils::project_id};
+use crate::path;
 use anyhow::{Context, Result};
 use serde::Deserialize;
 use std::{
@@ -38,25 +38,12 @@ pub fn default_socket_type() -> SocketType {
     }
 }
 
-fn runtime_dir(root_dir: &Path) -> Result<PathBuf> {
-    let root_dir = root_dir
-        .to_str()
-        .context("could not convert root dir to string")?;
-
-    let dir = path::cache_dir()?
-        .join("runtime")
-        .join(project_id(root_dir));
-
-    fs::create_dir_all(&dir)?;
-    Ok(dir)
-}
-
 fn fsock_path(root_dir: &Path) -> Result<PathBuf> {
-    Ok(runtime_dir(root_dir)?.join("neovim.sock"))
+    Ok(path::ensure_project_dir(root_dir)?.data.join("nvim.sock"))
 }
 
 fn netsock_port_file(root_dir: &Path) -> Result<PathBuf> {
-    Ok(runtime_dir(root_dir)?.join("port"))
+    Ok(path::ensure_project_dir(root_dir)?.data.join("nvim.port"))
 }
 
 fn read_netsock_port(root_dir: &Path) -> Result<Option<u16>> {

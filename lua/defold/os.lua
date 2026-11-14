@@ -331,11 +331,11 @@ function M.plugin_root()
     return res
 end
 
----Must match the `dirs` crate, the sidecar and bridge use the same directories
+---Must match `crates/core/src/path.rs`, the sidecar and bridge use the same directories
 ---@param kind "data"|"cache"
 ---@return string
 local function base_dir(kind)
-    -- NOTE: no logger here, it writes its log file into the cache dir
+    -- NOTE: no logger here, it writes its log file into the data dir
     local home = vim.uv.os_homedir()
     if not home or home == "" then
         error "defold.nvim: Could not find the home directory"
@@ -346,6 +346,10 @@ local function base_dir(kind)
 
         if not local_app_data or local_app_data == "" then
             error "defold.nvim: LOCALAPPDATA is not set"
+        end
+
+        if kind == "cache" then
+            return vim.fs.joinpath(local_app_data, "Temp")
         end
 
         return local_app_data
@@ -381,6 +385,14 @@ function M.cache_dir()
     end
 
     local dir = vim.fs.joinpath(base_dir "cache", name)
+    vim.fn.mkdir(dir, "p")
+    return dir
+end
+
+---Returns `Logs` directory
+---@return string
+function M.logs_dir()
+    local dir = vim.fs.joinpath(M.data_dir(), "logs")
     vim.fn.mkdir(dir, "p")
     return dir
 end

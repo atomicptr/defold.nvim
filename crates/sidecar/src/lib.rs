@@ -25,9 +25,7 @@ static LOG_RELOAD_HANDLE: OnceLock<reload::Handle<LevelFilter, tracing_subscribe
 #[mlua::lua_module]
 fn defold_nvim_sidecar(lua: &Lua) -> LuaResult<LuaTable> {
     LOG_INIT.get_or_init(|| {
-        let log_dir = path::cache_dir()
-            .expect("could not get cache dir")
-            .join("logs");
+        let log_dir = path::logs_dir().expect("could not get logs dir");
 
         fs::create_dir_all(&log_dir).expect("could not create logs dir");
 
@@ -126,7 +124,7 @@ fn register_exports(lua: &Lua) -> LuaResult<LuaTable> {
         "start_native_debugger",
         lua.create_function(start_native_debugger)?,
     )?;
-    exports.set("project_id", lua.create_function(project_id)?)?;
+    exports.set("project_paths", lua.create_function(project_paths)?)?;
 
     Ok(exports)
 }
@@ -272,10 +270,17 @@ fn editor_version(_lua: &Lua, game_root: String) -> LuaResult<String> {
     Ok(editor::version(&absolute(game_root)?)?)
 }
 
+/// Creates the project directory, cache directories are created on demand
 #[instrument(level = "debug", err(Debug), skip_all)]
-fn project_id(_lua: &Lua, game_root: String) -> LuaResult<String> {
-    let game_root = absolute(game_root)?;
-    Ok(utils::project_id(&game_root.display().to_string()))
+fn project_paths(lua: &Lua, game_root: String) -> LuaResult<LuaTable> {
+    let paths = path::ensure_project_dir(&absolute(game_root)?)?;
+    let table = lua.create_table()?;
+
+    table.set("data", paths.data)?;
+    table.set("deps", paths.deps)?;
+    table.set("cache", paths.cache)?;
+
+    Ok(table)
 }
 
 #[instrument(level = "debug", err(Debug), skip_all)]
