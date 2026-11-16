@@ -26,7 +26,7 @@ function M:complete(params, callback)
     local items = context and completions.get_completions(context) or {}
 
     for _, item in ipairs(items) do
-        item.icon = nil
+        item.icon_key = nil
     end
 
     callback { items = items, isIncomplete = true }

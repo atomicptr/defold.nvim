@@ -1,7 +1,7 @@
 local M = {}
 
 ---@class defold.completions.Item: lsp.CompletionItem
----@field icon? string Optional presentation metadata
+---@field icon_key? string Key in `icons.completions`, presentation metadata
 
 ---Whetever a buffer is supported for defold.nvim completions
 ---@param bufnr? integer
@@ -169,7 +169,7 @@ local function completion_item_from_entry(entry, omit_collection_name)
             or (entry.is_component and kinds.Variable)
             -- game object
             or kinds.Struct,
-        icon = entry.is_component and "󰒓" or "",
+        icon_key = entry.is_component and "component" or "game_object",
         insertTextFormat = vim.lsp.protocol.InsertTextFormat.PlainText,
         sortText = string.format(
             "%s|%s:/%s#%s",
@@ -237,7 +237,7 @@ local function get_gui_completions(filename, root)
             insertText = node.id,
             filterText = node.id,
             kind = kinds.Property,
-            icon = "",
+            icon_key = "gui_node",
             insertTextFormat = vim.lsp.protocol.InsertTextFormat.PlainText,
         })
     end
@@ -275,7 +275,7 @@ local function get_input_binding_completions(root)
             insertText = binding.action,
             filterText = binding.action,
             kind = kinds.Property,
-            icon = "󱇰",
+            icon_key = "input_binding",
             insertTextFormat = vim.lsp.protocol.InsertTextFormat.PlainText,
         })
     end
