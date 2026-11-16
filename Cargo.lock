@@ -372,7 +372,7 @@ dependencies = [
 
 [[package]]
 name = "defold-nvim-bridge"
-version = "0.14.0-beta6"
+version = "0.14.0"
 dependencies = [
  "anyhow",
  "clap",
@@ -388,7 +388,7 @@ dependencies = [
 
 [[package]]
 name = "defold-nvim-core"
-version = "0.14.0-beta6"
+version = "0.14.0"
 dependencies = [
  "anyhow",
  "chumsky",
@@ -412,7 +412,7 @@ dependencies = [
 
 [[package]]
 name = "defold-nvim-sidecar"
-version = "0.14.0-beta6"
+version = "0.14.0"
 dependencies = [
  "anyhow",
  "defold-nvim-core",
