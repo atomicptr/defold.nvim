@@ -337,6 +337,48 @@ local config = {
         errorformat = errorformat,
     },
 
+    icons = {
+        -- Enable support for icons, using mini.icons or nvim-web-devicons (default: true)
+        enable = true,
+
+        -- Colors used in our icons (referenced in files/etc)
+        colors = {
+            blue = "#4CB1FF",
+            green = "#2FA909",
+            yellow = "#E6B711",
+        },
+
+        -- Icons for completion items (blink.cmp only)
+        completions = {
+            component = { icon = "󰒓", color = "yellow", name = "DefoldCompletionComponent" },
+            game_object = { icon = "", color = "blue", name = "DefoldCompletionGameObject" },
+            gui_node = { icon = "", color = "blue", name = "DefoldCompletionGuiNode" },
+            input_binding = { icon = "󱇰", color = "green", name = "DefoldCompletionInputBinding" },
+        },
+
+        -- Icons by file name/extension, set to `false` to disable
+        files = {
+            atlas = { icon = "", color = "green", name = "DefoldAtlas" },
+            collection = { icon = "", color = "blue", name = "DefoldCollection" },
+            font = { icon = "", color = "yellow", name = "DefoldFont" },
+            fp = { icon = "", color = "yellow", name = "DefoldFragmentProgram" },
+            ["game.project"] = { icon = "󰐱", color = "green", name = "DefoldGameProject" },
+            go = { icon = "", color = "blue", name = "DefoldGameObject" },
+            gui = { icon = "", color = "blue", name = "DefoldGui" },
+            gui_script = { icon = "󰒓", color = "yellow", name = "DefoldGuiScript" },
+            input_binding = { icon = "󱇰", color = "green", name = "DefoldInputBinding" },
+            material = { icon = "", color = "green", name = "DefoldMaterial" },
+            particlefx = { icon = "", color = "blue", name = "DefoldParticleFX" },
+            render_script = { icon = "󰒓", color = "yellow", name = "DefoldRenderScript" },
+            script = { icon = "󰒓", color = "yellow", name = "DefoldScript" },
+            sound = { icon = "", color = "green", name = "DefoldSound" },
+            sprite = { icon = "", color = "blue", name = "DefoldSprite" },
+            tilemap = { icon = "", color = "blue", name = "DefoldTilemap" },
+            tilesource = { icon = "󱡔", color = "green", name = "DefoldTilesource" },
+            vp = { icon = "", color = "yellow", name = "DefoldVertexProgram" },
+        },
+    },
+
     -- setup the `:make` command in Defold projects to launch the game (default: true)
     setup_make = true,
 

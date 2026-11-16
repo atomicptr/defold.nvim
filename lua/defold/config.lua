@@ -76,6 +76,17 @@
 ---@field show_logs?   boolean       Show logs when launching the game (only when `mode` is set to "make") (default: true)
 ---@field errorformat? string[]      The errorformat being used by quicklist (only used on `mode` "make")
 
+---@class defold.config.Icon
+---@field icon?  string Icon glyph (icon, color and name are required for new entries)
+---@field color? string Palette name from `icons.colors` or hex color ("#RRGGBB")
+---@field name?  string Highlight group name
+
+---@class defold.config.Icons
+---@field enable?      boolean                                 Enable Defold icons (default: true)
+---@field colors?      table<string, string>                   Named hex colors
+---@field files?       table<string, defold.config.Icon|false> Icons by file extension or name, false disables an icon
+---@field completions? table<string, defold.config.Icon|false> Completion item icons (blink.cmp only), false disables an icon
+
 ---@class defold.Config Settings for defold.nvim
 ---@field defold?               defold.config.Editor      Settings for the Defold Game Engine
 ---@field launcher?             defold.config.Launcher    Settings for the Neovim launcher run by Defold
@@ -85,6 +96,7 @@
 ---@field snippets?             defold.config.Snippets    Settings for Defold snippets
 ---@field quickfix?             defold.config.Quickfix    Settings for the integrated Quickfix support
 ---@field game_runner?          defold.config.GameRunner  Settings for running the game through Defold
+---@field icons?                defold.config.Icons       Settings for Defold file and completion icons
 ---@field setup_make?           boolean                   Whenever or not defold.nvim sets up `:make`
 ---@field force_plugin_enabled? boolean                   Force the plugin to be always enabled (even if we can't find the game.project file)
 ---@field debug?                boolean                   Enable debug settings for the plugin
@@ -192,6 +204,44 @@ M.state = {
             "%-GWARNING:%.%#",
             "%-G%s",
             "%-G%.%#",
+        },
+    },
+
+    icons = {
+        enable = true,
+
+        colors = {
+            blue = "#4CB1FF",
+            green = "#2FA909",
+            yellow = "#E6B711",
+        },
+
+        completions = {
+            component = { icon = "󰒓", color = "yellow", name = "DefoldCompletionComponent" },
+            game_object = { icon = "", color = "blue", name = "DefoldCompletionGameObject" },
+            gui_node = { icon = "", color = "blue", name = "DefoldCompletionGuiNode" },
+            input_binding = { icon = "󱇰", color = "green", name = "DefoldCompletionInputBinding" },
+        },
+
+        files = {
+            atlas = { icon = "", color = "green", name = "DefoldAtlas" },
+            collection = { icon = "", color = "blue", name = "DefoldCollection" },
+            font = { icon = "", color = "yellow", name = "DefoldFont" },
+            fp = { icon = "", color = "yellow", name = "DefoldFragmentProgram" },
+            ["game.project"] = { icon = "󰐱", color = "green", name = "DefoldGameProject" },
+            go = { icon = "", color = "blue", name = "DefoldGameObject" },
+            gui = { icon = "", color = "blue", name = "DefoldGui" },
+            gui_script = { icon = "󰒓", color = "yellow", name = "DefoldGuiScript" },
+            input_binding = { icon = "󱇰", color = "green", name = "DefoldInputBinding" },
+            material = { icon = "", color = "green", name = "DefoldMaterial" },
+            particlefx = { icon = "", color = "blue", name = "DefoldParticleFX" },
+            render_script = { icon = "󰒓", color = "yellow", name = "DefoldRenderScript" },
+            script = { icon = "󰒓", color = "yellow", name = "DefoldScript" },
+            sound = { icon = "", color = "green", name = "DefoldSound" },
+            sprite = { icon = "", color = "blue", name = "DefoldSprite" },
+            tilemap = { icon = "", color = "blue", name = "DefoldTilemap" },
+            tilesource = { icon = "󱡔", color = "green", name = "DefoldTilesource" },
+            vp = { icon = "", color = "yellow", name = "DefoldVertexProgram" },
         },
     },
 

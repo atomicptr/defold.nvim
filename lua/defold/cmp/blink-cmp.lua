@@ -27,9 +27,11 @@ function M:get_completions(ctx, callback)
     local context = completions.get_context(ctx.bufnr, ctx.cursor[1], ctx.cursor[2] + 1)
     local items = context and completions.get_completions(context) or {}
 
+    local icons = require "defold.icons"
+
     for _, item in ipairs(items) do
-        item.kind_icon = item.icon
-        item.icon = nil
+        item.kind_icon, item.kind_hl = icons.completion_icon(item.icon_key)
+        item.icon_key = nil
     end
 
     callback {
